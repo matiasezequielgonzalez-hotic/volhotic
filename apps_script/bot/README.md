@@ -133,6 +133,26 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   paquetes vuelan al canasto, confeti al subir de nivel o con un pedido perfecto, y con 3 paquetes en
   los canastos pasa la colecta: suena la bocina, sube el portón y se los llevan.
 - **Emotes:** Espacio salta y 1–4 mandan 👋 😂 💪 🔥 (los ven todos, sin ensuciar el feed).
+- **Escuela de pedidos de Mercado Libre (sala):** en la PC aparece la venta como la ve el vendedor
+  (comprador, título, cantidad, posición, tipo de envío y reloj del horario de corte), a veces con un
+  mensaje del comprador para decidir qué hacer. Hay que imprimir la etiqueta, buscar en el piso y la zona
+  correctos, comparar la etiqueta (algunas trampas cambian un solo dígito), elegir delantero/trasero,
+  contar, revisar el estado, embalar paso a paso y pegar la etiqueta bien. Al final: "así le llegó al
+  comprador", con lo aprendido. La dificultad sube con el nivel: Aprendiz, Pro (hay que recordar la
+  etiqueta y la cantidad) y Experto (también el envío; menos tiempo; packs de hasta 3).
+- **Termómetro del equipo:** perfectas, con errores, demoradas y frenadas del día (hoja `BotXP`).
+- **Preguntas rápidas:** hottie repasa las reglas con repetición espaciada (lo que se erra vuelve a los
+  10 minutos; lo que se sabe, a los 1, 3, 7 y 16 días). Se guarda en el navegador de cada uno.
+- **Autopartes por piso:** al fondo hay una estantería por piso (Subsuelo, PB, Piso 1, 2, 3) con una
+  bahía por zona; "general" es el piso sin zona cargada. El lado del portón queda libre. Acepta pisos
+  escritos como "Piso 1" o "1", "PB" o "0", "Subsuelo" o "-1".
+- **Sectores por línea:** Pet (verde), Bio (rosa), Kid (celeste), Tec (rojo) y Ofi (amarillo) tienen
+  estanterías de su color al frente; Autopartes es azul. El chat muestra la línea con su color.
+- **Sala sexhotic.:** puerta violeta en la pared derecha. El SEX_ADMIN entra directo; el resto, con la
+  clave que pongas en `Config` → `SEX_CLAVE` (la clave vive solo en la planilla, nunca en el código). Habilita
+  12 horas, y después de 5 intentos fallidos bloquea 10 minutos. Adentro: vitrina, PC de ventas
+  sexhotic., mesa de embalaje discreto (paso extra: caja neutra) y hottie con humor más picante sobre el
+  oficio (sin coquetear con nadie: es un bot y una herramienta de trabajo).
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app

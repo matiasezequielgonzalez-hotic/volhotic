@@ -159,6 +159,8 @@
     padding: 6px 16px; border-radius: 99px; background: rgba(25, 27, 31, .85); border: 2px solid var(--c, var(--azul)); color: var(--c, #fff);
     pointer-events: none; opacity: 0; transition: opacity .3s; text-shadow: 0 0 14px var(--c, transparent); }
   #lugar.visible { opacity: 1; }
+  #velo { position: fixed; inset: 0; z-index: 30; background: #120a1a; opacity: 0; pointer-events: none; transition: opacity .3s; }
+  #velo.on { opacity: 1; }
   #confeti { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
   @media (max-width: 720px) { #ajustes { top: 12px; bottom: auto; } }
   #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 700 28px var(--display); color: var(--fg); letter-spacing: -.02em; }
@@ -204,6 +206,7 @@
 </div>
 <div id="toast"></div>
 <div id="lugar" aria-live="polite"></div>
+<div id="velo"></div>
 <div id="cargando">hotic.</div>
 
 <?!= botInclude('BotSprites') ?>
@@ -262,16 +265,17 @@ const demo = {
       ],
       eventos: demo.eventos.filter((e) => e.id > (estado.ultimoEvento || 0)),
       reputacion: window.SALA_DEMO_SERVIDOR && window.SALA_DEMO_SERVIDOR.reputacion ? window.SALA_DEMO_SERVIDOR.reputacion() : null,
-      desafio: Object.assign({ id: d.id, producto: d.producto, segundos: seg, ganador: d.ganador || '' }, d.ganador || seg > 60 ? { zona: d.zona } : seg > 30 ? { pista: 'Está en el piso 1 de su estantería.' } : {}),
+      desafio: Object.assign({ id: d.id, producto: d.producto, segundos: seg, ganador: d.ganador || '' }, d.ganador || seg > 60 ? { zona: d.zona, piso: d.piso || '' } : seg > 30 ? { pista: 'Está en el piso 1 de su estantería.' } : {}),
     };
   },
-  botSalaResponder: (id, zona) => {
+  botSalaResponder: (id, zona, piso) => {
     const d = demo.desafio;
-    if (String(zona) === d.zona) { d.ganador = 'Facundo'; demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'gana', texto: '🏆 Facundo encontró ' + d.producto.descripcion + ' (+20 XP)' }); return { ok: true, correcta: true, mensaje: '¡Bien! Era la zona ' + zona + ' 🏆', xp: { ganado: 20, total: 150, nivel: 2, desde: 50, hasta: 200 } }; }
+    if (String(zona) === d.zona && (!d.piso || String(piso || '') === d.piso)) { d.ganador = 'Facundo'; demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'gana', texto: '🏆 Facundo encontró ' + d.producto.descripcion + ' (+20 XP)' }); return { ok: true, correcta: true, mensaje: '¡Bien! Era la zona ' + zona + ' 🏆', xp: { ganado: 20, total: 150, nivel: 2, desde: 50, hasta: 200 } }; }
     demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'error', texto: 'Facundo probó en la zona ' + zona + ' ❌' });
     return { ok: true, correcta: false, mensaje: 'No, no está en la zona ' + zona + ' ❌ Probá en otra en 10 s.' };
   },
   botSalaAvisar: () => true,
+  botSexEntrar: () => ({ ok: true }), // fuera de Apps Script no hay clave: la valida el servidor real
   botSalaNuevoPedido: () => ({
     id: 'ML-DEMO' + Math.floor(Math.random() * 90 + 10), venta: '2000012345678901', comprador: 'TALLER_ELGRINGO', envio: 'Flex', creado: Date.now(),
     corte: Date.now() + 8 * 60000, dificultad: { nombre: 'Aprendiz', ocultar: [] }, mensaje: null,
@@ -528,7 +532,7 @@ for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
   }
   const conductor = caja(0.7, 0.5, 0.6, 0x26292f, x, 1.15, z + 0.3);
   conductor.material.roughness = 0.8;
-})(11.7, -5.0);
+})(12.1, -4.2);
 for (const [x, z, alto] of [[-11.7, -4.6, 3], [-11.7, -3.2, 2], [11.8, 4.0, 2], [11.8, 5.4, 3]]) {
   for (let n = 0; n < alto; n++) {
     pallet(x, n * 0.62, z);
@@ -547,41 +551,70 @@ for (const [x, z] of [[0.4, -3.3], [1.6, -3.3], [7.6, 4.4]]) {
 const estanterias = {};
 const matParante = new THREE.MeshStandardMaterial({ color: col(0x1538be), roughness: 0.35, metalness: 0.55 });
 const matViga = new THREE.MeshStandardMaterial({ color: col(0xe9ebef), roughness: 0.4, metalness: 0.4 });
-function estanteria(zona, i, total) {
-  const color = PALETA_ZONAS[i % PALETA_ZONAS.length];
-  const x = -ANCHO / 2 + 3 + i * ((ANCHO - 6) / Math.max(total - 1, 1));
-  const z = -FONDO / 2 + 1.25, w = 2.5, d = 1.15, h = 3.6, niveles = 3;
-  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) caja(0.09, h, 0.09, 0, x + dx * w / 2, 0, z + dz * d / 2, { material: matParante });
-  for (const dz of [-1, 1]) for (let k = 1; k < 7; k++) caja(0.03, 0.03, d, 0, x + dz * w / 2, k * 0.5, z, { material: matParante, sombra: false }); // diagonales simplificadas
+// Autopartes: una estantería por piso a lo largo del fondo (Subsuelo, PB, Piso 1, 2, 3), con una bahía por zona.
+// Del lado del portón queda libre. No es a escala: es para aprender piso + zona.
+const FONDO_X0 = -12.1, FONDO_X1 = 6.6, SEP_PISOS = 0.5;
+const COLOR_PISO = { subsuelo: '#5f7cff', pb: '#8fa2ff', 'piso 1': '#3b6bff', 'piso 2': '#aab8ff', 'piso 3': '#c3cdff' };
+const claveUbic = (piso, zona) => normal(piso) + '|' + normal(zona);
+const nombreBahia = (piso, zona) => [piso, zona ? 'zona ' + zona : 'general'].filter(Boolean).join(' · ');
+function armarFondo(ubicaciones) {
+  const bahias = ubicaciones.reduce((n, u) => n + u.zonas.length, 0);
+  const anchoBahia = Math.min(1.4, (FONDO_X1 - FONDO_X0 - SEP_PISOS * (ubicaciones.length - 1)) / Math.max(bahias, 1));
+  let x = FONDO_X0;
+  ubicaciones.forEach((u) => { estanteriaPiso(u.piso, u.zonas, x, anchoBahia); x += u.zonas.length * anchoBahia + SEP_PISOS; });
+}
+function estanteriaPiso(piso, zonas, x0, anchoBahia) {
+  const w = zonas.length * anchoBahia, x = x0 + w / 2;
+  const z = -FONDO / 2 + 1.25, d = 1.15, h = 3.4, niveles = 3;
+  const color = COLOR_PISO[normal(piso)] || '#8fa2ff';
+  for (let k = 0; k <= zonas.length; k++) for (const dz of [-1, 1]) caja(0.09, h, 0.09, 0, x0 + k * anchoBahia, 0, z + dz * d / 2, { material: matParante });
   for (let n = 0; n <= niveles; n++) {
     const y = 0.15 + n * (h - 0.3) / niveles;
     for (const dz of [-1, 1]) caja(w, 0.1, 0.06, 0, x, y, z + dz * d / 2, { material: matViga });
     if (n === niveles) break;
-    pallet(x - 0.6, y + 0.1, z, 1.05, d * 0.9); pallet(x + 0.6, y + 0.1, z, 1.05, d * 0.9);
-    for (let k = 0; k < 4; k++) {
-      if (Math.random() < 0.18) continue;
-      const cw = 0.42 + Math.random() * 0.12, ch = 0.32 + Math.random() * 0.34;
-      cajaCarton(cw, ch, d * 0.62, x - 0.9 + k * 0.6, y + 0.24, z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.15);
-      if (Math.random() < 0.35) cajaCarton(cw * 0.8, ch * 0.7, d * 0.5, x - 0.9 + k * 0.6, y + 0.24 + ch, z, (Math.random() - 0.5) * 0.3);
+    for (let b = 0; b < zonas.length; b++) {
+      const cx = x0 + (b + 0.5) * anchoBahia;
+      pallet(cx, y + 0.1, z, anchoBahia * 0.85, d * 0.9);
+      for (let k = 0; k < 2; k++) {
+        if (Math.random() < 0.2) continue;
+        const cw = anchoBahia * 0.36, ch = 0.32 + Math.random() * 0.34;
+        cajaCarton(cw, ch, d * 0.62, cx - anchoBahia * 0.2 + k * anchoBahia * 0.4, y + 0.24, z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.15);
+      }
     }
   }
-  solidos.push({ minX: x - w / 2 - 0.1, maxX: x + w / 2 + 0.1, minZ: z - d / 2 - 0.1, maxZ: z + d / 2 + 0.1 });
-  // Cartel colgante de la zona (blanco, texto negro, franja de su color).
-  const cartelZona = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.62), new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(512, 144, (g, W, H) => {
-    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H); g.fillStyle = color; g.fillRect(0, H - 22, W, 22);
-    g.fillStyle = '#191b1f'; g.font = '700 84px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('zona ' + String(zona).toLowerCase(), W / 2, 92);
+  solidos.push({ minX: x0 - 0.1, maxX: x0 + w + 0.1, minZ: z - d / 2 - 0.1, maxZ: z + d / 2 + 0.1 });
+  // Cartel colgante del piso.
+  const cartelPisoRack = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 2.6), 0.6), new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(512, 120, (g, W, H) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H); g.fillStyle = color; g.fillRect(0, H - 20, W, 20);
+    g.fillStyle = '#191b1f'; g.font = '700 74px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(String(piso).toLowerCase() + '.', W / 2, 80);
   }) }));
-  cartelZona.position.set(x, h + 0.75, z + 0.2); scene.add(cartelZona);
-  for (const dx of [-0.9, 0.9]) caja(0.015, 1.0, 0.015, 0x15171b, x + dx, h + 1.05, z + 0.2, { sombra: false });
-  // Número de zona pintado en el piso, para aprender la ubicación.
-  calco(1.5, 1.5, x, z + d / 2 + 1.35, lienzo(256, 256, (g, W, H) => {
-    g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 10; g.strokeRect(12, 12, W - 24, H - 24);
-    g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '700 120px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(String(zona).toUpperCase(), W / 2, H / 2 + 6);
-  }));
-  const frente = new THREE.Vector3(x, 0, z + d / 2 + 1.0);
-  estanterias[normal(zona)] = { zona, color, x, z, frente };
+  cartelPisoRack.position.set(x, h + 0.75, z + 0.2); scene.add(cartelPisoRack);
+  for (const dx of [-0.6, 0.6]) caja(0.015, 1.0, 0.015, 0x15171b, x + dx * Math.min(w, 2.6) / 1.3, h + 1.05, z + 0.2, { sombra: false });
+  // Una bahía por zona: la zona pintada en el piso, delante de su lugar.
+  zonas.forEach((zona, b) => {
+    const cx = x0 + (b + 0.5) * anchoBahia;
+    calco(anchoBahia * 0.9, 1.2, cx, z + d / 2 + 1.15, lienzo(160, 200, (g, W, H) => {
+      g.strokeStyle = color; g.lineWidth = 8; g.strokeRect(6, 6, W - 12, H - 12);
+      g.fillStyle = 'rgba(255,255,255,.9)'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.font = `700 ${zona ? (zona.length > 3 ? 40 : 84) : 34}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+      g.fillText(zona ? zona.toUpperCase() : 'GRAL', W / 2, H / 2 + 4);
+    }));
+    const frente = new THREE.Vector3(cx, 0, z + d / 2 + 1.0);
+    estanterias[claveUbic(piso, zona)] = { zona, piso, nombre: nombreBahia(piso, zona), color, x: cx, z, frente };
+  });
 }
+// La estantería más cercana (las bahías están pegadas: gana la más próxima).
+function estCerca(pos, radio = 1.8) {
+  let mejor = null, dist = radio;
+  Object.values(estanterias).forEach((e) => { const dd = pos.distanceTo(e.frente); if (dd < dist) { dist = dd; mejor = e; } });
+  return mejor;
+}
+// Dónde está algo en la sala: bahía de piso + zona, o sector de su línea.
+function lugarDe(o) {
+  return estanterias[claveUbic(o.piso, o.zona)] || estanterias[normal(o.zona)]
+    || Object.values(estanterias).find((e) => !e.sector && o.zona && normal(e.zona) === normal(o.zona)) || null;
+}
+const mismoLugar = (est, o) => est === lugarDe(o);
 
 // ---------- Sectores por línea de hotic: estanterías bajas a lo largo del frente, cada una con su color ----------
 // Autopartes vive en los racks azules del fondo (por zona); el resto de las líneas tiene su sector acá.
@@ -615,8 +648,138 @@ function estanteriaSector(linea, i, total) {
     g.fillStyle = color + '40'; g.fillRect(0, 0, W, H); g.strokeStyle = color; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
   }));
   const frente = new THREE.Vector3(x, 0, z - d / 2 - 0.9);
-  estanterias[normal(linea)] = { zona: linea, color, x, z, frente, sector: true };
+  estanterias[normal(linea)] = { zona: linea, piso: '', nombre: 'sector ' + info.nombre, color, x, z, frente, sector: true };
 }
+
+// ---------- Sala sexhotic.: otra sala (lejos de la principal), violeta y rosa, onda boutique ----------
+// Se entra por una puerta en la pared derecha; los que no son SEX_ADMIN necesitan la clave (Config SEX_CLAVE).
+const SEX = { x: 0, z: 60, ancho: 16, fondo: 12 };
+const PUERTA_SEX = new THREE.Vector3(ANCHO / 2 - 0.9, 0, 1.8);          // frente de la puerta, en la sala principal
+const SALIDA_SEX = new THREE.Vector3(SEX.x - SEX.ancho / 2 + 1.0, 0, SEX.z + 3.2); // frente de la salida, adentro
+const PC_SEX = new THREE.Vector3(SEX.x - 4.6, 0, SEX.z - 0.6);
+const MESA_SEX = new THREE.Vector3(SEX.x + 3.6, 0, SEX.z + 0.8);
+let botSex = null;
+function armarSalaSex() {
+  const V = '#9b5cff', ROSA = '#ff4fb8';
+  // Piso negro brillante con grilla rosa.
+  const piso = new THREE.Mesh(new THREE.PlaneGeometry(SEX.ancho, SEX.fondo), new THREE.MeshStandardMaterial({ roughness: 0.22, metalness: 0.35,
+    map: lienzo(512, 384, (g, W, H) => { g.fillStyle = '#120a1a'; g.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(255,79,184,.18)'; g.lineWidth = 2;
+      for (let x = 0; x <= W; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } for (let y = 0; y <= H; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } }) }));
+  piso.rotation.x = -Math.PI / 2; piso.position.set(SEX.x, 0.001, SEX.z); piso.receiveShadow = true; scene.add(piso);
+  const matMuro = new THREE.MeshStandardMaterial({ color: col(0x2a1038), roughness: 0.85 });
+  caja(SEX.ancho, 5, 0.3, 0, SEX.x, 0, SEX.z - SEX.fondo / 2, { material: matMuro, sombra: false });
+  caja(0.3, 5, SEX.fondo, 0, SEX.x - SEX.ancho / 2, 0, SEX.z, { material: matMuro, sombra: false });
+  caja(0.3, 5, SEX.fondo, 0, SEX.x + SEX.ancho / 2, 0, SEX.z, { material: matMuro, sombra: false });
+  // Tiras LED neón en el zócalo y arriba.
+  const led = (color) => neon(new THREE.MeshBasicMaterial({ color: col(color), toneMapped: false }), 1.8);
+  for (const [y, color] of [[0.08, ROSA], [4.6, V]]) {
+    caja(SEX.ancho - 0.4, 0.05, 0.05, 0, SEX.x, y, SEX.z - SEX.fondo / 2 + 0.18, { material: led(color), sombra: false });
+    for (const sx of [-1, 1]) caja(0.05, 0.05, SEX.fondo - 0.4, 0, SEX.x + sx * (SEX.ancho / 2 - 0.18), y, SEX.z, { material: led(color), sombra: false });
+  }
+  // Cartel de neón.
+  const cartelSex = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.6), neon(new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false,
+    map: texturaTexto('sexhotic.', '#ff9bd8', { ancho: 1024, alto: 272, fuente: 'italic 700 200px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo: null }) }), 1.9));
+  cartelSex.position.set(SEX.x - 1.5, 3.5, SEX.z - SEX.fondo / 2 + 0.17); scene.add(cartelSex);
+  // Telón de terciopelo.
+  const telon = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 4.6), new THREE.MeshStandardMaterial({ roughness: 0.95, map: lienzo(256, 256, (g, W, H) => {
+    for (let x = 0; x < W; x += 16) { const gr = g.createLinearGradient(x, 0, x + 16, 0); gr.addColorStop(0, '#3a0b2c'); gr.addColorStop(0.5, '#7a1650'); gr.addColorStop(1, '#3a0b2c'); g.fillStyle = gr; g.fillRect(x, 0, 16, H); } }) }));
+  telon.position.set(SEX.x + 5.6, 2.3, SEX.z - SEX.fondo / 2 + 0.17); scene.add(telon);
+  // Vitrinas negras con cajas discretas (cinta violeta): la del medio es donde se busca.
+  const matVitrina = new THREE.MeshStandardMaterial({ color: col(0x0d0d12), roughness: 0.2, metalness: 0.6 });
+  const matCajaNegra = new THREE.MeshStandardMaterial({ color: col(0x1a1420), roughness: 0.6 });
+  const matCintaV = led(V);
+  [-4.6, -1.5, 1.6].forEach((vx, i) => {
+    const x = SEX.x + vx, z = SEX.z - SEX.fondo / 2 + 0.9;
+    caja(2.6, 0.1, 0.9, 0, x, 0, z, { material: matVitrina });
+    for (const y of [0.9, 1.7, 2.5]) {
+      caja(2.6, 0.05, 0.9, 0, x, y, z, { material: matVitrina });
+      caja(2.6, 0.02, 0.02, 0, x, y + 0.04, z + 0.44, { material: led(i === 1 ? ROSA : V), sombra: false });
+      for (let k = 0; k < 4; k++) {
+        if (Math.random() < 0.25) continue;
+        const cx = x - 0.95 + k * 0.63;
+        caja(0.42, 0.3, 0.42, 0, cx, y + 0.07, z, { material: matCajaNegra });
+        caja(0.43, 0.03, 0.08, 0, cx, y + 0.35, z, { material: matCintaV, sombra: false });
+      }
+    }
+    for (const dx of [-1.3, 1.3]) caja(0.06, 3.0, 0.9, 0, x + dx, 0, z, { material: matVitrina });
+    solidos.push({ minX: x - 1.35, maxX: x + 1.35, minZ: z - 0.5, maxZ: z + 0.5 });
+    if (i === 1) estanterias[normal('SEX')] = { zona: 'SEX', piso: '', nombre: 'vitrina sexhotic', color: ROSA, x, z, frente: new THREE.Vector3(x, 0, z + 1.4), sector: true };
+  });
+  // PC de ventas sexhotic.
+  caja(1.6, 0.06, 0.8, 0x1a1420, PC_SEX.x, 0.9, PC_SEX.z, { rough: 0.3 });
+  for (const dx of [-0.75, 0.75]) caja(0.06, 0.9, 0.75, 0x2a1038, PC_SEX.x + dx, 0, PC_SEX.z);
+  solidos.push({ minX: PC_SEX.x - 0.85, maxX: PC_SEX.x + 0.85, minZ: PC_SEX.z - 0.45, maxZ: PC_SEX.z + 0.45 });
+  const monitor = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.56), neon(new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(512, 300, (g, W, H) => {
+    g.fillStyle = '#1a0f22'; g.fillRect(0, 0, W, H); g.fillStyle = ROSA; g.fillRect(0, 0, W, 56);
+    g.fillStyle = '#fff'; g.font = '700 30px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('ventas sexhotic.', 18, 38);
+    g.font = '500 24px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('Tocá E: venta discreta', 18, 120); g.fillText('🕶️ caja neutra siempre', 18, 160);
+  }) }), 1.2));
+  monitor.position.set(PC_SEX.x, 1.5, PC_SEX.z - 0.18); scene.add(monitor);
+  caja(1.0, 0.6, 0.04, 0x0d0d12, PC_SEX.x, 1.2, PC_SEX.z - 0.22);
+  // Mesa de embalaje discreto.
+  caja(2.6, 0.08, 1.2, 0x1a1420, MESA_SEX.x, ALTO_MESA - 0.08, MESA_SEX.z, { rough: 0.3, metal: 0.4 });
+  caja(2.6, 0.03, 0.03, 0, MESA_SEX.x, ALTO_MESA - 0.1, MESA_SEX.z + 0.6, { material: led(ROSA), sombra: false });
+  for (const [dx, dz] of [[-1.2, -0.5], [1.2, -0.5], [-1.2, 0.5], [1.2, 0.5]]) caja(0.08, ALTO_MESA - 0.08, 0.08, 0x2a1038, MESA_SEX.x + dx, 0, MESA_SEX.z + dz, { metal: 0.6 });
+  solidos.push({ minX: MESA_SEX.x - 1.35, maxX: MESA_SEX.x + 1.35, minZ: MESA_SEX.z - 0.65, maxZ: MESA_SEX.z + 0.65 });
+  calco(3.2, 0.7, MESA_SEX.x, MESA_SEX.z + 1.5, lienzo(512, 112, (g, W, H) => {
+    g.fillStyle = 'rgba(255,79,184,.85)'; g.beginPath(); g.roundRect(4, 4, W - 8, H - 8, 20); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 52px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('embalaje discreto', W / 2, H / 2 + 3);
+  }));
+  // Salida (portal) a la izquierda.
+  const marco = led(V);
+  caja(0.12, 3.0, 0.12, 0, SEX.x - SEX.ancho / 2 + 0.2, 0, SEX.z + 2.4, { material: marco, sombra: false });
+  caja(0.12, 3.0, 0.12, 0, SEX.x - SEX.ancho / 2 + 0.2, 0, SEX.z + 4.0, { material: marco, sombra: false });
+  caja(0.12, 0.12, 1.7, 0, SEX.x - SEX.ancho / 2 + 0.2, 3.0, SEX.z + 3.2, { material: marco, sombra: false });
+  const salida = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('← depósito', '#ffffff', { fondo: V }), depthWrite: false, toneMapped: false }));
+  salida.scale.set(1.5, 0.38, 1); salida.position.set(SALIDA_SEX.x, 3.5, SALIDA_SEX.z); scene.add(salida);
+  // Luces de ambiente (solo dos, para no cargar la PC).
+  const l1 = new THREE.PointLight(col(0xff4fb8), 1.6, 14, 1.6); l1.position.set(SEX.x - 3, 3.6, SEX.z); scene.add(l1);
+  const l2 = new THREE.PointLight(col(0x9b5cff), 1.6, 14, 1.6); l2.position.set(SEX.x + 4, 3.6, SEX.z + 2); scene.add(l2);
+  // Puerta en la sala principal: marco neón, cortina y cartel con candado.
+  const px = ANCHO / 2 - 0.16;
+  for (const dz of [-0.85, 0.85]) caja(0.1, 2.8, 0.1, 0, px, 0, PUERTA_SEX.z + dz, { material: marco, sombra: false });
+  caja(0.1, 0.1, 1.8, 0, px, 2.8, PUERTA_SEX.z, { material: marco, sombra: false });
+  const cortina = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.75), telon.material);
+  cortina.rotation.y = -Math.PI / 2; cortina.position.set(px - 0.02, 1.38, PUERTA_SEX.z); scene.add(cortina);
+  const cartelPuerta = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('sexhotic. 🔒', '#ffffff', { fondo: '#9b5cff' }), depthWrite: false, toneMapped: false }));
+  cartelPuerta.scale.set(1.7, 0.43, 1); cartelPuerta.position.set(px - 0.4, 3.3, PUERTA_SEX.z); scene.add(cartelPuerta);
+}
+
+// Pasar de una sala a la otra con un fundido corto.
+function irASala(destino) {
+  const velo = $('velo'); velo.classList.add('on'); Sonido.play('porton');
+  setTimeout(() => {
+    jugador.grupo.position.copy(destino); destinoClick = null;
+    camara.position.set(destino.x + Math.sin(yaw) * 11 * zoom, 8.5 * zoom, destino.z + Math.cos(yaw) * 11 * zoom);
+    velo.classList.remove('on');
+  }, 350);
+}
+function entrarSex() {
+  if (ini.salaSex && ini.salaSex.habilitada) {
+    irASala(new THREE.Vector3(SALIDA_SEX.x + 1.2, 0, SALIDA_SEX.z));
+    setTimeout(() => decir(botSex, Hottie.saludo(ini.jugador.nombre, 'sex'), 5), 700);
+    return;
+  }
+  // Pide la clave (la valida el servidor; acá no hay ninguna clave escrita).
+  const v = $('venta');
+  v.innerHTML = `<header style="background:#9b5cff;color:#fff"><div><b>sexhotic. 🔒</b><br><small style="color:#f3e8ff">Sala con clave</small></div></header>
+    <form class="cuerpo" id="form-clave"><label>Clave de la sala<br><input id="clave-sex" type="password" autocomplete="off" style="width:100%;padding:9px 10px;border:1px solid #c9b6f0;border-radius:6px;font:inherit"></label>
+    <div id="clave-msj" style="color:#c0262d;font-size:13px"></div>
+    <div style="display:flex;gap:8px"><button class="btn" type="submit" style="background:#9b5cff">Entrar</button><button class="btn sec" type="button" id="clave-cancelar">Cancelar</button></div></form>`;
+  v.hidden = false; dialogoAbierto = true;
+  setTimeout(() => $('clave-sex').focus(), 30);
+  $('clave-cancelar').onclick = () => { v.hidden = true; dialogoAbierto = false; };
+  $('form-clave').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const r = await servidor('botSexEntrar', $('clave-sex').value);
+      if (!r.ok) { $('clave-msj').textContent = r.mensaje; Sonido.play('error'); return; }
+      ini.salaSex.habilitada = true; v.hidden = true; dialogoAbierto = false; Sonido.play('ok');
+      entrarSex();
+    } catch (err) { $('clave-msj').textContent = err.message || String(err); }
+  };
+}
+const enSalaSex = () => jugador && jugador.grupo.position.z > SEX.z - 20;
 
 // ---------- Terminal de hottie ----------
 const TERMINAL = new THREE.Vector3(-3.4, 0, 1.2); // hottie, en el centro: todos pasan por ahí
@@ -706,11 +869,13 @@ function aplastar(objeto) { // pequeño rebote al cambiar algo de la caja
   animar(0.3, (k) => { objeto.scale.y = y0 * (1 - Math.sin(k * Math.PI) * 0.12); });
 }
 function animarArmado(clave) {
-  const carton = mat('carton0', () => new THREE.MeshStandardMaterial({ map: texturasCaja[0], roughness: 0.9 }));
+  // Sexhotic: caja neutra, kraft lisa sin nada impreso.
+  const carton = pedido && pedido.sex ? mat('neutra', () => new THREE.MeshStandardMaterial({ color: col(0xb98a55), roughness: 0.9 }))
+    : mat('carton0', () => new THREE.MeshStandardMaterial({ map: texturasCaja[0], roughness: 0.9 }));
   if (clave === 'caja') {
     limpiarArmado();
     const lado = { S: 0.38, M: 0.52, L: 0.68 }[tamanoCaja(pedido.items)], alto = lado * 0.7;
-    const grupo = new THREE.Group(); grupo.position.copy(MESA_ARMADO); scene.add(grupo);
+    const grupo = new THREE.Group(); grupo.position.copy(pedido.sex ? new THREE.Vector3(MESA_SEX.x, ALTO_MESA, MESA_SEX.z) : MESA_ARMADO); scene.add(grupo);
     // Abierta: la cara de arriba muestra el interior oscuro.
     const cuerpo = new THREE.Mesh(GEO_CAJA, [carton, carton, matInterior, carton, carton, carton]);
     cuerpo.scale.set(lado, alto, lado); cuerpo.position.y = alto / 2; cuerpo.castShadow = true; grupo.add(cuerpo);
@@ -722,6 +887,7 @@ function animarArmado(clave) {
   }
   const a = armadoVisual;
   if (!a) return;
+  if (clave === 'discreto') { aplastar(a.cuerpo); Sonido.play('clic'); return; }
   if (clave === 'proteger') {
     for (let i = 0; i < 5; i++) {
       const bollo = new THREE.Mesh(new THREE.IcosahedronGeometry(a.lado * 0.17, 0), matPapel);
@@ -907,7 +1073,7 @@ function cartelPiso(texto, x, z) {
 cartelPiso('1 · pedidos', PC.x, PC.z + 1.7);
 cartelPiso('2 · buscar', -5.2, -5.2);
 // Autopartes: los racks azules del fondo.
-calco(4.2, 0.8, 2.6, -6.4, lienzo(512, 98, (g, W, H) => {
+calco(4.2, 0.8, 2.6, -5.7, lienzo(512, 98, (g, W, H) => {
   g.fillStyle = 'rgba(59,107,255,.85)'; g.beginPath(); g.roundRect(4, 4, W - 8, H - 8, 18); g.fill();
   g.fillStyle = '#fff'; g.font = '700 56px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('autopartes.', W / 2, H / 2 + 3);
 }));
@@ -1192,7 +1358,9 @@ function aPantalla(pos, alto) {
 
 function chocaria(x, z) {
   const r = 0.35;
-  if (x < -ANCHO / 2 + 0.6 || x > ANCHO / 2 - 0.6 || z < -FONDO / 2 + 0.6 || z > FONDO / 2 - 0.6) return true;
+  if (z > SEX.z - 20) { // adentro de la sala sexhotic.
+    if (x < SEX.x - SEX.ancho / 2 + 0.6 || x > SEX.x + SEX.ancho / 2 - 0.6 || z < SEX.z - SEX.fondo / 2 + 0.6 || z > SEX.z + SEX.fondo / 2 - 0.6) return true;
+  } else if (x < -ANCHO / 2 + 0.6 || x > ANCHO / 2 - 0.6 || z < -FONDO / 2 + 0.6 || z > FONDO / 2 - 0.6) return true;
   return solidos.some((s) => x + r > s.minX && x - r < s.maxX && z + r > s.minZ && z - r < s.maxZ);
 }
 
@@ -1293,7 +1461,7 @@ function ponerMision(m) {
   if (!m) { if (typeof pintarPedido === 'function' && jugador) pintarPedido(); else { marcar(null); textoMision('Andá a hablar con hottie a la terminal.'); } return; }
   if (m.tipo === 'buscar') {
     marcar(m.est.frente, m.est.color);
-    textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">${m.est.sector ? 'Sector ' + esc(Hottie.linea(m.est.zona).nombre) : 'Zona ' + esc(m.ficha.zona)}</b>${m.ficha.piso && !m.est.sector ? ' · piso ' + esc(m.ficha.piso) : ''}`);
+    textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">${esc(m.est.nombre)}</b>`);
   } else if (m.tipo === 'despachar') {
     marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
     textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a <b>Despacho</b>`);
@@ -1309,13 +1477,14 @@ function ponerMision(m) {
 let escribiendo = null;
 function botDice(texto) {
   const el = $('texto-bot');
+  const quien = enSalaSex() && botSex ? botSex : bot;
   clearInterval(escribiendo);
   if (reduce) { el.textContent = texto; return; }
   let i = 0; el.textContent = '';
   escribiendo = setInterval(() => { el.textContent = texto.slice(0, ++i); if (i >= texto.length) clearInterval(escribiendo); }, 16);
-  decir(bot, texto.length > 70 ? texto.slice(0, 68) + '…' : texto, 4);
+  decir(quien, texto.length > 70 ? texto.slice(0, 68) + '…' : texto, 4);
 }
-function ctxCharla() { return { nombre: ini.jugador.nombre, jugador: ini.jugador, ranking: ini.ranking, pedido: pedido && pedido.fase === 'buscar' ? pedido.items[pedido.idx] : null }; }
+function ctxCharla() { return { sala: enSalaSex() ? 'sex' : '', nombre: ini.jugador.nombre, jugador: ini.jugador, ranking: ini.ranking, pedido: pedido && pedido.fase === 'buscar' ? pedido.items[pedido.idx] : null }; }
 function chips(lista) {
   $('chips').innerHTML = '';
   (lista || []).forEach((t) => {
@@ -1335,15 +1504,19 @@ function abrirDialogo() {
   dialogoAbierto = true; $('dialogo').hidden = false; $('accion').hidden = true;
   opciones([]);
   const apodo = Hottie.apodo(ini.jugador.nombre);
+  const sex = enSalaSex();
   botDice(mision ? pick([`¿Y, ${apodo}? ¿Encontraste ${mision.ficha.descripcion}? Seguí la luz 😉`, `Te marqué la zona, ${apodo}. Si querés buscamos otra cosa.`])
-    : Hottie.saludo(ini.jugador.nombre));
-  chips(Hottie.repaso.proxima(ini.jugador.nombre) ? ['🧠 Pregunta rápida', ...Hottie.chipsInicio] : Hottie.chipsInicio);
+    : Hottie.saludo(ini.jugador.nombre, sex ? 'sex' : ''));
+  const base = sex ? Hottie.chipsSex : Hottie.chipsInicio;
+  chips(Hottie.repaso.proxima(ini.jugador.nombre, opcionesRepaso()) ? ['🧠 Pregunta rápida', ...base] : base);
   setTimeout(() => $('pregunta').focus(), 50);
 }
 
 // ---------- Preguntas rápidas (repaso espaciado) ----------
+// Las preguntas de Sexhotic aparecen solo para quien tiene la sala habilitada.
+const opcionesRepaso = () => ({ sex: !!(ini.salaSex && ini.salaSex.habilitada) });
 function hacerPregunta() {
-  const q = Hottie.repaso.proxima(ini.jugador.nombre);
+  const q = Hottie.repaso.proxima(ini.jugador.nombre, opcionesRepaso());
   if (!q) { botDice('¡Ya repasaste todo lo que tocaba hoy! 🧠 Mañana te traigo más.'); chips(Hottie.chipsInicio); return; }
   botDice('🧠 ' + q.q);
   chips([]);
@@ -1360,13 +1533,13 @@ function hacerPregunta() {
 }
 // Cada tanto hottie invita a repasar, si hay preguntas pendientes y no estás en medio de algo.
 setInterval(() => {
-  if (!ini || dialogoAbierto || menu || document.hidden || !Hottie.repaso.proxima(ini.jugador.nombre)) return;
+  if (!ini || dialogoAbierto || menu || document.hidden || !Hottie.repaso.proxima(ini.jugador.nombre, opcionesRepaso())) return;
   decir(bot, pick(['¿Una pregunta rápida? Vení a la terminal 🧠', '🧠 Tengo una pregunta para vos, vení.', 'Repaso de 10 segundos, ¿te animás? 🧠']), 5);
 }, 240000);
 function cerrarDialogo() { dialogoAbierto = false; $('dialogo').hidden = true; clearInterval(escribiendo); }
 
 function lineaFicha(f) {
-  const lugar = f.zona ? `Zona ${esc(f.zona)}${f.piso ? ' · piso ' + esc(f.piso) : ''}` : 'Sin ubicación';
+  const lugar = f.zona || f.piso ? esc(nombreBahia(f.piso, f.zona)) : 'Sin ubicación';
   return `${esc(f.descripcion)}<small>${esc(f.marca || 's/marca')} · ${f.stock} u · ${esc(f.deposito || '')} · ${lugar}</small>`;
 }
 
@@ -1385,15 +1558,15 @@ function elegirFicha(f) {
     setTimeout(cerrarDialogo, reduce ? 600 : 2600);
     return;
   }
-  if (!f.zona) {
+  if (!f.zona && !f.piso) {
     if (ini.puedeUbicar) {
       botDice(`Uh, ${f.descripcion} (${f.stock} u., ${f.deposito || 'depósito'}) anda perdido, no tiene ubicación 😬. ¿Me hacés el favor? Agarralo y llevalo a la estantería donde lo vas a dejar. Te doy +${ini.xpPorAccion.ubicado} XP 😉`);
       ponerMision({ tipo: 'ubicar', ficha: f });
     } else botDice(`${f.descripcion} no tiene ubicación cargada. Avisale a Gabriel o a Franco para que lo ubiquen.`);
     return;
   }
-  const est = estanterias[normal(f.zona)];
-  if (!est) { botDice(`${f.descripcion}: está en zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''} de ${f.deposito || 'el depósito'}. Esa zona no está en esta sala.`); return; }
+  const est = lugarDe(f);
+  if (!est) { botDice(`${f.descripcion}: está en ${nombreBahia(f.piso, f.zona)} de ${f.deposito || 'el depósito'}. Ese lugar no está en esta sala.`); return; }
   botDice(Hottie.encontrado(f, ctxCharla()) + ' ' + pick(['Te marco el camino 💡', 'Seguí la luz 😉', 'Andá que te espero 💚', 'Si lo encontrás son +' + ini.xpPorAccion.encontrado + ' XP 🎯']));
   ponerMision({ tipo: 'buscar', ficha: f, est });
   setTimeout(cerrarDialogo, reduce ? 600 : 2200);
@@ -1437,13 +1610,16 @@ let menu = null; // menú abierto junto a una estantería o despacho: { pos }
 function accionCercana() {
   const pos = jugador.grupo.position;
   if (pos.distanceTo(bot.grupo.position) < 3.0) return { texto: 'Hablar con hottie', fn: abrirDialogo };
+  if (botSex && pos.distanceTo(botSex.grupo.position) < 3.0) return { texto: 'Hablar con hottie 😏', fn: abrirDialogo };
+  if (ini.salaSex && pos.distanceTo(PUERTA_SEX) < 1.7) return { texto: ini.salaSex.habilitada ? 'Entrar a sexhotic.' : 'Entrar a sexhotic. 🔒', fn: entrarSex };
+  if (ini.salaSex && pos.distanceTo(SALIDA_SEX) < 1.7) return { texto: 'Volver al depósito', fn: () => irASala(new THREE.Vector3(PUERTA_SEX.x - 1.0, 0, PUERTA_SEX.z)) };
   // Con papeles en la mano, reciclar va primero (el tacho está cerca de la PC).
   if (enMano && pos.distanceTo(RECICLAJE) < 1.9) return { texto: `♻ Reciclar (${enMano})`, fn: reciclar };
   const pa = accionPedido(pos);
   if (desafio && !desafio.ganador) {
-    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
+    const est = estCerca(pos);
     if (est && !(mision && mision.tipo === 'buscar' && mision.est === est) && !(mision && mision.tipo === 'ubicar')) {
-      const da = { texto: `⚡ Desafío: está en la zona ${est.zona}`, fn: () => responderDesafio(est) };
+      const da = { texto: `⚡ Desafío: está acá (${est.nombre})`, fn: () => responderDesafio(est) };
       // Con pedido en curso en el mismo rack, se elige qué hacer.
       if (pa) return { texto: 'Pedido o desafío', fn: () => opcionesFlotantes('¿Qué hacés acá?', [{ texto: '📦 ' + pa.texto, fn: pa.fn }, { texto: da.texto, fn: da.fn }]) };
       return da;
@@ -1452,8 +1628,8 @@ function accionCercana() {
   if (mision && mision.tipo === 'buscar' && pos.distanceTo(mision.est.frente) < 1.8) return { texto: 'Buscar en la estantería', fn: buscarEnEstanteria };
   if (pa) return pa;
   if (mision && mision.tipo === 'ubicar') {
-    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
-    if (est) return { texto: `Dejarlo en Zona ${est.zona}`, fn: () => ubicarEn(est) };
+    const est = estCerca(pos);
+    if (est && !est.sector) return { texto: `Dejarlo en ${est.nombre}`, fn: () => ubicarEn(est) };
   }
   const basura = basuras.find((b) => pos.distanceTo(b.mesh.position) < 1.3);
   if (basura && enMano < 3) return { texto: 'Juntar ' + basura.tipo, fn: () => juntarBasura(basura) };
@@ -1487,17 +1663,16 @@ function buscarEnEstanteria() {
 
 async function ubicarEn(est) {
   const f = mision.ficha;
-  opcionesUbic = opcionesUbic || await servidor('botOpcionesUbicacion').catch(() => ({ pisos: [] }));
-  opcionesFlotantes(`¿En qué piso de Zona ${est.zona} dejás ${f.descripcion}?`, opcionesUbic.pisos.map((piso) => ({
-    texto: 'Piso ' + piso,
-    fn: async () => {
+  opcionesFlotantes(`¿Dejás ${f.descripcion} en ${est.nombre}?`, [
+    { texto: '📦 Sí, lo dejo acá', fn: async () => {
       try {
-        const r = await servidor('botCorregirUbicacion', f.id, f.piso || '', f.zona || '', piso, est.zona);
-        if (r.ok) { decir(bot, `¡Listo! Quedó en Zona ${est.zona}, piso ${piso}. Gracias 💚`, 3); ponerMision(null); ganarXp(r.xp); }
+        const r = await servidor('botCorregirUbicacion', f.id, f.piso || '', f.zona || '', est.piso || '', est.zona || '');
+        if (r.ok) { decir(bot, `¡Listo! Quedó en ${est.nombre}. Gracias 💙`, 3); ponerMision(null); ganarXp(r.xp); }
         else decir(bot, r.mensaje, 4);
       } catch (e) { decir(bot, e.message || String(e), 4); }
-    },
-  })));
+    } },
+    { texto: 'Mejor en otro lado', sec: true, fn: () => {} },
+  ]);
 }
 
 function opcionesFlotantes(titulo, botones, imagen) {
@@ -1527,7 +1702,11 @@ const PASOS_ARMADO = [
   { clave: 'cinta', texto: '🧷 Cerrar con cinta' },
   { clave: 'etiqueta', texto: '🏷️ Pegar etiqueta' },
 ];
+// Sexhotic suma un paso: revisar que el paquete sea discreto antes de cerrarlo.
+const PASO_DISCRETO = { clave: 'discreto', texto: '🕶️ Revisar discreción' };
+const pasosArmado = () => (pedido && pedido.sex ? [PASOS_ARMADO[0], PASOS_ARMADO[1], PASO_DISCRETO, PASOS_ARMADO[2], PASOS_ARMADO[3]] : PASOS_ARMADO);
 const LECCION_ARMADO = {
+  discreto: 'Antes de cerrar, la discreción: caja neutra, sin logos ni nombre del producto 🕶️',
   caja: 'Primero va la caja: sin caja no hay dónde proteger nada 📦',
   proteger: 'Antes de cerrar, protegé la pieza con papel. ¡Si no, se rompe en el viaje! 🧻',
   cinta: 'La cinta va después de proteger y antes de la etiqueta 🧷',
@@ -1566,7 +1745,8 @@ function pintarPedido() {
     ['Leer la venta en la PC', true],
     ...pedido.items.map((it, i) => [`Buscar ${dato('cantidad', it.cantidad + '×')} <b>${esc(it.descripcion)}</b> · etiqueta <b>${dato('etiqueta', esc(it.etiqueta))}</b>`, i < pedido.idx || pedido.fase !== 'buscar']),
     [`Imprimir la etiqueta de la venta ${pedido.etiquetaImpresa ? '🖨️' : ''}`, pedido.etiquetaImpresa],
-    [pedido.items.length > 1 ? `Embalar el pack (${pedido.items.length} productos, una caja)` : 'Embalar en la mesa de armado', pedido.fase === 'canasto'],
+    [pedido.sex ? 'Embalaje discreto en la mesa sexhotic. 🕶️' : pedido.items.length > 1 ? `Embalar el pack (${pedido.items.length} productos, una caja)` : 'Embalar en la mesa de armado', pedido.fase === 'canasto'],
+    ...(pedido.sex ? [['Salir al depósito y llevarlo al canasto', pedido.fase === 'canasto' && !enSalaSex()]] : []),
     [`Dejar en el canasto <b>${dato('envio', esc(pedido.envio))}</b>`, false],
   ];
   const actual = pasos.findIndex((p) => !p[1]);
@@ -1574,9 +1754,9 @@ function pintarPedido() {
   textoMision(`<span style="color:var(--muted)">Venta ${esc(pedido.venta || pedido.id)} · ${esc(pedido.dificultad ? pedido.dificultad.nombre : '')} · ${pedido.errores ? pedido.errores + ' error(es)' : 'sin errores'}</span><br>` +
     `⏱ Corte: <span class="reloj-corte ${quedan < 60000 ? 'urgente' : ''}">${quedan > 0 ? mmss(quedan) : 'DEMORADA'}</span><br>` +
     pasos.map((p, i) => `${p[1] ? '✅' : i === actual ? '▶️' : '⬜'} ${p[0]}`).join('<br>'));
-  if (pedido.fase === 'armar') marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
+  if (pedido.fase === 'armar') marcar(pedido.sex ? new THREE.Vector3(MESA_SEX.x, 0, MESA_SEX.z + 1.6) : new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), pedido.sex ? '#ff4fb8' : '#ffffff');
   else if (pedido.fase === 'canasto') marcar(CANASTOS[pedido.envio].frente, CANASTOS[pedido.envio].color);
-  else if (pedido.ayuda) marcar(estanterias[normal(item.zona)].frente, '#8fa2ff'); // solo si le preguntó a hottie
+  else if (pedido.ayuda && lugarDe(item)) marcar(lugarDe(item).frente, '#8fa2ff'); // solo si le preguntó a hottie
   else marcar(null);
 }
 
@@ -1658,11 +1838,11 @@ function responderMensaje(i) {
   mostrarVenta();
 }
 
-async function verPC() {
+async function verPC(modo) {
   if (pedido) { mostrarVenta(); return; }
   dibujarPC(null, 'Buscando venta…');
   try {
-    const p = await servidor('botSalaNuevoPedido', ini.zonas, ini.sectores || []);
+    const p = await servidor('botSalaNuevoPedido', ini.zonas, ini.sectores || [], modo || '');
     pedido = Object.assign(p, { idx: 0, fase: 'buscar', errores: 0, pasoArmado: 0, ayuda: false, log: {}, lecciones: [], etiquetaImpresa: false, mensajeRespondido: null });
     if (!pedido.corte) pedido.corte = Date.now() + 8 * 60000;
     Sonido.play('mensaje');
@@ -1673,13 +1853,15 @@ async function verPC() {
 }
 
 function accionPedido(pos) {
-  if (pos.distanceTo(PC) < 1.9) return { texto: pedido ? 'Ver mi pedido en la PC' : 'Ver pedidos en la PC', fn: verPC };
+  if (pos.distanceTo(PC) < 1.9) return { texto: pedido ? 'Ver mi venta en la PC' : 'Ver ventas en la PC', fn: () => verPC('') };
+  if (ini.salaSex && pos.distanceTo(PC_SEX) < 1.9) return { texto: pedido ? 'Ver mi venta en la PC' : 'Ver ventas sexhotic.', fn: () => verPC('sex') };
   if (!pedido) return null;
   if (pedido.fase === 'buscar') {
-    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
+    const est = estCerca(pos);
     if (est) return { texto: 'Buscar el producto del pedido acá', fn: () => buscarParaPedido(est) };
   }
-  if (pedido.fase === 'armar' && pos.distanceTo(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.4)) < 2.2) return { texto: 'Embalar el pedido', fn: armarPedido };
+  const mesa = pedido.sex ? new THREE.Vector3(MESA_SEX.x, 0, MESA_SEX.z + 1.4) : new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.4);
+  if (pedido.fase === 'armar' && pos.distanceTo(mesa) < 2.2) return { texto: pedido.sex ? 'Embalaje discreto 🕶️' : 'Embalar el pedido', fn: armarPedido };
   if (pedido.fase === 'canasto') {
     const c = Object.values(CANASTOS).find((k) => pos.distanceTo(k.frente) < 1.3);
     if (c) return { texto: `Dejar en canasto ${c.nombre}`, fn: () => dejarEnCanasto(c) };
@@ -1689,8 +1871,8 @@ function accionPedido(pos) {
 
 function buscarParaPedido(est) {
   const item = pedido.items[pedido.idx];
-  if (normal(est.zona) !== normal(item.zona)) {
-    errorPedido(`Acá en la zona ${est.zona} no está 🤔 Mirá bien la venta o preguntame dónde está.`, 'zona');
+  if (!mismoLugar(est, item)) {
+    errorPedido(`Acá (${est.nombre}) no está 🤔 Fijate el piso y la zona, o preguntame dónde está.`, 'zona');
     return;
   }
   compararEtiqueta(item);
@@ -1768,21 +1950,36 @@ function tomarItem(item) {
 }
 
 function armarPedido() {
-  const siguiente = PASOS_ARMADO[pedido.pasoArmado];
+  const siguiente = pasosArmado()[pedido.pasoArmado];
   if (!siguiente) return;
   if (siguiente.clave === 'etiqueta' && !pedido.etiquetaImpresa) {
     errorPedido('No imprimiste la etiqueta de la venta 🖨️ Volvé a la PC, imprimila y seguí acá: la caja te espera.', 'etiqueta');
     return;
   }
-  const botones = PASOS_ARMADO.slice().sort(() => Math.random() - 0.5).filter((p, i, arr) => PASOS_ARMADO.indexOf(p) >= pedido.pasoArmado);
-  opcionesFlotantes(`Embalaje (paso ${pedido.pasoArmado + 1} de 4)${pedido.items.length > 1 ? ' · pack: todo en una caja' : ''}: ¿qué hacés ahora?`, botones.map((p) => ({
+  const pasos = pasosArmado();
+  const botones = pasos.slice().sort(() => Math.random() - 0.5).filter((p) => pasos.indexOf(p) >= pedido.pasoArmado);
+  opcionesFlotantes(`Embalaje (paso ${pedido.pasoArmado + 1} de ${pasos.length})${pedido.items.length > 1 ? ' · pack: todo en una caja' : ''}: ¿qué hacés ahora?`, botones.map((p) => ({
     texto: p.texto,
     fn: () => {
       if (p.clave !== siguiente.clave) { errorPedido(LECCION_ARMADO[siguiente.clave], 'embalaje'); setTimeout(armarPedido, 400); return; }
       if (p.clave === 'caja') return elegirCaja();
       if (p.clave === 'etiqueta') return ubicarEtiqueta();
+      if (p.clave === 'discreto') return revisarDiscrecion();
       avanzarArmado();
     },
+  })));
+}
+
+// Sexhotic: el paquete no puede decir qué lleva.
+function revisarDiscrecion() {
+  const opciones = [
+    { texto: 'Caja neutra: sin logos, sin nombre del producto, nada escrito', bien: true },
+    { texto: 'Caja de la marca, así se ve que es original', leccion: 'La caja de la marca delata qué es. Sexhotic sale siempre en caja neutra.' },
+    { texto: 'Le escribo "frágil – juguete" para que lo cuiden', leccion: 'Nada escrito que diga qué hay adentro: privacidad del comprador ante todo.' },
+  ].sort(() => Math.random() - 0.5);
+  opcionesFlotantes('🕶️ ¿Cómo queda el paquete por fuera?', opciones.map((o) => ({
+    texto: o.texto,
+    fn: () => { if (!o.bien) { errorPedido(o.leccion, 'discreto'); setTimeout(revisarDiscrecion, 400); } else { Sonido.play('ok'); avanzarArmado(); } },
   })));
 }
 
@@ -1817,13 +2014,14 @@ function elegirCaja() {
 }
 
 function avanzarArmado() {
-  animarArmado(PASOS_ARMADO[pedido.pasoArmado].clave);
+  animarArmado(pasosArmado()[pedido.pasoArmado].clave);
   pedido.pasoArmado++;
-  if (pedido.pasoArmado < PASOS_ARMADO.length) { setTimeout(armarPedido, 450); return; }
+  if (pedido.pasoArmado < pasosArmado().length) { setTimeout(armarPedido, 450); return; }
   setTimeout(llevarCajaArmada, 700);
-  soltarBasura(new THREE.Vector3(DESPACHO.x + (Math.random() - 0.5) * 1.5, 0, DESPACHO.z + 1.3), 'papel sobrante');
+  const mesaBasura = pedido.sex ? MESA_SEX : DESPACHO;
+  soltarBasura(new THREE.Vector3(mesaBasura.x + (Math.random() - 0.5) * 1.5, 0, mesaBasura.z + 1.3), 'papel sobrante');
   pedido.fase = 'canasto';
-  decir(bot, `¡Embalado! Quedó papel sobrante: juntalo y reciclalo ♻ Y el paquete va al canasto ${pedido.envio}.`, 5);
+  decir(enSalaSex() && botSex ? botSex : bot, pedido.sex ? `Discreto y prolijo 😌 Ahora salí al depósito y al canasto ${pedido.envio}. Y el papel sobrante, al tacho ♻` : `¡Embalado! Quedó papel sobrante: juntalo y reciclalo ♻ Y el paquete va al canasto ${pedido.envio}.`, 5);
   pintarPedido();
 }
 
@@ -1854,11 +2052,11 @@ async function finalizarPedido({ pausado }) {
 
 const PASOS_RESUMEN = [
   ['mensaje', 'Mensaje del comprador'], ['zona', 'Zona correcta'], ['sku', 'Etiqueta (SKU) correcta'], ['variante', 'Posición/lado correcto'],
-  ['cantidad', 'Cantidad'], ['estado', 'Estado de la pieza'], ['embalaje', 'Embalaje'], ['etiqueta', 'Etiqueta de envío'], ['canasto', 'Canasto del envío'],
+  ['cantidad', 'Cantidad'], ['estado', 'Estado de la pieza'], ['embalaje', 'Embalaje'], ['discreto', 'Embalaje discreto'], ['etiqueta', 'Etiqueta de envío'], ['canasto', 'Canasto del envío'],
 ];
 function mostrarResumen(p, { pausado, tarde }) {
   const perfecto = !pausado && !tarde && !p.errores;
-  const pasos = PASOS_RESUMEN.filter(([k]) => k !== 'mensaje' || p.mensaje).filter(([k]) => k !== 'variante' || p.items.some((i) => i.variante))
+  const pasos = PASOS_RESUMEN.filter(([k]) => k !== 'mensaje' || p.mensaje).filter(([k]) => k !== 'discreto' || p.sex).filter(([k]) => k !== 'variante' || p.items.some((i) => i.variante))
     .map(([k, txt]) => `<li>${p.log[k] ? '⚠️' : '✅'} ${txt}${p.log[k] ? ` <span style="color:var(--muted)">(${p.log[k]} error${p.log[k] > 1 ? 'es' : ''} corregido${p.log[k] > 1 ? 's' : ''})</span>` : ''}</li>`).join('');
   const titulo = pausado ? '🛑 Venta frenada: buen criterio' : perfecto ? '✅ ¡Le llegó perfecto!' : tarde ? '⏰ Llegó, pero la venta quedó demorada' : '📦 Le llegó bien, con errores en el camino';
   const cuerpo = pausado
@@ -2054,9 +2252,9 @@ function pintarDesafio(d) {
   if (cambio && !d.ganador) { decir(bot, '⚡ ¿Quién me encuentra ' + d.producto.descripcion + '? ¡El primero gana +20 XP!', 5); Sonido.play('desafio'); }
   const restante = Math.max(0, 60 - d.segundos);
   $('desafio').innerHTML = d.ganador
-    ? `<h3>DESAFÍO TERMINADO</h3><p>🏆 <b>${esc(d.ganador)}</b> lo encontró en la zona ${esc(d.zona)}</p><small>En unos segundos sale otro…</small>`
+    ? `<h3>DESAFÍO TERMINADO</h3><p>🏆 <b>${esc(d.ganador)}</b> lo encontró en ${esc(nombreBahia(d.piso, d.zona))}</p><small>En unos segundos sale otro…</small>`
     : `<h3>⚡ DESAFÍO · +20 XP AL PRIMERO</h3><p>¿Dónde está <b>${esc(d.producto.descripcion)}</b>${d.producto.marca ? ' (' + esc(d.producto.marca) + ')' : ''}?</p>
-       <small>${d.zona ? 'hottie lo dice: zona ' + esc(d.zona) : d.pista ? '💡 Pista: ' + esc(d.pista) : 'Corré a la estantería y apretá E · pista en ' + Math.max(0, 30 - d.segundos) + ' s'}</small>`;
+       <small>${d.zona != null ? 'hottie lo dice: ' + esc(nombreBahia(d.piso, d.zona)) : d.pista ? '💡 Pista: ' + esc(d.pista) : 'Corré a la estantería y apretá E · pista en ' + Math.max(0, 30 - d.segundos) + ' s'}</small>`;
 }
 
 async function latido() {
@@ -2094,9 +2292,9 @@ function moverRemotos(dt) {
 async function responderDesafio(est) {
   if (!desafio || desafio.ganador) return;
   if (Date.now() < esperaDesafio) { decir(bot, 'Esperá un toque para volver a intentar ⏳', 2.5); return; }
-  decir(jugador, '¡Está acá, en la zona ' + est.zona + '!', 3);
+  decir(jugador, '¡Está acá, en ' + est.nombre + '!', 3);
   try {
-    const r = await servidor('botSalaResponder', desafio.id, est.zona);
+    const r = await servidor('botSalaResponder', desafio.id, est.zona, est.piso);
     decir(bot, r.mensaje, 4);
     if (r.correcta) { ganarXp(r.xp); toast('🏆 +20 XP'); confeti(140); }
     else if (r.ok) { esperaDesafio = Date.now() + 10000; Sonido.play('error'); }
@@ -2112,13 +2310,13 @@ const reloj = new THREE.Clock();
 let lugarActual = null, lugarHasta = 0;
 function pintarLugar() {
   const pos = jugador.grupo.position;
-  const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 2.0);
-  const clave = est ? est.zona : null;
+  const est = estCerca(pos, 2.0);
+  const clave = est ? est.nombre : null;
   if (clave !== lugarActual) {
     lugarActual = clave;
     if (est) {
       const el = $('lugar');
-      el.textContent = '📍 ' + (est.sector ? 'sector ' + Hottie.linea(est.zona).nombre + '.' : 'zona ' + String(est.zona).toLowerCase() + ' · autopartes.');
+      el.textContent = '📍 ' + (est.sector ? est.nombre + '.' : est.nombre.toLowerCase() + ' · autopartes.');
       el.style.setProperty('--c', est.sector ? est.color : '#8fa2ff');
       el.classList.add('visible'); lugarHasta = performance.now() + 1800;
       Sonido.play('clic');
@@ -2152,6 +2350,7 @@ function tick() {
   moverRemotos(dt);
   // La bot mira a quien tiene cerca.
   bot.mira = jugador.grupo.position.x > bot.grupo.position.x ? 1 : -1;
+  if (botSex) botSex.mira = jugador.grupo.position.x > botSex.grupo.position.x ? 1 : -1;
   personajes.forEach((p) => animarPersonaje(p, dt, t));
 
   // Cámara en tercera persona que sigue al jugador.
@@ -2193,8 +2392,12 @@ function tick() {
 $('retrato').src = BOT_AVATAR;
 servidor('botSalaInicio').then((datos) => {
   ini = datos;
-  ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
+  armarFondo(ini.ubicaciones || [{ piso: '', zonas: ini.zonas }]);
   (ini.sectores || []).forEach((l, i, todos) => estanteriaSector(l, i, todos.length));
+  if (ini.salaSex) {
+    armarSalaSex();
+    botSex = crearPersonaje('hottie', COLORES.bot, new THREE.Vector3(SEX.x + 0.4, 0, SEX.z + 1.0), 'bot');
+  }
   bot = crearPersonaje('hottie', COLORES.bot, new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
   jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 5.5));
   latido(); setInterval(latido, 2000);
@@ -2202,8 +2405,8 @@ servidor('botSalaInicio').then((datos) => {
   setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);
   $('cargando').hidden = true;
   // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
-  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z) => estanterias[normal(z)].frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position),
-    zonas: () => ini.zonas, sectores: () => ini.sectores, yaw: (v) => { yaw = v; }, tamano: () => tamanoCaja(pedido.items), paquetes: paquetesEnCanastos,
+  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z, piso) => (lugarDe({ zona: z, piso: piso || '' }) || {}).frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position),
+    zonas: () => ini.zonas, sectores: () => ini.sectores, yaw: (v) => { yaw = v; }, zoom: (v) => { zoom = v; }, tamano: () => tamanoCaja(pedido.items), paquetes: paquetesEnCanastos,
     retiro: () => { ['Flex', 'Colecta', 'Colecta'].forEach((n) => sumarCajaCanasto(CANASTOS[n])); retiroColecta(); } };
   requestAnimationFrame(tick);
 }).catch((e) => { $('cargando').textContent = e.message || String(e); });

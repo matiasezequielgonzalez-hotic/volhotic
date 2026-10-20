@@ -349,12 +349,63 @@ var Hottie = (function () {
     ]);
   }
 
+  // ---------- Sala sexhotic.: hottie más picante (humor sobre el oficio y la mercadería, nunca con ellos) ----------
+  var CHIPS_SEX = ['¿Cómo se embala acá?', 'Contame un chiste', '¿Quién compró qué?'];
+  var REGLAS_SEX = [
+    {
+      re: /\b(como se embala|como embalo|discreto|discreta|reglas|que hago aca|como funciona)\b/,
+      fn: function (n) {
+        return { texto: 'Las reglas de la casa, ' + n + ' 😏\n1. Caja neutra: sin logos ni nombre del producto\n2. Nada escrito por fuera que diga qué es\n3. Va sellado: se revisa por fuera, no se abre\n4. Etiqueta de ML y nada más\n5. Lo que pasa en esta sala, queda en esta sala 🤐', chips: ['Contame un chiste'] };
+      },
+    },
+    {
+      re: /\b(quien compro|quien compra|de quien es|para quien es|quien lo pidio)\b/,
+      fn: function () {
+        return { texto: pick(['Eso queda entre el comprador y Mercado Libre 🤐 Acá no se comenta quién compra qué.', 'Secreto profesional 🤫 Acá vemos ventas, no personas.']), chips: CHIPS_SEX };
+      },
+    },
+    {
+      re: /\b(chiste|contame algo|otro|otra|me aburro)\b/,
+      fn: function () {
+        return { texto: pick([
+          'Acá el único que se calienta es el sellador de cinta 🔥',
+          'Lo que más se mueve en esta sala son las ventas 😏',
+          '¿Sabés cuál es el producto más discreto de la sala? La caja neutra 😌',
+          'Regla de la casa: el que abre un sellado, paga la ronda 😂',
+          'Acá no existe la devolución "por probar" 😅 Por eso no se abre nada.',
+          'En esta sala las pilas van incluidas… en la mercadería, no en vos. ¡Dale que hay ventas! 🔋',
+        ]), chips: ['Otro', '¿Cómo se embala acá?'] };
+      },
+    },
+    {
+      re: /\b(te amo|te quiero|linda|hermosa|diosa|bombon|casate|novia|salis conmigo|un beso|besito|mi amor|bebe|reina|me gustas|estas buena|hot|sexy|caliente)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Tranqui, tigre 😏 Acá la que vibra es la mercadería, no yo. Soy un bot, ¿te acordás?',
+          'Mucho calor acá adentro, ' + n + '. Bajalo armando un pedido 🔥📦',
+          'Picante sí, pero profesional 😌 Yo soy código; lo hot acá son las ventas.',
+        ]), chips: CHIPS_SEX };
+      },
+    },
+  ];
+  function saludoSex(n) {
+    return pick([
+      'Bienvenido a sexhotic., ' + n + ' 😏 Regla de oro: lo que pasa en esta sala, sale en caja neutra.',
+      'Pasá, pasá 😌 Acá todo vibra… menos el embalaje, que va firme y discreto.',
+      'Llegaste a la parte picante del depósito 🔥 Ojo: acá la discreción suma XP.',
+    ]);
+  }
+
   function charla(texto, ctx) {
     ctx = ctx || {};
     var t = normal(texto);
     if (!t) return null;
     var n = apodo(ctx.nombre);
     memoria.mensajes++;
+    if (ctx.sala === 'sex') {
+      if (/^(hola+|holis|buenas|buen dia|hey|ey|que onda|hottie)( hottie)?$/.test(t)) return { texto: saludoSex(n), chips: CHIPS_SEX };
+      for (var k = 0; k < REGLAS_SEX.length; k++) if (REGLAS_SEX[k].re.test(t)) return REGLAS_SEX[k].fn(n, ctx);
+    }
     for (var i = 0; i < REGLAS.length; i++) {
       if (REGLAS[i].re.test(t)) return REGLAS[i].fn(n, ctx);
     }
@@ -430,6 +481,9 @@ var Hottie = (function () {
     { id: 'flex', q: 'En Flex, después de entregar el paquete…', o: ['Ya está', 'Hay que confirmar la entrega en la app', 'Se avisa por WhatsApp'], c: 1, p: 'Si la entrega no se marca en la app a tiempo, la venta puede contar como demorada.' },
     { id: 'caja_vieja', q: 'Reusás una caja que tiene una etiqueta vieja:', o: ['La dejo, no molesta', 'La saco o la tapo antes de pegar la nueva', 'Pego la nueva arriba torcida'], c: 1, p: 'Dos etiquetas confunden al que escanea: el paquete puede ir a otro lado.' },
     { id: 'prometer', q: 'El comprador pregunta si llega hoy:', o: ['Le prometo que sí', 'No prometo: la promesa la da ML; yo lo despacho antes del corte', 'Le digo que mañana'], c: 1, p: 'La fecha de entrega la promete Mercado Libre. Lo nuestro es cumplir el corte.' },
+    { id: 'sx_caja', sex: true, q: 'Un pedido Sexhotic sale en…', o: ['Caja de la marca', 'Caja neutra, sin logos ni nombre del producto', 'Bolsa transparente'], c: 1, p: 'Discreción total: nada por fuera tiene que decir qué hay adentro.' },
+    { id: 'sx_sello', sex: true, q: '¿Se abre un producto íntimo para revisar que ande?', o: ['Sí, siempre', 'No: va sellado; se revisa por fuera', 'Solo si el comprador lo pide'], c: 1, p: 'Los productos íntimos se mandan sellados, como vienen. Abrirlos los arruina para la venta.' },
+    { id: 'sx_privacidad', sex: true, q: 'Un compañero te pregunta quién compró tal cosa:', o: ['Le cuento, es de confianza', 'Eso no se comenta: privacidad del comprador', 'Le muestro la etiqueta'], c: 1, p: 'Lo que compra cada persona es privado. En esta sala, secreto profesional.' },
     { id: 'papel', q: 'Sobró papel de embalar. ¿Qué hacés?', o: ['Lo tiro al piso', 'Lo junto y lo reciclo', 'Lo dejo en la mesa'], c: 1, p: 'Orden y limpieza: un depósito limpio es más rápido y más seguro.' },
   ];
   var DIAS_CAJA = [0, 1, 3, 7, 16];
@@ -437,12 +491,13 @@ var Hottie = (function () {
   function leerRepaso(nombre) { try { return JSON.parse(localStorage.getItem(claveRepaso(nombre)) || '{}'); } catch (e) { return {}; } }
   function guardarRepaso(nombre, datos) { try { localStorage.setItem(claveRepaso(nombre), JSON.stringify(datos)); } catch (e) { /* sin storage */ } }
   // La próxima pregunta que toca: primero las que vencieron (de la caja más baja), después las nuevas.
-  function proximaPregunta(nombre) {
-    var datos = leerRepaso(nombre), ahora = Date.now();
-    var vencidas = PREGUNTAS.filter(function (q) { return datos[q.id] && datos[q.id].proxima <= ahora; })
+  function proximaPregunta(nombre, opciones) {
+    var datos = leerRepaso(nombre), ahora = Date.now(), sex = !!(opciones && opciones.sex);
+    var pool = PREGUNTAS.filter(function (q) { return !q.sex || sex; });
+    var vencidas = pool.filter(function (q) { return datos[q.id] && datos[q.id].proxima <= ahora; })
       .sort(function (a, b) { return datos[a.id].caja - datos[b.id].caja; });
     if (vencidas.length) return vencidas[0];
-    var nuevas = PREGUNTAS.filter(function (q) { return !datos[q.id]; });
+    var nuevas = pool.filter(function (q) { return !datos[q.id]; });
     return nuevas.length ? nuevas[Math.floor(Math.random() * nuevas.length)] : null;
   }
   function responderPregunta(nombre, id, acierto) {
@@ -456,6 +511,6 @@ var Hottie = (function () {
   }
   var repaso = { proxima: proximaPregunta, responder: responderPregunta, total: PREGUNTAS.length };
 
-  return { linea: linea, repaso: repaso, charla: charla, encontrado: encontrado, varios: varios, nada: nada, buscando: buscando, saludo: function (nombre) { return saludo(apodo(nombre)); }, chipsInicio: CHIPS_INICIO, apodo: apodo };
+  return { linea: linea, repaso: repaso, charla: charla, encontrado: encontrado, varios: varios, nada: nada, buscando: buscando, saludo: function (nombre, sala) { return sala === 'sex' ? saludoSex(apodo(nombre)) : saludo(apodo(nombre)); }, chipsInicio: CHIPS_INICIO, chipsSex: CHIPS_SEX, apodo: apodo };
 })();
 </script>

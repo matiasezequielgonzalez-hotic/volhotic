@@ -322,8 +322,38 @@ function botPareceCodigo_(texto) {
 }
 
 function botVisibles_(u, linea) {
+  const verSex = u.sexAdmin || botSexHabilitado_(u);
   return botIndice_().filter((f) =>
-    (f.linea !== 'SEX' || u.sexAdmin) && (!linea || linea === 'Todo' || f.linea === linea));
+    (f.linea !== 'SEX' || verSex) && (!linea || linea === 'Todo' || f.linea === linea));
+}
+
+// ---------------------------------------------------------------------------
+// Sala Sexhotic: el SEX_ADMIN entra siempre; el resto, con la clave de Config (SEX_CLAVE).
+// La clave vive solo en la planilla, nunca en el código. Habilita por 12 horas.
+// ---------------------------------------------------------------------------
+const BOT_SEX = { HORAS: 12, MAX_INTENTOS: 5, BLOQUEO_SEGUNDOS: 600 };
+
+function botSexHabilitado_(u) {
+  return !!CacheService.getScriptCache().get('bot_sex_ok_' + botNormalizarCodigo_(u.nombre));
+}
+
+/** La pantalla manda la clave; si es la de Config SEX_CLAVE, habilita la sala Sexhotic a esa persona. */
+function botSexEntrar(clave) {
+  const u = botExigir_();
+  if (u.sexAdmin || botSexHabilitado_(u)) return { ok: true };
+  const cache = CacheService.getScriptCache();
+  const claveIntentos = 'bot_sex_intentos_' + botNormalizarCodigo_(u.nombre);
+  const intentos = Number(cache.get(claveIntentos)) || 0;
+  if (intentos >= BOT_SEX.MAX_INTENTOS) return { ok: false, mensaje: 'Demasiados intentos 🔒 Probá en 10 minutos.' };
+  const correcta = String(botConfig_('SEX_CLAVE') || '').trim();
+  if (correcta && String(clave || '').trim().toLowerCase() === correcta.toLowerCase()) {
+    cache.put('bot_sex_ok_' + botNormalizarCodigo_(u.nombre), '1', BOT_SEX.HORAS * 3600);
+    cache.remove(claveIntentos);
+    botSalaEvento_('logro', '🔓 ' + u.nombre + ' entró a la sala sexhotic.', u.nombre);
+    return { ok: true };
+  }
+  cache.put(claveIntentos, String(intentos + 1), BOT_SEX.BLOQUEO_SEGUNDOS);
+  return { ok: false, mensaje: correcta ? 'Clave incorrecta 😏' : 'La sala todavía no tiene clave: pedile a Matías que cargue SEX_CLAVE en Config.' };
 }
 
 function botBuscarPorCodigo_(items, texto) {
@@ -633,15 +663,45 @@ function botRanking_() {
     .sort((a, b) => b.xp - a.xp).slice(0, 8);
 }
 
+// Autopartes en la sala: una estantería por piso (Subsuelo, PB, Piso 1, 2, 3) con una bahía por zona.
+// No es a escala del depósito: es para aprender en qué piso y zona está cada cosa.
+const BOT_PISOS_SALA = ['subsuelo', 'pb', 'piso 1', 'piso 2', 'piso 3'];
+const BOT_MAX_BAHIAS = 16;
+/** "Piso 1" o "1" -> "piso 1"; "PB" o "0" -> "pb"; "Subsuelo" o "-1" -> "subsuelo". Otro valor -> ''. */
+function botPisoSala_(piso) {
+  const p = botNormalizar_(piso);
+  const n = { '-1': 'subsuelo', '0': 'pb', '1': 'piso 1', '2': 'piso 2', '3': 'piso 3', 'planta baja': 'pb' }[p] || p;
+  return BOT_PISOS_SALA.includes(n) ? n : '';
+}
+
+/** [{ piso, zonas: ['4A', '3', ''] }] ('' = el piso sin zona cargada: bahía "general"). */
+function botSalaUbicaciones_(u) {
+  const cuenta = {};
+  botVisibles_(u).forEach((f) => {
+    if (f.linea !== BOT_LINEA_DEFECTO || !botPisoSala_(f.piso)) return;
+    const clave = f.piso + '|' + f.zona;
+    cuenta[clave] = (cuenta[clave] || 0) + 1;
+  });
+  // Las bahías con más productos (al menos 2), sin pasar el máximo que entra en la sala.
+  const bahias = Object.keys(cuenta).filter((k) => cuenta[k] >= 2).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, BOT_MAX_BAHIAS);
+  const pisos = {};
+  bahias.forEach((k) => { const [piso, zona] = k.split('|'); (pisos[piso] = pisos[piso] || []).push(zona); });
+  const orden = (a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'es', { numeric: true }));
+  return Object.keys(pisos)
+    .sort((a, b) => BOT_PISOS_SALA.indexOf(botPisoSala_(a)) - BOT_PISOS_SALA.indexOf(botPisoSala_(b)))
+    .map((piso) => ({ piso, zonas: pisos[piso].sort(orden) }));
+}
+function botEnSala_(ubicaciones, f) {
+  return ubicaciones.some((u) => u.piso === f.piso && u.zonas.includes(f.zona));
+}
+
 function botSalaInicio() {
   const u = botExigir_();
   const { total } = botTotalesXp_();
   const xp = total[u.nombre] || 0;
-  // Las zonas con más productos (las estanterías de la sala).
-  const cuenta = {};
-  botVisibles_(u).forEach((f) => { if (f.zona) cuenta[f.zona] = (cuenta[f.zona] || 0) + 1; });
-  const zonas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 8)
-    .sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+  const ubicaciones = botSalaUbicaciones_(u);
+  const zonas = [...new Set([].concat(...ubicaciones.map((x) => x.zonas)).filter(Boolean))];
+  const haySex = botIndice_().some((f) => f.linea === 'SEX');
   const equipo = botTabla_(BOT.HOJAS.equipo);
   const companeros = equipo.filas
     .filter((f) => String(equipo.get(f, 'Activo')).trim().toUpperCase() !== 'NO')
@@ -651,7 +711,10 @@ function botSalaInicio() {
     jugador: Object.assign({ nombre: u.nombre, avatar: botAvatarPersona_(u), xp }, botNivel_(xp)),
     zonas, companeros, ranking: botRanking_(),
     // Sectores por línea de hotic (Pet, Bio, Kid, Tec, Ofi; SEX solo para SEX_ADMIN): lo que no tiene zona va a su sector.
-    sectores: botInicio().lineas.filter((l) => l !== 'Todo' && l !== BOT_LINEA_DEFECTO),
+    sectores: botInicio().lineas.filter((l) => l !== 'Todo' && l !== BOT_LINEA_DEFECTO && l !== 'SEX'),
+    ubicaciones,
+    // La sala Sexhotic existe si hay productos; adentro se entra con la clave (o siendo SEX_ADMIN).
+    salaSex: haySex ? { habilitada: !!(u.sexAdmin || botSexHabilitado_(u)) } : null,
     lineas: botInicio().lineas, puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,
     xpPorAccion: BOT_XP,
   };
@@ -697,14 +760,15 @@ function botSalaEvento_(tipo, texto, quien) {
 }
 
 /** Producto al azar con zona entre las de la sala, para el desafío. */
-function botSalaNuevoDesafio_(u, zonas) {
-  const candidatos = botVisibles_(u).filter((f) => f.zona && zonas.includes(f.zona) && f.stock > 0 && f.linea === 'Autopartes');
+function botSalaNuevoDesafio_(u) {
+  const ubicaciones = botSalaUbicaciones_(u);
+  const candidatos = botVisibles_(u).filter((f) => f.stock > 0 && f.linea === BOT_LINEA_DEFECTO && botEnSala_(ubicaciones, f));
   if (!candidatos.length) return null;
   const f = candidatos[Math.floor(Math.random() * candidatos.length)];
   return {
     id: 'D' + Date.now().toString(36), inicio: Date.now(), ganador: '', fin: 0,
     producto: { id: f.id, descripcion: f.descripcion, marca: f.marca, piso: f.piso, oem: f.oem },
-    zona: f.zona, intentos: {},
+    zona: f.zona, piso: f.piso, intentos: {},
   };
 }
 
@@ -713,10 +777,8 @@ function botSalaDesafioVisible_(d) {
   if (!d) return null;
   const seg = (Date.now() - d.inicio) / 1000;
   const vista = { id: d.id, producto: { descripcion: d.producto.descripcion, marca: d.producto.marca }, segundos: Math.floor(seg), ganador: d.ganador };
-  if (d.ganador || seg >= BOT_SALA.REVELAR_SEGUNDOS) vista.zona = d.zona;
-  else if (seg >= BOT_SALA.PISTA_SEGUNDOS) {
-    vista.pista = d.producto.piso ? 'Está en el piso ' + d.producto.piso + ' de su estantería.' : 'Su código OEM empieza con ' + String(d.producto.oem || d.producto.descripcion).slice(0, 3) + '.';
-  }
+  if (d.ganador || seg >= BOT_SALA.REVELAR_SEGUNDOS) { vista.zona = d.zona; vista.piso = d.piso || ''; }
+  else if (seg >= BOT_SALA.PISTA_SEGUNDOS) vista.pista = d.piso ? 'Está en ' + d.piso + '.' : 'Su código empieza con ' + String(d.producto.oem || d.producto.descripcion).slice(0, 3) + '.';
   return vista;
 }
 
@@ -766,7 +828,7 @@ function botSalaLatido(estado) {
     try {
       d = botSalaLeer_('sala_desafio', null);
       if (!d || (d.fin && ahora - d.fin > BOT_SALA.PAUSA_ENTRE_DESAFIOS * 1000)) {
-        d = botSalaNuevoDesafio_(u, zonas);
+        d = botSalaNuevoDesafio_(u);
         if (d) {
           botSalaGuardar_('sala_desafio', d);
           botSalaEvento_('desafio', '⚡ Nuevo desafío: ¿dónde está ' + d.producto.descripcion + (d.producto.marca ? ' (' + d.producto.marca + ')' : '') + '?', 'hottie');
@@ -787,27 +849,30 @@ function botSalaLatido(estado) {
   return { jugadores, eventos, desafio: botSalaDesafioVisible_(d), ahora, reputacion: botSalaLeer_('sala_reputacion', null) };
 }
 
-function botSalaResponder(desafioId, zona) {
+function botSalaResponder(desafioId, zona, piso) {
   const u = botExigir_();
   zona = String(zona || '').trim();
+  piso = String(piso || '').trim();
+  const nombreLugar = (p, z) => [p, z ? 'zona ' + z : 'general'].filter(Boolean).join(' · ');
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   let resultado;
   try {
     const d = botSalaLeer_('sala_desafio', null);
     if (!d || d.id !== desafioId) return { ok: false, mensaje: 'Ese desafío ya terminó.' };
-    if (d.ganador) return { ok: false, mensaje: d.ganador + ' llegó primero 😅 Era la zona ' + d.zona + '.' };
+    if (d.ganador) return { ok: false, mensaje: d.ganador + ' llegó primero 😅 Era ' + nombreLugar(d.piso, d.zona) + '.' };
     const ultimoError = d.intentos[u.nombre] || 0;
     const espera = BOT_SALA.ESPERA_ERROR * 1000 - (Date.now() - ultimoError);
     if (espera > 0) return { ok: false, mensaje: 'Esperá ' + Math.ceil(espera / 1000) + ' s para volver a intentar.' };
-    if (botNormalizarCodigo_(zona) === botNormalizarCodigo_(d.zona)) {
+    // Con piso cargado tiene que coincidir todo: la zona "1" existe en varios pisos.
+    if (botNormalizarCodigo_(zona) === botNormalizarCodigo_(d.zona) && (!d.piso || botNormalizar_(piso) === botNormalizar_(d.piso))) {
       d.ganador = u.nombre; d.fin = Date.now();
       botSalaGuardar_('sala_desafio', d);
-      resultado = { ok: true, correcta: true, mensaje: '¡Bien! Era la zona ' + d.zona + ' 🏆' };
+      resultado = { ok: true, correcta: true, mensaje: '¡Bien! Era ' + nombreLugar(d.piso, d.zona) + ' 🏆' };
     } else {
       d.intentos[u.nombre] = Date.now();
       botSalaGuardar_('sala_desafio', d);
-      resultado = { ok: true, correcta: false, mensaje: 'No, no está en la zona ' + zona + ' ❌ Probá en otra en 10 s.' };
+      resultado = { ok: true, correcta: false, mensaje: 'No, no está en ' + nombreLugar(piso, zona) + ' ❌ Probá en otra en 10 s.' };
     }
   } finally {
     lock.releaseLock();
@@ -858,6 +923,22 @@ const BOT_MENSAJES_COMPRADOR = [
     leccion: 'Si el comprador pide cambiar la venta, no se despacha hasta que el encargado la modifique o la cancele.' },
 ];
 
+// Sexhotic: lo que más importa es la discreción y la privacidad del comprador.
+const BOT_MENSAJES_SEX = [
+  { texto: 'Hola, ¿lo mandan discreto? Vivo con mis viejos 🙈', correcta: 1, frena: false,
+    opciones: ['Le pongo un cartel de "frágil, juguete"', 'Sí: caja neutra, sin logos ni nombre del producto', 'Lo mando en la bolsa de la marca'],
+    leccion: 'Todo Sexhotic sale en caja neutra: sin logos, sin nombre del producto y sin nada escrito que diga qué es.' },
+  { texto: '¿Me lo pueden mandar a nombre de otra persona?', correcta: 0, frena: true,
+    opciones: ['No lo despacho y aviso al encargado', 'Le cambio el nombre en la etiqueta', 'Lo mando igual y que se arregle'],
+    leccion: 'La etiqueta no se toca nunca. Cambiar destinatario lo resuelve el encargado dentro de Mercado Libre.' },
+  { texto: '¿Viene sellado? Es para regalo 😏', correcta: 2, frena: false,
+    opciones: ['Lo abro para revisar que ande', 'Le saco el sello para que entre en la caja', 'Reviso que el sello esté intacto y lo embalo así'],
+    leccion: 'Los productos íntimos se mandan sellados, como vienen. Se revisa por fuera, nunca se abren.' },
+  { texto: 'Les dejo mi Instagram así me avisan cuando sale 😉', correcta: 1, frena: false,
+    opciones: ['Le escribo por Instagram', 'Todo por la mensajería de Mercado Libre; sigo armando', 'Freno hasta que me conteste'],
+    leccion: 'Privacidad para los dos lados: nada de redes ni datos personales, todo dentro de Mercado Libre.' },
+];
+
 // Lado y posición: si la descripción lo dice, se practica no confundirlo.
 const BOT_VARIANTES = [['izquierdo', 'derecho'], ['izquierda', 'derecha'], ['delantero', 'trasero'], ['delantera', 'trasera'], ['superior', 'inferior']];
 const BOT_COMPRADORES = ['JUANCHO_22', 'MARIANELA.R', 'TALLER_ELGRINGO', 'LUCAS1987', 'REPUESTOSOESTE', 'CAROSANZ', 'EL_TANO_MECANICO', 'PATRI.G', 'NICOVW', 'MECANICA_LOS_HERMANOS'];
@@ -890,15 +971,24 @@ function botTitulosMl_() {
   return titulos;
 }
 
-function botSalaNuevoPedido(zonas, sectores) {
+/**
+ * Venta de práctica. modo 'sex': solo productos Sexhotic (se arman en su sala, con embalaje discreto).
+ * Ubicación en la sala: Autopartes por piso + zona; las otras líneas, en su sector (zona = nombre de la línea).
+ */
+function botSalaNuevoPedido(zonas, sectores, modo) {
   const u = botExigir_();
-  zonas = (Array.isArray(zonas) ? zonas : []).map(String);
   sectores = (Array.isArray(sectores) ? sectores : []).map(String);
+  const sex = modo === 'sex';
+  if (sex && !u.sexAdmin && !botSexHabilitado_(u)) throw new Error('La sala sexhotic. pide clave 🔒');
+  const ubicaciones = botSalaUbicaciones_(u);
   const conEtiqueta = botVisibles_(u).filter((f) => f.stock > 0 && (f.sku || f.oem));
-  // Autopartes se busca por zona; las otras líneas, en su sector de la sala (si no tienen zona propia).
-  const lugar = (f) => (zonas.includes(f.zona) ? f.zona : f.linea !== BOT_LINEA_DEFECTO && sectores.includes(f.linea) ? f.linea : '');
+  const lugar = (f) => {
+    if (sex) return f.linea === 'SEX' ? { piso: '', zona: 'SEX' } : null;
+    if (f.linea === BOT_LINEA_DEFECTO) return botEnSala_(ubicaciones, f) ? { piso: f.piso, zona: f.zona } : null;
+    return f.linea !== 'SEX' && sectores.includes(f.linea) ? { piso: '', zona: f.linea } : null;
+  };
   const candidatos = conEtiqueta.filter((f) => lugar(f));
-  if (!candidatos.length) throw new Error('No hay productos con zona en la sala para armar un pedido.');
+  if (!candidatos.length) throw new Error(sex ? 'No hay productos Sexhotic con stock para practicar.' : 'No hay productos con ubicación en la sala para armar un pedido.');
   const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
   const { total } = botTotalesXp_();
   const nivel = botNivel_(total[u.nombre] || 0).nivel;
@@ -928,7 +1018,7 @@ function botSalaNuevoPedido(zonas, sectores) {
     const par = BOT_VARIANTES.find(([a, b]) => palabras.includes(a) || palabras.includes(b));
     const variante = par ? (palabras.includes(par[0]) ? { pide: par[0], otra: par[1] } : { pide: par[1], otra: par[0] }) : null;
     items.push({
-      id: f.id, descripcion: f.descripcion, marca: f.marca, zona: lugar(f), piso: f.piso, linea: f.linea, etiqueta,
+      id: f.id, descripcion: f.descripcion, marca: f.marca, zona: lugar(f).zona, piso: lugar(f).piso, linea: f.linea, etiqueta,
       titulo: titulos[botNormalizarCodigo_(f.sku)] || [f.descripcion, f.marca].filter(Boolean).join(' '),
       cantidad: f.stock >= 2 && Math.random() < 0.3 ? 2 : 1,
       danado: Math.random() < 0.2, // a veces la primera unidad viene golpeada
@@ -936,13 +1026,13 @@ function botSalaNuevoPedido(zonas, sectores) {
     });
   }
   const creado = Date.now();
-  const mensaje = Math.random() < dif.mensaje ? azar(BOT_MENSAJES_COMPRADOR) : null;
+  const mensaje = Math.random() < (sex ? dif.mensaje + 0.25 : dif.mensaje) ? azar(sex ? BOT_MENSAJES_SEX : BOT_MENSAJES_COMPRADOR) : null;
   const pedido = {
     id: 'ML-' + creado.toString(36).slice(-5).toUpperCase(),
     venta: '2000' + String(creado).slice(-9) + String(Math.floor(Math.random() * 900) + 100),
     comprador: azar(BOT_COMPRADORES),
     items, envio: azar(BOT_ENVIOS), creado, corte: creado + dif.minutosCorte * 60000,
-    dificultad: { nombre: dif.nombre, ocultar: dif.ocultar },
+    dificultad: { nombre: dif.nombre, ocultar: dif.ocultar }, sex,
     mensaje: mensaje && { texto: mensaje.texto, opciones: mensaje.opciones, correcta: mensaje.correcta, frena: mensaje.frena, leccion: mensaje.leccion },
   };
   botSalaGuardar_('sala_pedido_' + botNormalizarCodigo_(u.nombre), pedido, 7200);
