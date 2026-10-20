@@ -110,6 +110,43 @@
   @keyframes subir { to { transform: translate(-50%, -70px); opacity: 0; } }
   #toast { position: fixed; z-index: 11; top: 18%; left: 50%; transform: translateX(-50%); font: 700 34px var(--display); color: var(--gold);
     text-shadow: 0 0 24px var(--gold); pointer-events: none; opacity: 0; transition: opacity .3s; text-align: center; }
+  /* Venta de Mercado Libre en la PC (práctica) */
+  .modal { position: fixed; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 20px));
+    max-height: calc(100vh - 40px); overflow: auto; border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55); }
+  #venta { background: #fff; color: #191b1f; }
+  #venta header { background: #fff159; padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  #venta header b { font: 700 18px var(--display); letter-spacing: -.02em; }
+  #venta header small { font-size: 12px; color: #4b4b4b; }
+  #venta .cuerpo { padding: 14px 16px; display: grid; gap: 12px; font-size: 14px; }
+  #venta .item { border: 1px solid #e3e3e3; border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+  #venta .item .titulo { font-weight: 600; }
+  #venta .item .datos { display: flex; flex-wrap: wrap; gap: 6px 14px; color: #555; font-size: 13px; }
+  #venta .item .datos b { color: #191b1f; }
+  #venta .cant { font: 700 15px var(--display); color: #1538be; }
+  #venta .envio { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #venta .chip { font: 700 12px var(--display); padding: 4px 10px; border-radius: 99px; color: #fff; }
+  #venta .corte { font-weight: 600; } #venta .corte.urgente { color: #c0262d; }
+  #venta .mensaje { background: #f4f6ff; border-left: 4px solid #1538be; border-radius: 6px; padding: 10px 12px; display: grid; gap: 8px; }
+  #venta .mensaje .opciones { display: grid; gap: 6px; }
+  #venta .mensaje button { text-align: left; background: #fff; border: 1px solid #c9d0ec; border-radius: 6px; padding: 8px 10px; font: inherit; cursor: pointer; color: #191b1f; }
+  #venta .mensaje button:hover { border-color: #1538be; }
+  #venta .mensaje .leccion { font-size: 13px; color: #333; }
+  #venta footer { padding: 0 16px 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  #venta footer .btn.sec { color: #1538be; border-color: #c9d0ec; }
+  #resumen { background: var(--panel); border: 2px solid var(--azul); padding: 16px 18px; display: grid; gap: 10px; }
+  #resumen h3 { margin: 0; font: 700 20px var(--display); letter-spacing: -.02em; }
+  #resumen ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+  #resumen .aprendi { background: #202227; border-radius: 8px; padding: 8px 12px; font-size: 13px; display: grid; gap: 4px; }
+  #resumen .aprendi b { color: var(--gold); }
+  /* Termómetro del día del equipo */
+  #termometro { top: 140px; left: 12px; padding: 8px 12px; width: 230px; font-size: 12px; color: var(--muted); }
+  #termometro h3 { margin: 0 0 5px; font: 700 11px var(--display); letter-spacing: .08em; color: var(--muted); }
+  #termometro .seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 5px; }
+  #termometro .seg i { height: 8px; border-radius: 2px; opacity: .22; }
+  #termometro .seg i.on { opacity: 1; box-shadow: 0 0 8px currentColor; }
+  .reloj-corte { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .reloj-corte.urgente { color: #ff6b6b; }
+  @media (max-width: 720px) { #termometro { display: none; } }
   /* Sonido, música y gráficos */
   #ajustes { right: 12px; bottom: 114px; display: flex; gap: 6px; }
   #ajustes button { width: 40px; height: 40px; padding: 0; font-size: 17px; border-radius: 8px; background: var(--panel); }
@@ -141,6 +178,9 @@
 <div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> interactuar · <b>Espacio</b> saltar · <b>1–4</b> emotes · <b>T</b> hablarle al equipo</div>
 <div id="conectados" class="hud caja">Conectando…</div>
 <div id="desafio" class="hud caja" hidden></div>
+<div id="termometro" class="hud caja" hidden title="Como la reputación de Mercado Libre: despachos perfectos y a tiempo suben, errores y demoras bajan"></div>
+<div id="venta" class="modal" hidden role="dialog" aria-label="Venta de Mercado Libre"></div>
+<div id="resumen" class="modal" hidden role="dialog" aria-label="Resultado del pedido"></div>
 <div id="feed" class="hud"></div>
 <form id="decir" class="hud caja" hidden><div id="emotes"></div><input id="decir-texto" maxlength="140" autocomplete="off" placeholder="Decile algo al equipo…" aria-label="Mensaje para el equipo"><button class="btn" type="submit">Enviar</button></form>
 
