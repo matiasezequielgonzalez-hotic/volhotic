@@ -650,6 +650,8 @@ function botSalaInicio() {
   return {
     jugador: Object.assign({ nombre: u.nombre, avatar: botAvatarPersona_(u), xp }, botNivel_(xp)),
     zonas, companeros, ranking: botRanking_(),
+    // Sectores por línea de hotic (Pet, Bio, Kid, Tec, Ofi; SEX solo para SEX_ADMIN): lo que no tiene zona va a su sector.
+    sectores: botInicio().lineas.filter((l) => l !== 'Todo' && l !== BOT_LINEA_DEFECTO),
     lineas: botInicio().lineas, puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,
     xpPorAccion: BOT_XP,
   };
@@ -888,11 +890,14 @@ function botTitulosMl_() {
   return titulos;
 }
 
-function botSalaNuevoPedido(zonas) {
+function botSalaNuevoPedido(zonas, sectores) {
   const u = botExigir_();
   zonas = (Array.isArray(zonas) ? zonas : []).map(String);
-  const conEtiqueta = botVisibles_(u).filter((f) => f.linea === 'Autopartes' && f.stock > 0 && (f.sku || f.oem));
-  const candidatos = conEtiqueta.filter((f) => zonas.includes(f.zona));
+  sectores = (Array.isArray(sectores) ? sectores : []).map(String);
+  const conEtiqueta = botVisibles_(u).filter((f) => f.stock > 0 && (f.sku || f.oem));
+  // Autopartes se busca por zona; las otras líneas, en su sector de la sala (si no tienen zona propia).
+  const lugar = (f) => (zonas.includes(f.zona) ? f.zona : f.linea !== BOT_LINEA_DEFECTO && sectores.includes(f.linea) ? f.linea : '');
+  const candidatos = conEtiqueta.filter((f) => lugar(f));
   if (!candidatos.length) throw new Error('No hay productos con zona en la sala para armar un pedido.');
   const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
   const { total } = botTotalesXp_();
@@ -923,7 +928,7 @@ function botSalaNuevoPedido(zonas) {
     const par = BOT_VARIANTES.find(([a, b]) => palabras.includes(a) || palabras.includes(b));
     const variante = par ? (palabras.includes(par[0]) ? { pide: par[0], otra: par[1] } : { pide: par[1], otra: par[0] }) : null;
     items.push({
-      id: f.id, descripcion: f.descripcion, marca: f.marca, zona: f.zona, piso: f.piso, etiqueta,
+      id: f.id, descripcion: f.descripcion, marca: f.marca, zona: lugar(f), piso: f.piso, linea: f.linea, etiqueta,
       titulo: titulos[botNormalizarCodigo_(f.sku)] || [f.descripcion, f.marca].filter(Boolean).join(' '),
       cantidad: f.stock >= 2 && Math.random() < 0.3 ? 2 : 1,
       danado: Math.random() < 0.2, // a veces la primera unidad viene golpeada
@@ -1009,7 +1014,7 @@ function botSalaAvisar(texto) {
 // ---------------------------------------------------------------------------
 
 // Paleta del equipo: un color por persona, los mismos que usan la sala y los retratos.
-const BOT_COLOR_PERSONA = { hottie: '#5ef2c4', facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a' };
+const BOT_COLOR_PERSONA = { hottie: '#22c7c9', facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a' };
 // Para quien no esté en la paleta (gente nueva), uno fijo según el nombre.
 const BOT_COLORES_AVATAR = ['#4d8dff', '#f2b84b', '#a98bff', '#ff7a7a', '#7fe08a', '#8fa2ff'];
 const BOT_MAX_FOTO_BYTES = 300 * 1024;

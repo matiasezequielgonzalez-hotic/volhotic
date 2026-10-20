@@ -84,6 +84,10 @@
   #texto:focus { border-color: var(--azul-claro); outline: none; }
   form button { background: var(--azul); color: #fff; border-color: var(--azul); font-weight: 700; padding: 0 16px; }
   form button:hover { background: #1a43dd; }
+  /* Color de cada línea de hotic */
+  .punto-linea { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--linea); margin-right: 6px; vertical-align: 1px; }
+  #lineas button[aria-pressed="true"][style] { border-color: var(--linea); box-shadow: inset 0 -2px 0 var(--linea); }
+  .tag-linea { font: 700 10px "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .04em; color: var(--linea); border: 1px solid var(--linea); border-radius: 99px; padding: 0 6px; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -159,7 +163,7 @@
       <div class="ficha" data-id="${esc(f.id)}" data-piso="${esc(f.piso)}" data-zona="${esc(f.zona)}">
         <div class="top">
           <div><div class="desc">${esc(f.descripcion)}</div>
-            <div class="sub">${esc([f.marca, f.condicion, f.linea !== 'Autopartes' ? f.linea : ''].filter(Boolean).join(' · '))}</div></div>
+            <div class="sub"><span class="tag-linea" style="--linea:${Hottie.linea(f.linea).color}">${esc(Hottie.linea(f.linea).nombre)}</span> ${esc([f.marca, f.condicion].filter(Boolean).join(' · '))}</div></div>
           <div class="stock ${f.stock > 0 ? '' : 'cero'}"><b>${esc(f.stock)}</b><small>unidades</small></div>
         </div>
         <div class="codigos">${codigos}</div>
@@ -261,7 +265,7 @@
 
   function pintarLineas(lineas) {
     const cont = document.getElementById('lineas');
-    cont.innerHTML = lineas.map((l) => `<button type="button" aria-pressed="${l === estado.linea}">${esc(l)}</button>`).join('');
+    cont.innerHTML = lineas.map((l) => `<button type="button" aria-pressed="${l === estado.linea}"${l === 'Todo' ? '' : ` style="--linea:${Hottie.linea(l).color}"`}>${l === 'Todo' ? 'Todo' : '<i class="punto-linea"></i>' + esc(l)}</button>`).join('');
     cont.onclick = (ev) => {
       const b = ev.target.closest('button');
       if (!b) return;

@@ -395,6 +395,67 @@ var Hottie = (function () {
   }
   function buscando() { return pick(['Dame un segundo…', 'Buscando en la planilla… 🔎', 'A ver, a ver…', 'Revisando estantes… 📦']); }
 
-  return { charla: charla, encontrado: encontrado, varios: varios, nada: nada, buscando: buscando, saludo: function (nombre) { return saludo(apodo(nombre)); }, chipsInicio: CHIPS_INICIO, apodo: apodo };
+  // ---------- Líneas de hotic: cada sector con su color ----------
+  var LINEAS = [
+    { re: /auto/, color: '#3b6bff', nombre: 'autopartes' },
+    { re: /pet/, color: '#2fbf71', nombre: 'pethotic' },
+    { re: /bio/, color: '#ff6fb5', nombre: 'biohotic' },
+    { re: /kid/, color: '#5ec8f2', nombre: 'kidhotic' },
+    { re: /tec/, color: '#e5484d', nombre: 'techotic' },
+    { re: /sex/, color: '#9b5cff', nombre: 'sexhotic' },
+    { re: /ofi/, color: '#f2c230', nombre: 'ofihotic' },
+  ];
+  function linea(nombre) {
+    var n = normal(nombre);
+    for (var i = 0; i < LINEAS.length; i++) if (LINEAS[i].re.test(n)) return LINEAS[i];
+    return { color: '#a4a8b1', nombre: n || 'otros' };
+  }
+
+  // ---------- Preguntas rápidas con repaso espaciado (cajas de Leitner) ----------
+  // Lo que se erra vuelve pronto; lo que se sabe vuelve cada vez más espaciado (1, 3, 7 y 16 días).
+  // Recordar sin mirar (práctica de recuperación) fija mucho más que releer.
+  var PREGUNTAS = [
+    { id: 'lista', q: '¿Cuándo está lista una venta para despachar?', o: ['Cuando imprimí la etiqueta', 'Cuando verifiqué producto, variante y cantidad contra la venta', 'Cuando la puse en la caja'], c: 1, p: 'Imprimir la etiqueta no es preparar: hay que comprobar que producto, variante y cantidad coincidan con la venta.' },
+    { id: 'etiq_lugar', q: '¿Dónde va la etiqueta de envío?', o: ['Doblada sobre una esquina', 'Arriba, en la cara más grande, lisa', 'Adentro de la caja'], c: 1, p: 'Plana, sin arrugas y en la cara más grande, para que el código se escanee de una.' },
+    { id: 'etiq_cinta', q: '¿Se puede poner cinta encima del código de barras?', o: ['Sí, la protege', 'No, puede no leerse', 'Solo cinta transparente'], c: 1, p: 'La cinta refleja la luz del lector: el código puede no leerse y el paquete se traba.' },
+    { id: 'corte', q: 'Si despachás después del horario de corte…', o: ['No pasa nada si llega igual', 'La venta queda demorada y afecta la reputación', 'Se cancela sola'], c: 1, p: 'Las demoras cuentan en la reputación de la cuenta. Leer la venta y arrancar ya es la mejor defensa.' },
+    { id: 'reputacion', q: '¿Qué mide la reputación de Mercado Libre?', o: ['Reclamos, cancelaciones y demoras', 'Cantidad de publicaciones', 'Fotos y precios'], c: 0, p: 'Reclamos, ventas canceladas por el vendedor y despachos demorados. Cada pedido bien armado la cuida.' },
+    { id: 'whatsapp', q: 'El comprador te pide tu WhatsApp. ¿Qué hacés?', o: ['Se lo paso', 'Todo se habla por la mensajería de Mercado Libre', 'Le paso el de la empresa'], c: 1, p: 'La conversación queda dentro de Mercado Libre: protege la venta y la cuenta.' },
+    { id: 'cambio', q: 'El comprador pide otra medida antes del despacho:', o: ['Le mando la otra', 'No lo despacho y aviso al encargado', 'Despacho igual lo vendido'], c: 1, p: 'Nunca se despacha algo distinto a lo vendido. Se frena y lo resuelve el encargado.' },
+    { id: 'pack', q: 'Una venta con 2 productos (pack):', o: ['Dos cajas con dos etiquetas', 'Todo en una caja, una sola etiqueta', 'Uno hoy y otro mañana'], c: 1, p: 'El pack viaja junto: una caja, una etiqueta. Antes de cerrar, contá que estén todos.' },
+    { id: 'golpe', q: 'La pieza tiene un golpe. ¿Qué hacés?', o: ['La mando igual, nadie se da cuenta', 'La separo, aviso y tomo una sana', 'La tapo con papel'], c: 1, p: 'Si sale golpeada, vuelve como reclamo. Revisar el estado es parte de preparar.' },
+    { id: 'caja_grande', q: '¿Qué pasa con una caja demasiado grande?', o: ['Nada, mejor que sobre', 'La pieza baila y se puede romper', 'Llega más rápido'], c: 1, p: 'Caja justa y relleno: la pieza no se mueve. Además se gasta menos cartón.' },
+    { id: 'casi_igual', q: '415 0491 09 y 415 0941 09, ¿son el mismo código?', o: ['Sí', 'No, cambian dos dígitos de lugar', 'Depende de la marca'], c: 1, p: 'Los errores más comunes son dígitos cambiados de lugar. Compará de izquierda a derecha, de a uno.' },
+    { id: 'posicion', q: 'Amortiguador delantero vs trasero:', o: ['Son lo mismo', 'Son piezas distintas', 'Solo cambia la caja'], c: 1, p: 'Delantero/trasero e izquierdo/derecho son piezas distintas: si sale el lado equivocado, es reclamo seguro.' },
+    { id: 'flex', q: 'En Flex, después de entregar el paquete…', o: ['Ya está', 'Hay que confirmar la entrega en la app', 'Se avisa por WhatsApp'], c: 1, p: 'Si la entrega no se marca en la app a tiempo, la venta puede contar como demorada.' },
+    { id: 'caja_vieja', q: 'Reusás una caja que tiene una etiqueta vieja:', o: ['La dejo, no molesta', 'La saco o la tapo antes de pegar la nueva', 'Pego la nueva arriba torcida'], c: 1, p: 'Dos etiquetas confunden al que escanea: el paquete puede ir a otro lado.' },
+    { id: 'prometer', q: 'El comprador pregunta si llega hoy:', o: ['Le prometo que sí', 'No prometo: la promesa la da ML; yo lo despacho antes del corte', 'Le digo que mañana'], c: 1, p: 'La fecha de entrega la promete Mercado Libre. Lo nuestro es cumplir el corte.' },
+    { id: 'papel', q: 'Sobró papel de embalar. ¿Qué hacés?', o: ['Lo tiro al piso', 'Lo junto y lo reciclo', 'Lo dejo en la mesa'], c: 1, p: 'Orden y limpieza: un depósito limpio es más rápido y más seguro.' },
+  ];
+  var DIAS_CAJA = [0, 1, 3, 7, 16];
+  function claveRepaso(nombre) { return 'hottie-repaso-' + normal(nombre).replace(/\s+/g, '_'); }
+  function leerRepaso(nombre) { try { return JSON.parse(localStorage.getItem(claveRepaso(nombre)) || '{}'); } catch (e) { return {}; } }
+  function guardarRepaso(nombre, datos) { try { localStorage.setItem(claveRepaso(nombre), JSON.stringify(datos)); } catch (e) { /* sin storage */ } }
+  // La próxima pregunta que toca: primero las que vencieron (de la caja más baja), después las nuevas.
+  function proximaPregunta(nombre) {
+    var datos = leerRepaso(nombre), ahora = Date.now();
+    var vencidas = PREGUNTAS.filter(function (q) { return datos[q.id] && datos[q.id].proxima <= ahora; })
+      .sort(function (a, b) { return datos[a.id].caja - datos[b.id].caja; });
+    if (vencidas.length) return vencidas[0];
+    var nuevas = PREGUNTAS.filter(function (q) { return !datos[q.id]; });
+    return nuevas.length ? nuevas[Math.floor(Math.random() * nuevas.length)] : null;
+  }
+  function responderPregunta(nombre, id, acierto) {
+    var datos = leerRepaso(nombre), d = datos[id] || { caja: 0 };
+    d.caja = acierto ? Math.min(d.caja + 1, DIAS_CAJA.length - 1) : 0;
+    // Si la erró, vuelve en 10 minutos; si la sabe, según su caja.
+    d.proxima = Date.now() + (acierto ? DIAS_CAJA[d.caja] * 86400000 : 600000);
+    datos[id] = d; guardarRepaso(nombre, datos);
+    var dominadas = Object.keys(datos).filter(function (k) { return datos[k].caja >= 3; }).length;
+    return { caja: d.caja, dominadas: dominadas, total: PREGUNTAS.length };
+  }
+  var repaso = { proxima: proximaPregunta, responder: responderPregunta, total: PREGUNTAS.length };
+
+  return { linea: linea, repaso: repaso, charla: charla, encontrado: encontrado, varios: varios, nada: nada, buscando: buscando, saludo: function (nombre) { return saludo(apodo(nombre)); }, chipsInicio: CHIPS_INICIO, apodo: apodo };
 })();
 </script>

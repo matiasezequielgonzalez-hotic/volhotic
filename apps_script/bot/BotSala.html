@@ -155,6 +155,10 @@
   #emotes button { background: #202227; border: 1px solid var(--line); border-radius: 6px; font-size: 18px; width: 38px; cursor: pointer; }
   #emotes button:hover { border-color: var(--mint); }
   .globo.emoji { font-size: 30px; line-height: 1; padding: 0; background: transparent; box-shadow: none; border: 0; }
+  #lugar { position: fixed; z-index: 4; left: 50%; bottom: 150px; transform: translateX(-50%); font: 700 22px var(--display); letter-spacing: -.02em;
+    padding: 6px 16px; border-radius: 99px; background: rgba(25, 27, 31, .85); border: 2px solid var(--c, var(--azul)); color: var(--c, #fff);
+    pointer-events: none; opacity: 0; transition: opacity .3s; text-shadow: 0 0 14px var(--c, transparent); }
+  #lugar.visible { opacity: 1; }
   #confeti { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
   @media (max-width: 720px) { #ajustes { top: 12px; bottom: auto; } }
   #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 700 28px var(--display); color: var(--fg); letter-spacing: -.02em; }
@@ -199,10 +203,12 @@
   <button id="cerrar" type="button" aria-label="Cerrar">×</button>
 </div>
 <div id="toast"></div>
+<div id="lugar" aria-live="polite"></div>
 <div id="cargando">hotic.</div>
 
 <?!= botInclude('BotSprites') ?>
 <?!= botInclude('BotCharla') ?>
+<?!= botInclude('BotEscenas') ?>
 <?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- Brillo neón (postproceso de three.js r128). Si no cargan, la sala anda igual, sin brillo. -->
@@ -222,7 +228,7 @@ const DEMO = typeof google === 'undefined' || !google.script;
 const demo = {
   botSalaInicio: () => ({
     jugador: { nombre: 'Facundo', avatar: { tipo: 'iniciales', texto: 'F', color: '#4d8dff' }, xp: 120, nivel: 2, desde: 50, hasta: 200 },
-    zonas: ['1', '2', '3', '4A'], companeros: ['Gabriel', 'Sebastián', 'Agustín'],
+    zonas: ['1', '2', '3', '4A'], sectores: ['Biohotic', 'Kidhotic', 'Ofihotic', 'Pethotic', 'Techotic'], companeros: ['Gabriel', 'Sebastián', 'Agustín'],
     ranking: [{ nombre: 'Gabriel', xp: 85 }, { nombre: 'Facundo', xp: 60 }, { nombre: 'Agustín', xp: 55 }, { nombre: 'Sebastián', xp: 40 }],
     puedeUbicar: true, verPrecios: false, xpPorAccion: { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15 },
   }),
@@ -255,6 +261,7 @@ const demo = {
           dice: Math.floor(t / 9) % 3 === 1 ? '¿Quién se anima a la bolsa? 🥊' : '', diceId: 100 + Math.floor(t / 9) },
       ],
       eventos: demo.eventos.filter((e) => e.id > (estado.ultimoEvento || 0)),
+      reputacion: window.SALA_DEMO_SERVIDOR && window.SALA_DEMO_SERVIDOR.reputacion ? window.SALA_DEMO_SERVIDOR.reputacion() : null,
       desafio: Object.assign({ id: d.id, producto: d.producto, segundos: seg, ganador: d.ganador || '' }, d.ganador || seg > 60 ? { zona: d.zona } : seg > 30 ? { pista: 'Está en el piso 1 de su estantería.' } : {}),
     };
   },
@@ -266,11 +273,13 @@ const demo = {
   },
   botSalaAvisar: () => true,
   botSalaNuevoPedido: () => ({
-    id: 'ML-DEMO' + Math.floor(Math.random() * 90 + 10), envio: 'Flex', creado: Date.now(),
-    items: [{ id: 'P06306', descripcion: 'Volante Bimasa Vento 1.9', marca: 'Luk', zona: '3', piso: '1', etiqueta: '415 0491 09', cantidad: 1, danado: true,
+    id: 'ML-DEMO' + Math.floor(Math.random() * 90 + 10), venta: '2000012345678901', comprador: 'TALLER_ELGRINGO', envio: 'Flex', creado: Date.now(),
+    corte: Date.now() + 8 * 60000, dificultad: { nombre: 'Aprendiz', ocultar: [] }, mensaje: null,
+    items: [{ id: 'P06306', descripcion: 'Volante Bimasa Vento 1.9', titulo: 'Volante Bimasa Vento 1.9 Luk', marca: 'Luk', zona: '3', piso: '1', etiqueta: '415 0491 09', cantidad: 1, danado: true, variante: null,
       trampas: [{ etiqueta: '415 0581 09', descripcion: 'Volante Bimasa Vento 2.0 TDI' }, { etiqueta: '415 0431 10', descripcion: 'Volante Bimasa Vento 2.0 TDI' }] }],
   }),
-  botSalaCompletarPedido: (id, errores) => ({ errores, xp: { ganado: errores ? 10 : 25, total: 145, nivel: 2, desde: 50, hasta: 200 } }),
+  botSalaCompletarPedido: (id, r) => ({ errores: r.errores, pausado: !!r.pausado, tarde: false, xp: { ganado: r.pausado ? 15 : r.errores ? 10 : 25, total: 145, nivel: 2, desde: 50, hasta: 200 },
+    reputacion: { perfectos: r.errores ? 3 : 4, conErrores: r.errores ? 2 : 1, demorados: 0, frenados: r.pausado ? 1 : 0 } }),
   botNoLoEncontre: () => ({ ok: true, mensaje: 'Listo, pedí un recuento.', xp: { ganado: 3, total: 133, nivel: 2, desde: 50, hasta: 200 } }),
   botOpcionesUbicacion: () => ({ pisos: ['-1', '0', '1', '2', '3'], zonas: ['1', '2', '3', '4A'] }),
   botCorregirUbicacion: () => ({ ok: true, mensaje: 'Ubicación actualizada.', xp: { ganado: 15, total: 148, nivel: 2, desde: 50, hasta: 200 } }),
@@ -290,7 +299,7 @@ const normal = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').t
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Mismos colores que BOT_COLOR_PERSONA (Bot.gs) y que los aros de los retratos.
-const COLORES = { facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a', bot: '#5ef2c4' };
+const COLORES = { facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a', bot: '#22c7c9' };
 // Zonas en la gama de la marca: azules y blanco.
 const PALETA_ZONAS = ['#8fa2ff', '#ffffff', '#5f7cff', '#c3cdff', '#3b5bea', '#e3e8ff', '#7b93ff', '#aab8ff'];
 
@@ -520,7 +529,7 @@ for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
   const conductor = caja(0.7, 0.5, 0.6, 0x26292f, x, 1.15, z + 0.3);
   conductor.material.roughness = 0.8;
 })(11.7, -5.0);
-for (const [x, z, alto] of [[-11.7, -4.6, 3], [-11.7, -3.2, 2], [11.8, 7.9, 2], [11.8, 6.5, 3]]) {
+for (const [x, z, alto] of [[-11.7, -4.6, 3], [-11.7, -3.2, 2], [11.8, 4.0, 2], [11.8, 5.4, 3]]) {
   for (let n = 0; n < alto; n++) {
     pallet(x, n * 0.62, z);
     cajaCarton(0.5, 0.42, 0.5, x - 0.26, n * 0.62 + 0.14, z - 0.25); cajaCarton(0.5, 0.42, 0.5, x + 0.26, n * 0.62 + 0.14, z - 0.25);
@@ -572,6 +581,41 @@ function estanteria(zona, i, total) {
   }));
   const frente = new THREE.Vector3(x, 0, z + d / 2 + 1.0);
   estanterias[normal(zona)] = { zona, color, x, z, frente };
+}
+
+// ---------- Sectores por línea de hotic: estanterías bajas a lo largo del frente, cada una con su color ----------
+// Autopartes vive en los racks azules del fondo (por zona); el resto de las líneas tiene su sector acá.
+function estanteriaSector(linea, i, total) {
+  const info = Hottie.linea(linea), color = info.color;
+  const ancho = 1.7, d = 0.8, h = 1.9;
+  const paso = Math.min(2.05, 11 / Math.max(total, 1));
+  const x = 1.0 + i * paso, z = FONDO / 2 - 1.4;
+  const matSector = mat('sector_' + info.nombre, () => new THREE.MeshStandardMaterial({ color: col(color), roughness: 0.4, metalness: 0.4 }));
+  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) caja(0.07, h, 0.07, 0, x + dx * ancho / 2, 0, z + dz * d / 2, { material: matSector });
+  for (let n = 0; n < 3; n++) {
+    const y = 0.12 + n * (h - 0.2) / 2;
+    caja(ancho, 0.06, d, 0, x, y, z, { material: matViga });
+    if (n === 2) break;
+    for (let k = 0; k < 3; k++) {
+      if (Math.random() < 0.2) continue;
+      const cajita = cajaCarton(0.42, 0.28 + Math.random() * 0.2, 0.5, x - 0.55 + k * 0.55, y + 0.06, z, (Math.random() - 0.5) * 0.2);
+      // Cinta del color de la línea, para reconocer el sector de lejos.
+      caja(0.43, 0.05, 0.51, 0, cajita.position.x, cajita.position.y + cajita.scale.y / 2 - 0.02, z, { material: matSector, sombra: false }).rotation.y = cajita.rotation.y;
+    }
+  }
+  solidos.push({ minX: x - ancho / 2 - 0.1, maxX: x + ancho / 2 + 0.1, minZ: z - d / 2 - 0.1, maxZ: z + d / 2 + 0.1 });
+  const cartelS = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.42), neon(new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(512, 128, (g, W, H) => {
+    g.fillStyle = color; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#fff'; g.font = '700 70px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(info.nombre + '.', W / 2, 88);
+  }) }), 1.2));
+  // Mira hacia el centro de la sala (el frente del rack da a -z).
+  cartelS.position.set(x, h + 0.45, z - d / 2 - 0.05); cartelS.rotation.y = Math.PI; scene.add(cartelS);
+  // Sector pintado en el piso.
+  calco(ancho + 0.3, 1.6, x, z - d / 2 - 0.9, lienzo(128, 128, (g, W, H) => {
+    g.fillStyle = color + '40'; g.fillRect(0, 0, W, H); g.strokeStyle = color; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
+  }));
+  const frente = new THREE.Vector3(x, 0, z - d / 2 - 0.9);
+  estanterias[normal(linea)] = { zona: linea, color, x, z, frente, sector: true };
 }
 
 // ---------- Terminal de hottie ----------
@@ -718,13 +762,25 @@ solidos.push({ minX: PC.x - 0.85, maxX: PC.x + 0.85, minZ: PC.z - 0.45, maxZ: PC
 caja(0.06, 0.25, 0.06, 0x191b1f, PC.x, 0.96, PC.z - 0.2);
 const canvasPC = document.createElement('canvas'); canvasPC.width = 512; canvasPC.height = 300;
 const texPC = new THREE.CanvasTexture(canvasPC); texPC.encoding = THREE.sRGBEncoding;
-function dibujarPC(lineas) {
-  const g = canvasPC.getContext('2d');
-  g.fillStyle = '#191b1f'; g.fillRect(0, 0, 512, 300);
-  g.fillStyle = '#1538be'; g.fillRect(0, 0, 512, 56);
-  g.fillStyle = '#fff'; g.font = '700 34px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('pedidos.', 18, 40);
-  g.font = '500 24px "Helvetica Neue", Helvetica, Arial, sans-serif';
-  (lineas || ['Tocá E para ver', 'el próximo pedido']).forEach((l, i) => { g.fillStyle = i ? '#a4a8b1' : '#ffffff'; g.fillText(l, 18, 100 + i * 36); });
+// Pantalla de la PC: la lista de ventas, con la que está en curso.
+function dibujarPC(p, aviso) {
+  const g = canvasPC.getContext('2d'), F = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, 512, 300);
+  g.fillStyle = '#fff159'; g.fillRect(0, 0, 512, 56);
+  g.fillStyle = '#191b1f'; g.font = '700 30px ' + F; g.fillText('ventas.', 18, 38);
+  g.font = '500 18px ' + F; g.fillStyle = '#4b4b4b'; g.fillText(p ? 'Lista para preparar' : 'Para preparar hoy', 300, 36);
+  if (!p) {
+    g.fillStyle = '#191b1f'; g.font = '600 24px ' + F; g.fillText(aviso || 'Tocá E para tomar', 18, 110);
+    if (!aviso) g.fillText('la próxima venta', 18, 146);
+  } else {
+    g.fillStyle = '#191b1f'; g.font = '700 22px ' + F; g.fillText('#' + (p.venta || p.id), 18, 92);
+    g.font = '500 20px ' + F;
+    p.items.slice(0, 3).forEach((it, i) => g.fillText(it.cantidad + 'u · ' + (it.titulo || it.descripcion).slice(0, 34), 18, 128 + i * 30));
+    g.fillStyle = CANASTOS[p.envio].color; g.fillRect(18, 232, 150, 40);
+    g.fillStyle = '#fff'; g.font = '700 20px ' + F; g.fillText(p.envio, 30, 259);
+    g.fillStyle = p.etiquetaImpresa ? '#1f8a4c' : '#c0262d'; g.font = '700 18px ' + F;
+    g.fillText(p.etiquetaImpresa ? '🖨 etiqueta impresa' : '⚠ falta imprimir etiqueta', 190, 259);
+  }
   texPC.needsUpdate = true;
 }
 dibujarPC();
@@ -850,6 +906,11 @@ function cartelPiso(texto, x, z) {
 }
 cartelPiso('1 · pedidos', PC.x, PC.z + 1.7);
 cartelPiso('2 · buscar', -5.2, -5.2);
+// Autopartes: los racks azules del fondo.
+calco(4.2, 0.8, 2.6, -6.4, lienzo(512, 98, (g, W, H) => {
+  g.fillStyle = 'rgba(59,107,255,.85)'; g.beginPath(); g.roundRect(4, 4, W - 8, H - 8, 18); g.fill();
+  g.fillStyle = '#fff'; g.font = '700 56px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('autopartes.', W / 2, H / 2 + 3);
+}));
 cartelPiso('3 · armar', DESPACHO.x, DESPACHO.z + 2.2);
 cartelPiso('4 · despachar', 9.6, 0.4);
 const texFlecha = lienzo(128, 128, (g) => {
@@ -1232,7 +1293,7 @@ function ponerMision(m) {
   if (!m) { if (typeof pintarPedido === 'function' && jugador) pintarPedido(); else { marcar(null); textoMision('Andá a hablar con hottie a la terminal.'); } return; }
   if (m.tipo === 'buscar') {
     marcar(m.est.frente, m.est.color);
-    textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">Zona ${esc(m.ficha.zona)}</b>${m.ficha.piso ? ' · piso ' + esc(m.ficha.piso) : ''}`);
+    textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">${m.est.sector ? 'Sector ' + esc(Hottie.linea(m.est.zona).nombre) : 'Zona ' + esc(m.ficha.zona)}</b>${m.ficha.piso && !m.est.sector ? ' · piso ' + esc(m.ficha.piso) : ''}`);
   } else if (m.tipo === 'despachar') {
     marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
     textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a <b>Despacho</b>`);
@@ -1276,9 +1337,32 @@ function abrirDialogo() {
   const apodo = Hottie.apodo(ini.jugador.nombre);
   botDice(mision ? pick([`¿Y, ${apodo}? ¿Encontraste ${mision.ficha.descripcion}? Seguí la luz 😉`, `Te marqué la zona, ${apodo}. Si querés buscamos otra cosa.`])
     : Hottie.saludo(ini.jugador.nombre));
-  chips(Hottie.chipsInicio);
+  chips(Hottie.repaso.proxima(ini.jugador.nombre) ? ['🧠 Pregunta rápida', ...Hottie.chipsInicio] : Hottie.chipsInicio);
   setTimeout(() => $('pregunta').focus(), 50);
 }
+
+// ---------- Preguntas rápidas (repaso espaciado) ----------
+function hacerPregunta() {
+  const q = Hottie.repaso.proxima(ini.jugador.nombre);
+  if (!q) { botDice('¡Ya repasaste todo lo que tocaba hoy! 🧠 Mañana te traigo más.'); chips(Hottie.chipsInicio); return; }
+  botDice('🧠 ' + q.q);
+  chips([]);
+  const orden = q.o.map((t, i) => i).sort(() => Math.random() - 0.5);
+  opciones(orden.map((i) => ({ html: esc(q.o[i]), accion: async () => {
+    opciones([]);
+    const bien = i === q.c;
+    const r = Hottie.repaso.responder(ini.jugador.nombre, q.id, bien);
+    botDice((bien ? '✅ ¡Bien! ' : '❌ Era: "' + q.o[q.c] + '". ') + q.p + `\n(Dominás ${r.dominadas} de ${r.total})`);
+    Sonido.play(bien ? 'ok' : 'error');
+    chips(['🧠 Otra pregunta', 'Buscar algo']);
+    if (bien) ganarXp(await servidor('botSumarXP', 'pregunta', q.id).catch(() => null));
+  } })));
+}
+// Cada tanto hottie invita a repasar, si hay preguntas pendientes y no estás en medio de algo.
+setInterval(() => {
+  if (!ini || dialogoAbierto || menu || document.hidden || !Hottie.repaso.proxima(ini.jugador.nombre)) return;
+  decir(bot, pick(['¿Una pregunta rápida? Vení a la terminal 🧠', '🧠 Tengo una pregunta para vos, vení.', 'Repaso de 10 segundos, ¿te animás? 🧠']), 5);
+}, 240000);
 function cerrarDialogo() { dialogoAbierto = false; $('dialogo').hidden = true; clearInterval(escribiendo); }
 
 function lineaFicha(f) {
@@ -1292,6 +1376,13 @@ function elegirFicha(f) {
   if (pedido && pedido.fase === 'buscar' && pedido.items[pedido.idx].id === f.id) {
     pedido.ayuda = true; pintarPedido();
     botDice(`Es lo de tu pedido 😉 Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Te lo marco. Compará la etiqueta ${pedido.items[pedido.idx].etiqueta} antes de llevarlo.`);
+    return;
+  }
+  const sector = !f.zona && f.linea !== 'Autopartes' && estanterias[normal(f.linea)];
+  if (sector) {
+    botDice(`${f.descripcion} es de ${Hottie.linea(f.linea).nombre}. (${f.stock} u., ${f.deposito || 'depósito'}). Va en su sector, el ${Hottie.linea(f.linea).nombre}. del frente 😉`);
+    ponerMision({ tipo: 'buscar', ficha: Object.assign({}, f, { zona: f.linea }), est: sector });
+    setTimeout(cerrarDialogo, reduce ? 600 : 2600);
     return;
   }
   if (!f.zona) {
@@ -1310,6 +1401,7 @@ function elegirFicha(f) {
 
 async function preguntar(texto) {
   opciones([]); chips([]);
+  if (/pregunta rapida|otra pregunta|preguntame|repaso|trivia/.test(normal(texto).replace(/[^a-z ]/g, ''))) { hacerPregunta(); return; }
   const charla = Hottie.charla(texto, ctxCharla());
   if (charla) {
     botDice(charla.texto); chips(charla.chips);
@@ -1408,10 +1500,11 @@ async function ubicarEn(est) {
   })));
 }
 
-function opcionesFlotantes(titulo, botones) {
+function opcionesFlotantes(titulo, botones, imagen) {
   $('accion').hidden = false; accionActual = null; menu = { pos: jugador.grupo.position.clone() };
-  $('accion').innerHTML = `<div class="caja" style="padding:10px;display:grid;gap:8px;max-width:min(420px,calc(100vw - 24px))">
-    <div style="font-size:13px">${esc(titulo)}</div><div style="display:flex;flex-wrap:wrap;gap:8px"></div></div>`;
+  const foto = imagen ? `<img src="${imagen}" alt="" style="width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0">` : '';
+  $('accion').innerHTML = `<div class="caja" style="padding:10px;display:grid;gap:8px;max-width:min(460px,calc(100vw - 24px))">
+    <div style="font-size:13px;display:flex;gap:10px;align-items:center">${foto}<span>${esc(titulo)}</span></div><div style="display:flex;flex-wrap:wrap;gap:8px"></div></div>`;
   const fila = $('accion').querySelector('div div:last-child');
   botones.forEach((b) => {
     const el = document.createElement('button'); el.type = 'button'; el.className = 'btn' + (b.sec ? ' sec' : ''); el.textContent = b.texto;
@@ -1451,24 +1544,35 @@ function tamanoCaja(items) {
   }).sort((a, b) => orden[b] - orden[a])[0];
 }
 
-function errorPedido(leccion) {
+// Cada error queda anotado por paso, con su lección, para el resumen del final.
+function errorPedido(leccion, paso = 'general') {
   pedido.errores++;
+  pedido.log[paso] = (pedido.log[paso] || 0) + 1;
+  if (!pedido.lecciones.includes(leccion)) pedido.lecciones.push(leccion);
   Sonido.play('error');
   decir(bot, leccion, 5);
   toast('❌');
 }
 
+const NOMBRE_ENVIO = { Flex: 'Mercado Envíos Flex', Colecta: 'Colecta', Retiro: 'Retiro en el local' };
+const mmss = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const oculto = (campo) => pedido && pedido.dificultad && pedido.dificultad.ocultar.includes(campo);
+
 function pintarPedido() {
-  if (!pedido) { textoMision('Pasá por la <b>PC de pedidos</b> para tomar uno, o hablale a hottie.'); marcar(null); return; }
+  if (!pedido) { textoMision('Pasá por la <b>PC de pedidos</b> para tomar una venta, o hablale a hottie.'); marcar(null); return; }
   const item = pedido.items[pedido.idx];
+  const dato = (campo, valor) => oculto(campo) ? '<span title="Recordalo o volvé a mirar la venta en la PC">🔒</span>' : valor;
   const pasos = [
-    ['Ver pedido en la PC', true],
-    ...pedido.items.map((it, i) => [`Buscar ${it.cantidad}× <b>${esc(it.descripcion)}</b> · etiqueta <b>${esc(it.etiqueta)}</b>`, i < pedido.idx || pedido.fase !== 'buscar']),
-    ['Embalar en la mesa de armado', pedido.fase === 'canasto'],
-    [`Dejar en el canasto <b>${esc(pedido.envio)}</b>`, false],
+    ['Leer la venta en la PC', true],
+    ...pedido.items.map((it, i) => [`Buscar ${dato('cantidad', it.cantidad + '×')} <b>${esc(it.descripcion)}</b> · etiqueta <b>${dato('etiqueta', esc(it.etiqueta))}</b>`, i < pedido.idx || pedido.fase !== 'buscar']),
+    [`Imprimir la etiqueta de la venta ${pedido.etiquetaImpresa ? '🖨️' : ''}`, pedido.etiquetaImpresa],
+    [pedido.items.length > 1 ? `Embalar el pack (${pedido.items.length} productos, una caja)` : 'Embalar en la mesa de armado', pedido.fase === 'canasto'],
+    [`Dejar en el canasto <b>${dato('envio', esc(pedido.envio))}</b>`, false],
   ];
   const actual = pasos.findIndex((p) => !p[1]);
-  textoMision(`<span style="color:var(--muted)">Pedido ${esc(pedido.id)} · ${pedido.errores ? pedido.errores + ' error(es)' : 'sin errores'}</span><br>` +
+  const quedan = pedido.corte - Date.now();
+  textoMision(`<span style="color:var(--muted)">Venta ${esc(pedido.venta || pedido.id)} · ${esc(pedido.dificultad ? pedido.dificultad.nombre : '')} · ${pedido.errores ? pedido.errores + ' error(es)' : 'sin errores'}</span><br>` +
+    `⏱ Corte: <span class="reloj-corte ${quedan < 60000 ? 'urgente' : ''}">${quedan > 0 ? mmss(quedan) : 'DEMORADA'}</span><br>` +
     pasos.map((p, i) => `${p[1] ? '✅' : i === actual ? '▶️' : '⬜'} ${p[0]}`).join('<br>'));
   if (pedido.fase === 'armar') marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
   else if (pedido.fase === 'canasto') marcar(CANASTOS[pedido.envio].frente, CANASTOS[pedido.envio].color);
@@ -1476,24 +1580,96 @@ function pintarPedido() {
   else marcar(null);
 }
 
-async function verPC() {
-  if (pedido) {
-    opcionesFlotantes(`Pedido ${pedido.id} · envío ${pedido.envio}: ` + pedido.items.map((i) => `${i.cantidad}× ${i.descripcion} (${i.etiqueta})`).join(' + '), [
-      { texto: 'Sigo con este', fn: () => {} },
-      { texto: 'Abandonar', sec: true, fn: () => { pedido = null; limpiarArmado(); ponerCarga(jugador, false); dibujarPC(); pintarPedido(); decir(bot, 'Ok, lo dejamos. Tomá otro cuando quieras.', 3); } },
-    ]);
-    return;
+// Reloj del horario de corte: si se pasa, la venta queda demorada (como en ML).
+setInterval(() => {
+  if (!pedido || !pedido.corte) return;
+  const quedan = pedido.corte - Date.now();
+  document.querySelectorAll('.reloj-corte').forEach((el) => { el.textContent = quedan > 0 ? mmss(quedan) : 'DEMORADA'; el.classList.toggle('urgente', quedan < 60000); });
+  if (quedan <= 0 && !pedido.avisoTarde) {
+    pedido.avisoTarde = true; Sonido.play('error');
+    decir(bot, '⏰ Se pasó el horario de corte: esta venta va a quedar demorada. Terminala bien igual, y la próxima arrancá apenas la leas.', 6);
+  } else if (quedan < 60000 && quedan > 59000) decir(bot, '⏱ ¡Queda un minuto para el corte! 🏃', 3);
+}, 1000);
+
+// ---------- La venta en la PC (como la ve el vendedor en Mercado Libre) ----------
+function htmlVenta(p) {
+  const quedan = p.corte - Date.now();
+  const items = p.items.map((it) => `<div class="item">
+      <div class="titulo">${esc(it.titulo || it.descripcion)}</div>
+      <div class="datos"><span class="cant">${it.cantidad} u.</span><span>SKU <b>${esc(it.etiqueta)}</b></span>${it.variante ? `<span>Posición: <b>${esc(it.variante.pide.toUpperCase())}</b></span>` : ''}</div>
+    </div>`).join('');
+  const m = p.mensaje;
+  const mensaje = m ? `<div class="mensaje"><div>💬 <b>${esc(p.comprador)}</b> te escribió:<br>“${esc(m.texto)}”</div>
+      ${p.mensajeRespondido == null ? `<div><b>¿Qué hacés?</b></div><div class="opciones">${m.opciones.map((o, i) => `<button type="button" data-msj="${i}">${esc(o)}</button>`).join('')}</div>`
+        : `<div class="leccion">${p.mensajeRespondido === m.correcta ? '✅' : '❌'} ${esc(m.leccion)}</div>`}
+    </div>` : '';
+  const listo = !m || p.mensajeRespondido != null;
+  return `<header><div><b>Venta #${esc(p.venta)}</b><br><small>${esc(p.comprador)} · ${p.items.length > 1 ? 'Pack de ' + p.items.length + ' productos' : '1 producto'}</small></div>
+      <img src="${BOT_ESCENAS.venta}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover"></header>
+    <div class="cuerpo">${items}
+      <div class="envio"><span class="chip" style="background:${CANASTOS[p.envio].color}">${esc(NOMBRE_ENVIO[p.envio] || p.envio)}</span>
+        <span class="corte">Despachá antes del corte: <span class="reloj-corte ${quedan < 60000 ? 'urgente' : ''}">${quedan > 0 ? mmss(quedan) : 'DEMORADA'}</span></span></div>
+      ${mensaje}
+    </div>
+    <footer>
+      <button type="button" class="btn" data-acc="imprimir" ${listo && !p.etiquetaImpresa ? '' : 'disabled style="opacity:.5"'}>🖨️ ${p.etiquetaImpresa ? 'Etiqueta impresa' : 'Imprimir etiqueta'}</button>
+      <button type="button" class="btn sec" data-acc="cerrar" ${listo ? '' : 'disabled style="opacity:.5"'}>Listo, voy</button>
+      <button type="button" class="btn sec" data-acc="abandonar">Soltar la venta</button>
+    </footer>`;
+}
+function mostrarVenta() {
+  const v = $('venta');
+  v.innerHTML = htmlVenta(pedido); v.hidden = false; dialogoAbierto = true;
+  v.querySelectorAll('[data-msj]').forEach((b) => { b.onclick = () => responderMensaje(Number(b.dataset.msj)); });
+  v.querySelector('[data-acc="imprimir"]').onclick = () => {
+    if (pedido.etiquetaImpresa) return;
+    pedido.etiquetaImpresa = true; Sonido.play('etiqueta'); toast('🖨️');
+    dibujarPC(pedido); mostrarVenta(); pintarPedido();
+  };
+  v.querySelector('[data-acc="cerrar"]').onclick = cerrarVenta;
+  v.querySelector('[data-acc="abandonar"]').onclick = () => {
+    cerrarVenta(); pedido = null; limpiarArmado(); ponerCarga(jugador, false); dibujarPC(); pintarPedido();
+    decir(bot, 'Ok, la soltamos. Tomá otra cuando quieras.', 3);
+  };
+}
+function cerrarVenta() {
+  $('venta').hidden = true; dialogoAbierto = false;
+  if (!pedido) return;
+  if (!pedido.leida) {
+    pedido.leida = true;
+    const dif = pedido.dificultad || { ocultar: [] };
+    decir(bot, dif.ocultar.length
+      ? pick(['Nivel ' + dif.nombre + ': no te muestro todo en el checklist 🔒 Recordalo o volvé a mirar la venta 😉', 'Memoria activada 🧠 Si te olvidás algo, la venta está en la PC.'])
+      : pick(['Buscalo, compará la etiqueta, contá y revisá el estado 💪', 'Arrancamos. Si no sabés dónde está, preguntame 😉']), 5);
   }
-  dibujarPC(['Buscando pedido…']);
+  pintarPedido();
+}
+function responderMensaje(i) {
+  const m = pedido.mensaje;
+  pedido.mensajeRespondido = i;
+  if (i === m.correcta) {
+    Sonido.play('ok');
+    if (m.frena) { mostrarVenta(); setTimeout(() => { cerrarVenta(); finalizarPedido({ pausado: true }); }, 2600); return; }
+  } else {
+    errorPedido(m.leccion, 'mensaje');
+    // Si había que frenar y no se frenó, se anota: en la vida real terminaría en reclamo o devolución.
+    if (m.frena) pedido.debiaFrenar = true;
+  }
+  mostrarVenta();
+}
+
+async function verPC() {
+  if (pedido) { mostrarVenta(); return; }
+  dibujarPC(null, 'Buscando venta…');
   try {
-    const p = await servidor('botSalaNuevoPedido', ini.zonas);
-    pedido = Object.assign(p, { idx: 0, fase: 'buscar', errores: 0, pasoArmado: 0, ayuda: false });
+    const p = await servidor('botSalaNuevoPedido', ini.zonas, ini.sectores || []);
+    pedido = Object.assign(p, { idx: 0, fase: 'buscar', errores: 0, pasoArmado: 0, ayuda: false, log: {}, lecciones: [], etiquetaImpresa: false, mensajeRespondido: null });
+    if (!pedido.corte) pedido.corte = Date.now() + 8 * 60000;
     Sonido.play('mensaje');
-    dibujarPC([`Pedido ${p.id} · ${p.envio}`, ...p.items.map((i) => `${i.cantidad}× ${i.descripcion.slice(0, 30)}`), ...p.items.map((i) => `SKU ${i.etiqueta}`)]);
-    decir(jugador, 'Tomo el pedido ' + p.id, 3);
-    decir(bot, pick(['¡Pedido nuevo! Fijate el SKU y andá a buscarlo. Si no sabés dónde está, preguntame 😉', 'Arrancamos: buscalo, compará la etiqueta, contá y revisá el estado 💪']), 5);
-    pintarPedido();
-  } catch (e) { dibujarPC(['No pude traer pedidos', String(e.message || e).slice(0, 34)]); }
+    dibujarPC(pedido);
+    decir(jugador, 'Tomo la venta ' + (p.venta || p.id), 3);
+    mostrarVenta(); pintarPedido();
+  } catch (e) { dibujarPC(null, String(e.message || e).slice(0, 34)); }
 }
 
 function accionPedido(pos) {
@@ -1514,7 +1690,7 @@ function accionPedido(pos) {
 function buscarParaPedido(est) {
   const item = pedido.items[pedido.idx];
   if (normal(est.zona) !== normal(item.zona)) {
-    errorPedido(`Acá en la zona ${est.zona} no está 🤔 Mirá bien el pedido o preguntame dónde está.`);
+    errorPedido(`Acá en la zona ${est.zona} no está 🤔 Mirá bien la venta o preguntame dónde está.`, 'zona');
     return;
   }
   compararEtiqueta(item);
@@ -1522,23 +1698,41 @@ function buscarParaPedido(est) {
 
 function compararEtiqueta(item) {
   const opciones = [item.etiqueta, ...item.trampas.map((t) => t.etiqueta)].sort(() => Math.random() - 0.5);
-  opcionesFlotantes(`Compará con el pedido: ¿qué caja tiene la etiqueta ${item.etiqueta}?`, opciones.map((et) => ({
+  // Con nivel alto el código no está en el checklist: hay que recordarlo (o volver a la PC).
+  const pregunta = oculto('etiqueta') ? '¿Qué caja tiene la etiqueta de la venta? (de memoria 🧠)' : `Compará con la venta: ¿qué caja tiene la etiqueta ${item.etiqueta}?`;
+  opcionesFlotantes(pregunta, opciones.map((et) => ({
     texto: '🏷️ ' + et,
     fn: () => {
       if (et !== item.etiqueta) {
         const t = item.trampas.find((x) => x.etiqueta === et);
-        errorPedido(`Ojo: esa etiqueta es ${et}${t ? ' (' + t.descripcion + ')' : ''}. El pedido pide ${item.etiqueta}. Compará el código completo, dígito por dígito.`);
+        errorPedido(t && t.casi
+          ? `Casi 👀 ${et} no es ${item.etiqueta}: cambia un solo carácter. Compará dígito por dígito, de izquierda a derecha.`
+          : `Ojo: esa etiqueta es ${et}${t ? ' (' + t.descripcion + ')' : ''}. La venta pide ${item.etiqueta}. Compará el código completo, dígito por dígito.`, 'sku');
         setTimeout(() => compararEtiqueta(item), 400);
-      } else { Sonido.play('ok'); verificarCantidad(item); }
+      } else { Sonido.play('ok'); item.variante ? elegirVariante(item) : verificarCantidad(item); }
     },
-  })));
+  })), BOT_ESCENAS.escanea);
+}
+
+// Delantero/trasero, izquierdo/derecho: piezas distintas aunque se parezcan.
+function elegirVariante(item) {
+  const { pide, otra } = item.variante;
+  const conPalabra = (palabra) => item.descripcion.replace(new RegExp(pide, 'i'), palabra.toUpperCase());
+  const opciones = [pide, otra].sort(() => Math.random() - 0.5);
+  opcionesFlotantes('En el estante hay dos parecidas. ¿Cuál es la de la venta?', opciones.map((v) => ({
+    texto: conPalabra(v),
+    fn: () => {
+      if (v !== pide) { errorPedido(`La venta pide ${pide.toUpperCase()}, no ${otra.toUpperCase()}. Es otra pieza: si sale la equivocada, vuelve como reclamo.`, 'variante'); setTimeout(() => elegirVariante(item), 400); }
+      else { Sonido.play('ok'); verificarCantidad(item); }
+    },
+  })), BOT_ESCENAS.escanea);
 }
 
 function verificarCantidad(item) {
-  opcionesFlotantes(`SKU correcto ✅ ¿Cuántas unidades lleva el pedido?`, [1, 2, 3].map((n) => ({
+  opcionesFlotantes(`Producto correcto ✅ ¿Cuántas unidades lleva la venta?${oculto('cantidad') ? ' (de memoria 🧠)' : ''}`, [1, 2, 3].map((n) => ({
     texto: n + (n === 1 ? ' unidad' : ' unidades'),
     fn: () => {
-      if (n !== item.cantidad) { errorPedido(`El pedido pide ${item.cantidad}. Siempre contá antes de embalar 🔢`); setTimeout(() => verificarCantidad(item), 400); }
+      if (n !== item.cantidad) { errorPedido(`La venta pide ${item.cantidad}. Siempre contá antes de embalar 🔢`, 'cantidad'); setTimeout(() => verificarCantidad(item), 400); }
       else { Sonido.play('clic'); revisarEstado(item); }
     },
   })));
@@ -1550,13 +1744,13 @@ function revisarEstado(item) {
     : 'Revisás la pieza: caja sana, sin golpes ni rayones. ¿Cómo está?';
   opcionesFlotantes(texto, [
     { texto: '✔ Está bien', fn: () => {
-      if (item.danado) errorPedido('Estaba golpeada 😬 Si sale así, vuelve. Siempre revisá el estado antes de embalar.');
+      if (item.danado) errorPedido('Estaba golpeada 😬 Si sale así, vuelve. Siempre revisá el estado antes de embalar.', 'estado');
       else decir(bot, 'Perfecto, sana 👌', 2);
       tomarItem(item);
     } },
     { texto: '✖ Está dañada', sec: true, fn: () => {
       if (item.danado) { decir(bot, '¡Bien visto! 👀 La separás, avisás y tomás otra unidad sana.', 4); servidor('botSalaAvisar', `separó una unidad dañada de ${item.descripcion} 👀`).catch(() => {}); }
-      else errorPedido('Estaba bien, no hacía falta descartarla. Revisá con calma 🙂');
+      else errorPedido('Estaba bien, no hacía falta descartarla. Revisá con calma 🙂', 'estado');
       tomarItem(item);
     } },
   ]);
@@ -1568,7 +1762,7 @@ function tomarItem(item) {
   pedido.idx++; pedido.ayuda = false;
   if (pedido.idx >= pedido.items.length) {
     pedido.fase = 'armar';
-    setTimeout(() => decir(bot, '¡Tenés todo! Llevalo a la mesa de armado para embalarlo 📦', 4), 600);
+    setTimeout(() => decir(bot, pedido.items.length > 1 ? '¡Tenés todo el pack! A la mesa: va todo junto en una caja, con una sola etiqueta 📦' : '¡Tenés todo! Llevalo a la mesa de armado para embalarlo 📦', 4), 600);
   } else setTimeout(() => decir(bot, 'Uno listo. Falta ' + pedido.items[pedido.idx].descripcion + ' 💪', 4), 600);
   pintarPedido();
 }
@@ -1576,14 +1770,35 @@ function tomarItem(item) {
 function armarPedido() {
   const siguiente = PASOS_ARMADO[pedido.pasoArmado];
   if (!siguiente) return;
+  if (siguiente.clave === 'etiqueta' && !pedido.etiquetaImpresa) {
+    errorPedido('No imprimiste la etiqueta de la venta 🖨️ Volvé a la PC, imprimila y seguí acá: la caja te espera.', 'etiqueta');
+    return;
+  }
   const botones = PASOS_ARMADO.slice().sort(() => Math.random() - 0.5).filter((p, i, arr) => PASOS_ARMADO.indexOf(p) >= pedido.pasoArmado);
-  opcionesFlotantes(`Embalaje (paso ${pedido.pasoArmado + 1} de 4): ¿qué hacés ahora?`, botones.map((p) => ({
+  opcionesFlotantes(`Embalaje (paso ${pedido.pasoArmado + 1} de 4)${pedido.items.length > 1 ? ' · pack: todo en una caja' : ''}: ¿qué hacés ahora?`, botones.map((p) => ({
     texto: p.texto,
     fn: () => {
-      if (p.clave !== siguiente.clave) { errorPedido(LECCION_ARMADO[siguiente.clave]); setTimeout(armarPedido, 400); return; }
+      if (p.clave !== siguiente.clave) { errorPedido(LECCION_ARMADO[siguiente.clave], 'embalaje'); setTimeout(armarPedido, 400); return; }
       if (p.clave === 'caja') return elegirCaja();
+      if (p.clave === 'etiqueta') return ubicarEtiqueta();
       avanzarArmado();
     },
+  })));
+}
+
+// Dónde va la etiqueta: si no se lee el código, el paquete no viaja.
+const LUGARES_ETIQUETA = [
+  { texto: 'Arriba, en la cara más grande, lisa y sin cinta sobre el código', bien: true },
+  { texto: 'Doblada sobre una esquina para que se vea de los dos lados', leccion: 'Doblada no se escanea: el código tiene que quedar plano, en una sola cara.' },
+  { texto: 'Con cinta transparente encima del código para que no se despegue', leccion: 'Nunca cinta sobre el código de barras: refleja y no se lee. La cinta va alrededor, no encima.' },
+  { texto: 'Al lado de una etiqueta vieja que tenía la caja', leccion: 'Si reusás una caja, sacá o tapá la etiqueta vieja: dos etiquetas confunden al que la escanea.' },
+];
+function ubicarEtiqueta() {
+  const opciones = LUGARES_ETIQUETA.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  if (!opciones.some((o) => o.bien)) opciones[0] = LUGARES_ETIQUETA[0];
+  opcionesFlotantes('¿Dónde pegás la etiqueta?', opciones.sort(() => Math.random() - 0.5).map((o) => ({
+    texto: o.texto,
+    fn: () => { if (!o.bien) { errorPedido(o.leccion, 'etiqueta'); setTimeout(ubicarEtiqueta, 400); } else avanzarArmado(); },
   })));
 }
 
@@ -1593,7 +1808,7 @@ function elegirCaja() {
     texto: { S: 'Chica (S)', M: 'Mediana (M)', L: 'Grande (L)' }[t],
     fn: () => {
       if (t !== justa) {
-        errorPedido(t === 'L' || (t === 'M' && justa === 'S') ? 'Muy grande: la pieza baila y se golpea, y gastamos cartón de más 📦' : 'Muy chica: no entra o queda apretada sin lugar para protegerla 📦');
+        errorPedido(t === 'L' || (t === 'M' && justa === 'S') ? 'Muy grande: la pieza baila y se golpea, y gastamos cartón de más 📦' : 'Muy chica: no entra o queda apretada sin lugar para protegerla 📦', 'embalaje');
         setTimeout(elegirCaja, 400); return;
       }
       avanzarArmado();
@@ -1612,23 +1827,70 @@ function avanzarArmado() {
   pintarPedido();
 }
 
-async function dejarEnCanasto(c) {
-  if (c.nombre !== pedido.envio) { errorPedido(`Ese canasto es ${c.nombre}; este pedido sale por ${pedido.envio}. Si va al canasto equivocado, no llega 🚚`); return; }
-  const p = pedido; pedido = null;
-  ponerCarga(jugador, false); dibujarPC(); pintarPedido();
+function dejarEnCanasto(c) {
+  if (c.nombre !== pedido.envio) { errorPedido(`Ese canasto es ${c.nombre}; esta venta sale por ${pedido.envio}. Si va al canasto equivocado, no llega 🚚`, 'canasto'); return; }
+  ponerCarga(jugador, false);
   // La caja vuela de las manos al canasto.
   const paquete = cajaCarton(0.36, 0.26, 0.36, 0, 0, 0);
   volar(paquete, jugador.grupo.position.clone().setY(1.1), new THREE.Vector3(c.x, 0.3, c.z), { segundos: 0.55, altura: 0.8 }, () => {
     scene.remove(paquete); sumarCajaCanasto(c); Sonido.play('carton');
     if (paquetesEnCanastos() >= 3) setTimeout(retiroColecta, 2500);
   });
+  finalizarPedido({});
+}
+
+// Cierra la venta en el servidor y muestra "así le llegó al comprador".
+async function finalizarPedido({ pausado }) {
+  const p = pedido; pedido = null;
+  dibujarPC(); pintarPedido();
+  const tarde = !pausado && Date.now() > p.corte;
   try {
-    const r = await servidor('botSalaCompletarPedido', p.id, p.errores);
+    const r = await servidor('botSalaCompletarPedido', p.id, { errores: p.errores, pausado: !!pausado });
     ganarXp(r.xp);
-    toast(p.errores ? `📦 Pedido listo · ${p.errores} error(es)` : '✅ ¡Pedido perfecto!');
-    if (!p.errores) { confeti(110); Sonido.play('ok'); }
-    decir(bot, p.errores ? `Listo, despachado. Tuviste ${p.errores} error(es): la próxima sale perfecto 💪` : pick(['¡Pedido perfecto! Así se trabaja 💚', `${Hottie.apodo(ini.jugador.nombre)}, sos una máquina 🏆`]), 4);
+    if (r.reputacion) pintarTermometro(r.reputacion);
+    mostrarResumen(p, { pausado: !!pausado, tarde: r.tarde != null ? r.tarde : tarde });
   } catch (e) { decir(bot, e.message || String(e), 5); }
+}
+
+const PASOS_RESUMEN = [
+  ['mensaje', 'Mensaje del comprador'], ['zona', 'Zona correcta'], ['sku', 'Etiqueta (SKU) correcta'], ['variante', 'Posición/lado correcto'],
+  ['cantidad', 'Cantidad'], ['estado', 'Estado de la pieza'], ['embalaje', 'Embalaje'], ['etiqueta', 'Etiqueta de envío'], ['canasto', 'Canasto del envío'],
+];
+function mostrarResumen(p, { pausado, tarde }) {
+  const perfecto = !pausado && !tarde && !p.errores;
+  const pasos = PASOS_RESUMEN.filter(([k]) => k !== 'mensaje' || p.mensaje).filter(([k]) => k !== 'variante' || p.items.some((i) => i.variante))
+    .map(([k, txt]) => `<li>${p.log[k] ? '⚠️' : '✅'} ${txt}${p.log[k] ? ` <span style="color:var(--muted)">(${p.log[k]} error${p.log[k] > 1 ? 'es' : ''} corregido${p.log[k] > 1 ? 's' : ''})</span>` : ''}</li>`).join('');
+  const titulo = pausado ? '🛑 Venta frenada: buen criterio' : perfecto ? '✅ ¡Le llegó perfecto!' : tarde ? '⏰ Llegó, pero la venta quedó demorada' : '📦 Le llegó bien, con errores en el camino';
+  const cuerpo = pausado
+    ? `<p style="margin:0">${esc(p.mensaje.leccion)}</p>`
+    : `<ul>${pasos}<li>${tarde ? '⏰ Despachada después del corte' : '⏱ Despachada antes del corte'}</li></ul>`;
+  const aprendi = p.lecciones.length ? `<div class="aprendi"><b>Lo que te llevás:</b>${p.lecciones.slice(0, 3).map((l) => `<span>• ${esc(l)}</span>`).join('')}</div>` : '';
+  const frenar = p.debiaFrenar ? `<div class="aprendi"><b>Ojo:</b><span>Esta venta había que frenarla. En la vida real terminaba en reclamo o devolución.</span></div>` : '';
+  const r = $('resumen');
+  r.innerHTML = `<div style="display:flex;gap:12px;align-items:center">${perfecto || pausado ? `<img src="${BOT_ESCENAS.entrega}" alt="" style="width:84px;height:84px;border-radius:10px;object-fit:cover">` : ''}
+      <div><small style="color:var(--muted)">Venta #${esc(p.venta || p.id)} · ${esc(p.comprador || '')}</small><h3>${titulo}</h3></div></div>
+    ${cuerpo}${frenar}${aprendi}
+    <button type="button" class="btn">Seguir</button>`;
+  r.hidden = false; dialogoAbierto = true;
+  r.querySelector('button').onclick = () => { r.hidden = true; dialogoAbierto = false; };
+  if (perfecto) { confeti(110); Sonido.play('ok'); }
+  decir(bot, pausado ? 'Bien frenada 🛑 Eso es criterio de pro.' : perfecto ? pick(['¡Venta perfecta! Así se trabaja 💙', `${Hottie.apodo(ini.jugador.nombre)}, sos una máquina 🏆`]) : tarde ? 'Salió, pero tarde. La próxima: leé la venta y arrancá ya ⏱' : `Salió bien, con ${p.errores} error(es) en el camino. Mirá el resumen 👀`, 4);
+}
+
+// ---------- Termómetro del día del equipo ----------
+const COLORES_TERMOMETRO = ['#e5484d', '#f2994a', '#f2c230', '#9bd35a', '#2fbf71'];
+function pintarTermometro(rep) {
+  if (!rep) return;
+  const total = rep.perfectos + rep.conErrores + rep.demorados + rep.frenados;
+  const el = $('termometro');
+  el.hidden = false;
+  if (!total) { el.innerHTML = '<h3>TERMÓMETRO DEL EQUIPO</h3>Todavía no salió nada hoy. ¡Arranquen! 💪'; return; }
+  // Como la reputación de ML: lo perfecto suma, los errores restan un poco y las demoras restan todo.
+  const puntaje = (rep.perfectos + rep.frenados + 0.5 * rep.conErrores) / total;
+  const nivel = puntaje >= 0.9 ? 4 : puntaje >= 0.75 ? 3 : puntaje >= 0.6 ? 2 : puntaje >= 0.4 ? 1 : 0;
+  el.innerHTML = `<h3>TERMÓMETRO DEL EQUIPO · HOY</h3>
+    <div class="seg">${COLORES_TERMOMETRO.map((c, i) => `<i class="${i === nivel ? 'on' : ''}" style="background:${c};color:${c}"></i>`).join('')}</div>
+    ✅ ${rep.perfectos} perfectas · 📦 ${rep.conErrores} con errores · ⏰ ${rep.demorados} demoradas${rep.frenados ? ' · 🛑 ' + rep.frenados + ' frenadas' : ''}`;
 }
 
 // ---------- Orden y limpieza ----------
@@ -1711,6 +1973,8 @@ $('decir').addEventListener('submit', (ev) => {
 $('decir-texto').addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('decir').hidden = true; e.stopPropagation(); } });
 addEventListener('keydown', (e) => {
   if (!$('decir').hidden) return;
+  if (!$('resumen').hidden) { if (e.key === 'Escape' || e.key === 'Enter') { $('resumen').hidden = true; dialogoAbierto = false; } return; }
+  if (!$('venta').hidden) { if (e.key === 'Escape' && (!pedido || !pedido.mensaje || pedido.mensajeRespondido != null)) cerrarVenta(); return; }
   if (dialogoAbierto) { if (e.key === 'Escape') cerrarDialogo(); return; }
   if (e.key.toLowerCase() === 't') { e.preventDefault(); abrirDecir(); return; }
   if (e.key === ' ') { e.preventDefault(); saltar(jugador); return; }
@@ -1806,6 +2070,7 @@ async function latido() {
     actualizarRemotos(r.jugadores || []);
     if (r.eventos && r.eventos.length) { ultimoEvento = r.eventos[r.eventos.length - 1].id; pintarFeed(r.eventos); }
     pintarDesafio(r.desafio);
+    pintarTermometro(r.reputacion || { perfectos: 0, conErrores: 0, demorados: 0, frenados: 0 });
   } catch (e) {
     $('conectados').textContent = 'Sin conexión con la sala, reintentando…';
   } finally {
@@ -1843,6 +2108,24 @@ async function responderDesafio(est) {
 // Bucle
 // ---------------------------------------------------------------------------
 const reloj = new THREE.Clock();
+// Cartel "📍 sector pethotic." / "zona 4A" al entrar a un sector, como en los juegos.
+let lugarActual = null, lugarHasta = 0;
+function pintarLugar() {
+  const pos = jugador.grupo.position;
+  const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 2.0);
+  const clave = est ? est.zona : null;
+  if (clave !== lugarActual) {
+    lugarActual = clave;
+    if (est) {
+      const el = $('lugar');
+      el.textContent = '📍 ' + (est.sector ? 'sector ' + Hottie.linea(est.zona).nombre + '.' : 'zona ' + String(est.zona).toLowerCase() + ' · autopartes.');
+      el.style.setProperty('--c', est.sector ? est.color : '#8fa2ff');
+      el.classList.add('visible'); lugarHasta = performance.now() + 1800;
+      Sonido.play('clic');
+    }
+  }
+  if (lugarHasta && performance.now() > lugarHasta) { $('lugar').classList.remove('visible'); lugarHasta = 0; }
+}
 const medidor = { cuadros: 0, tiempo: 0 };
 function tick() {
   const crudo = reloj.getDelta(), dt = Math.min(crudo, 0.05), t = reloj.elapsedTime;
@@ -1898,6 +2181,7 @@ function tick() {
     pp.needsUpdate = true;
   }
   if (baliza.encendida) { luzBaliza.intensity = 1.6 + Math.sin(t * 14) * 1.4; baliza.rotation.y = t * 9; }
+  pintarLugar();
   pintarAccion();
   dibujar();
   requestAnimationFrame(tick);
@@ -1910,6 +2194,7 @@ $('retrato').src = BOT_AVATAR;
 servidor('botSalaInicio').then((datos) => {
   ini = datos;
   ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
+  (ini.sectores || []).forEach((l, i, todos) => estanteriaSector(l, i, todos.length));
   bot = crearPersonaje('hottie', COLORES.bot, new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
   jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 5.5));
   latido(); setInterval(latido, 2000);
@@ -1918,7 +2203,7 @@ servidor('botSalaInicio').then((datos) => {
   $('cargando').hidden = true;
   // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
   if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z) => estanterias[normal(z)].frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position),
-    zonas: () => ini.zonas, tamano: () => tamanoCaja(pedido.items), paquetes: paquetesEnCanastos,
+    zonas: () => ini.zonas, sectores: () => ini.sectores, yaw: (v) => { yaw = v; }, tamano: () => tamanoCaja(pedido.items), paquetes: paquetesEnCanastos,
     retiro: () => { ['Flex', 'Colecta', 'Colecta'].forEach((n) => sumarCajaCanasto(CANASTOS[n])); retiroColecta(); } };
   requestAnimationFrame(tick);
 }).catch((e) => { $('cargando').textContent = e.message || String(e); });

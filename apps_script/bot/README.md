@@ -13,6 +13,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 | `BotWidget.html` | Ventana emergente (botón flotante + chat) | Archivo HTML `BotWidget` |
 | `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
 | `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
+| `BotEscenas.html` | Escenas de hottie para la interfaz de la sala (venta, entrega, escaneo) | Archivo HTML `BotEscenas` |
 | `BotCharla.html` | Personalidad de hottie: charla y frases | Archivo HTML `BotCharla` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
 | `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
@@ -105,7 +106,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   servidor decide quién ganó (con lock), así que no hay empates ni trampas.
 - **Estética hotic.:** grafito `#191B1F`, azul cobalto `#1538BE`, blanco y grotesca bold
   (Helvetica/Arial). Azul claro `#8FA2FF` para texto azul sobre grafito.
-- **Color de cada uno:** hottie `#5EF2C4` (menta, como sus auriculares), Facundo `#4D8DFF`,
+- **Color de cada uno:** hottie `#22C7C9` (turquesa, como su campera), Facundo `#4D8DFF`,
   Gabriel `#F2B84B`, Sebastián `#A98BFF`, Agustín `#FF7A7A`. Son los mismos en los retratos
   (anillo), en la sala (aro y nombre) y en el chat. Están en `BOT_COLOR_PERSONA` (Bot.gs) y
   `COLORES` (BotSala.html): si cambiás uno, cambialo en los dos.
