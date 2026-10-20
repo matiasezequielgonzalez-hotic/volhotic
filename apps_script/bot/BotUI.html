@@ -181,7 +181,7 @@
       const r = await servidor('botBuscar', texto, estado.linea);
       let html = '';
       if (!r.total) {
-        html = `<div class="dice">${esc(Hottie.nada(texto, r.sugerencias.length > 0))}</div>${chipsHtml(r.sugerencias)}`;
+        html = `<div class="dice">${esc(Hottie.nada(texto, r.sugerencias.length > 0, { nombre: estado.inicio && estado.inicio.nombre }))}</div>${chipsHtml(r.sugerencias)}`;
       } else {
         const nombre = estado.inicio && estado.inicio.nombre;
         html = `<div class="dice">${esc(r.total === 1 ? Hottie.encontrado(r.fichas[0], { nombre }) : Hottie.varios(r.total, r.fichas.length))}</div>`;

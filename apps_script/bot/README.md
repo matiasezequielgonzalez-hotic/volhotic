@@ -105,12 +105,21 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   servidor decide quién ganó (con lock), así que no hay empates ni trampas.
 - **Estética hotic.:** grafito `#191B1F`, azul cobalto `#1538BE`, blanco y grotesca bold
   (Helvetica/Arial). Azul claro `#8FA2FF` para texto azul sobre grafito.
+- **Color de cada uno:** hottie `#5EF2C4` (menta, como sus auriculares), Facundo `#4D8DFF`,
+  Gabriel `#F2B84B`, Sebastián `#A98BFF`, Agustín `#FF7A7A`. Son los mismos en los retratos
+  (anillo), en la sala (aro y nombre) y en el chat. Están en `BOT_COLOR_PERSONA` (Bot.gs) y
+  `COLORES` (BotSala.html): si cambiás uno, cambialo en los dos.
+- **Personalidad de hottie** (`BotCharla.html`, sin IA): saluda según la hora, charla de mate,
+  comida, fútbol, música, juegos y el finde, cuenta chistes, adivinanzas y datos, motiva, y
+  acompaña si alguien dice que está cansado o mal. Si le tiran onda, lo corta con humor, y si
+  le preguntan si es real dice siempre que es un bot. Para sumar temas, agregá una regla a `REGLAS`.
 - **XP:** se guarda en la hoja `BotXP` (la crea el bot). El servidor no da XP dos veces por la misma
   acción y producto en el día (el desafío da +20 una vez por desafío), tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
   acción real. Nivel n desde 50·(n-1)² XP (50, 200, 450…).
 - **Figuras:** `BotSprites.html` tiene a hottie, Facundo, Gabriel, Sebastián y Agustín. El nombre del
   jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una
-  silueta de su color con la inicial. Para sumar a alguien: agregá `"nombre": "data:image/webp;base64,..."`.
+  silueta de su color con la inicial. Los retratos de la foto de perfil van por Drive (columna
+  Foto de `Equipo`). Para sumar a alguien a la sala: agregá `"nombre": "data:image/webp;base64,..."`.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app

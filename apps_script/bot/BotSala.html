@@ -158,7 +158,7 @@
 const DEMO = typeof google === 'undefined' || !google.script;
 const demo = {
   botSalaInicio: () => ({
-    jugador: { nombre: 'Facundo', avatar: { tipo: 'iniciales', texto: 'F', color: '#3fa9ff' }, xp: 120, nivel: 2, desde: 50, hasta: 200 },
+    jugador: { nombre: 'Facundo', avatar: { tipo: 'iniciales', texto: 'F', color: '#4d8dff' }, xp: 120, nivel: 2, desde: 50, hasta: 200 },
     zonas: ['1', '2', '3', '4A'], companeros: ['Gabriel', 'Sebastián', 'Agustín'],
     ranking: [{ nombre: 'Gabriel', xp: 85 }, { nombre: 'Facundo', xp: 60 }, { nombre: 'Agustín', xp: 55 }, { nombre: 'Sebastián', xp: 40 }],
     puedeUbicar: true, verPrecios: false, xpPorAccion: { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15 },
@@ -219,7 +219,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const normal = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const COLORES = { facundo: '#3fa9ff', gabriel: '#ffb52e', sebastian: '#b46bff', agustin: '#ff6b6b', bot: '#8fa2ff' };
+// Mismos colores que BOT_COLOR_PERSONA (Bot.gs) y que los aros de los retratos.
+const COLORES = { facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a', bot: '#5ef2c4' };
 // Zonas en la gama de la marca: azules y blanco.
 const PALETA_ZONAS = ['#8fa2ff', '#ffffff', '#5f7cff', '#c3cdff', '#3b5bea', '#e3e8ff', '#7b93ff', '#aab8ff'];
 
@@ -377,7 +378,7 @@ const texLinea = (color) => lienzo(64, 64, (g, w, h) => { g.fillStyle = color; g
 // Pasillo amarillo frente a los racks y camino azul hasta hottie.
 calco(ANCHO - 2, 0.12, 0, -FONDO / 2 + 2.6, texLinea('#e8b923'));
 calco(ANCHO - 2, 0.12, 0, -FONDO / 2 + 5.0, texLinea('#e8b923'));
-calco(0.12, FONDO - 6, -6.5, 1, texLinea('rgba(21,56,190,.9)'));
+// (El recorrido 1 → 4 se pinta más abajo, cuando están ubicadas las estaciones.)
 
 // ---------- Paredes, columnas y portón ----------
 const matPared = new THREE.MeshStandardMaterial({ map: texPared, roughness: 0.92 });
@@ -395,7 +396,7 @@ caja(4.6, 0.25, 0.25, 0, ANCHO / 2 - 3.2, 4.4, -FONDO / 2 + 0.25, { material: ne
 // Columnas finas y oscuras, entre el pasillo y el centro, para no tapar la vista desde arriba.
 const matColumna = new THREE.MeshStandardMaterial({ color: col(0x4a4e57), roughness: 0.6, metalness: 0.3 });
 const matFranja = new THREE.MeshStandardMaterial({ map: texPeligro, roughness: 0.6 });
-for (const [x, z] of [[-2.5, -3.2], [5.5, -3.2]]) {
+for (const [x, z] of [[-0.8, -3.3], [6.2, -3.3]]) {
   caja(0.34, ALTO_PARED, 0.34, 0, x, 0, z, { material: matColumna, solido: true });
   caja(0.38, 0.6, 0.38, 0, x, 0, z, { material: matFranja });
 }
@@ -423,8 +424,8 @@ for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
   }
   const conductor = caja(0.7, 0.5, 0.6, 0x26292f, x, 1.15, z + 0.3);
   conductor.material.roughness = 0.8;
-})(9.5, -1);
-for (const [x, z, alto] of [[11.4, -5.6, 3], [11.4, -4.2, 2], [-11.6, 8.4, 2]]) {
+})(11.7, -5.0);
+for (const [x, z, alto] of [[-11.7, -4.6, 3], [-11.7, -3.2, 2], [11.8, 7.9, 2], [11.8, 6.5, 3]]) {
   for (let n = 0; n < alto; n++) {
     pallet(x, n * 0.62, z);
     cajaCarton(0.5, 0.42, 0.5, x - 0.26, n * 0.62 + 0.14, z - 0.25); cajaCarton(0.5, 0.42, 0.5, x + 0.26, n * 0.62 + 0.14, z - 0.25);
@@ -433,7 +434,7 @@ for (const [x, z, alto] of [[11.4, -5.6, 3], [11.4, -4.2, 2], [-11.6, 8.4, 2]]) 
   solidos.push({ minX: x - 0.6, maxX: x + 0.6, minZ: z - 0.6, maxZ: z + 0.6 });
 }
 const matCono = new THREE.MeshStandardMaterial({ color: col(0xff6a1a), roughness: 0.6 });
-for (const [x, z] of [[1.2, 7.8], [2.4, 7.8], [7.2, 3.2]]) {
+for (const [x, z] of [[0.4, -3.3], [1.6, -3.3], [7.6, 4.4]]) {
   const c = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.6, 16), matCono); c.position.set(x, 0.3, z); c.castShadow = true; scene.add(c);
   caja(0.36, 0.04, 0.36, 0x191b1f, x, 0, z);
 }
@@ -479,7 +480,7 @@ function estanteria(zona, i, total) {
 }
 
 // ---------- Terminal de hottie ----------
-const TERMINAL = new THREE.Vector3(-9.5, 0, 3);
+const TERMINAL = new THREE.Vector3(-3.4, 0, 1.2); // hottie, en el centro: todos pasan por ahí
 caja(2.8, 0.06, 1.2, 0xf4f5f7, TERMINAL.x, 0.95, TERMINAL.z - 0.45, { rough: 0.3 });
 caja(2.6, 0.95, 0.08, 0xe3e6ea, TERMINAL.x, 0, TERMINAL.z - 0.95, { rough: 0.4 });
 for (const dx of [-1.25, 1.25]) caja(0.08, 0.95, 1.1, 0xe3e6ea, TERMINAL.x + dx, 0, TERMINAL.z - 0.45, { rough: 0.4 });
@@ -511,13 +512,14 @@ const holo = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1.0, 32, 1, tru
 holo.position.set(TERMINAL.x, 1.65, TERMINAL.z + 1.3); holo.rotation.y = Math.PI; scene.add(holo);
 const pantalla = holo; // compatibilidad con el bucle
 const luzBot = new THREE.PointLight(col(0x4d6bff), 1.6, 8); luzBot.position.set(TERMINAL.x, 2.4, TERMINAL.z + 1.2); scene.add(luzBot);
-const aroHottie = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: col(0x8fa2ff), toneMapped: false }));
+const aroHottie = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: col(COLORES.bot), toneMapped: false }));
 aroHottie.rotation.x = -Math.PI / 2; aroHottie.position.set(TERMINAL.x + 0.2, 0.05, TERMINAL.z + 0.9); scene.add(aroHottie);
 
 // ---------- Mesa de armado de pedidos ----------
-const DESPACHO = new THREE.Vector3(9, 0, 6.5); // la mesa de armado
-caja(3.2, 0.08, 1.4, 0xb98a55, DESPACHO.x, 0.86, DESPACHO.z, { rough: 0.8 });
-for (const [dx, dz] of [[-1.5, -0.6], [1.5, -0.6], [-1.5, 0.6], [1.5, 0.6]]) caja(0.08, 0.86, 0.08, 0x9aa0aa, DESPACHO.x + dx, 0, DESPACHO.z + dz, { metal: 0.6, rough: 0.35 });
+const DESPACHO = new THREE.Vector3(4.6, 0, 2.4); // la mesa de armado (estación 3)
+const ALTO_MESA = 1.08;
+caja(3.2, 0.08, 1.4, 0xb98a55, DESPACHO.x, ALTO_MESA - 0.08, DESPACHO.z, { rough: 0.8 });
+for (const [dx, dz] of [[-1.5, -0.6], [1.5, -0.6], [-1.5, 0.6], [1.5, 0.6]]) caja(0.08, ALTO_MESA - 0.08, 0.08, 0x9aa0aa, DESPACHO.x + dx, 0, DESPACHO.z + dz, { metal: 0.6, rough: 0.35 });
 caja(3.0, 0.05, 1.2, 0x9aa0aa, DESPACHO.x, 0.25, DESPACHO.z, { metal: 0.6, rough: 0.4 });
 solidos.push({ minX: DESPACHO.x - 1.6, maxX: DESPACHO.x + 1.6, minZ: DESPACHO.z - 0.7, maxZ: DESPACHO.z + 0.7 });
 calco(4.4, 2.8, DESPACHO.x, DESPACHO.z + 0.4, lienzo(256, 160, (g, W, H) => {
@@ -538,27 +540,27 @@ function sumarCajaDespacho() { // cajas de cartón que se van apilando en la mes
   pilaDespacho.push(cajaCarton(0.6, 0.42, 0.6, DESPACHO.x - 1.1 + colN * 0.72, 0.9 + fila * 0.43, DESPACHO.z, (Math.random() - 0.5) * 0.2));
 }
 // Sobre la mesa: cajas desarmadas, rollos de cinta y papel para proteger.
-caja(0.9, 0.12, 0.7, 0, DESPACHO.x - 1.0, 0.9, DESPACHO.z, { material: mat('carton1', () => new THREE.MeshStandardMaterial({ map: texturasCaja[1], roughness: 0.9 })) });
-caja(0.9, 0.06, 0.7, 0, DESPACHO.x - 1.0, 1.02, DESPACHO.z, { material: mat('carton2', () => new THREE.MeshStandardMaterial({ map: texturasCaja[2], roughness: 0.9 })) });
+caja(0.9, 0.12, 0.7, 0, DESPACHO.x - 1.0, ALTO_MESA, DESPACHO.z, { material: mat('carton1', () => new THREE.MeshStandardMaterial({ map: texturasCaja[1], roughness: 0.9 })) });
+caja(0.9, 0.06, 0.7, 0, DESPACHO.x - 1.0, ALTO_MESA + 0.12, DESPACHO.z, { material: mat('carton2', () => new THREE.MeshStandardMaterial({ map: texturasCaja[2], roughness: 0.9 })) });
 const matCinta = new THREE.MeshStandardMaterial({ color: col(0xd8b46a), roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.92 });
 for (const dx of [0.05, 0.35]) {
   const r = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.045, 10, 24), matCinta);
-  r.rotation.x = Math.PI / 2; r.position.set(DESPACHO.x + dx, 0.95, DESPACHO.z + 0.35); r.castShadow = true; scene.add(r);
+  r.rotation.x = Math.PI / 2; r.position.set(DESPACHO.x + dx, ALTO_MESA + 0.05, DESPACHO.z + 0.35); r.castShadow = true; scene.add(r);
 }
 const rolloPapel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 20), new THREE.MeshStandardMaterial({ color: col(0xf1ede4), roughness: 0.95 }));
-rolloPapel.rotation.z = Math.PI / 2; rolloPapel.position.set(DESPACHO.x + 0.9, 1.06, DESPACHO.z - 0.3); rolloPapel.castShadow = true; scene.add(rolloPapel);
+rolloPapel.rotation.z = Math.PI / 2; rolloPapel.position.set(DESPACHO.x + 0.9, ALTO_MESA + 0.16, DESPACHO.z - 0.3); rolloPapel.castShadow = true; scene.add(rolloPapel);
 const pilaArmada = [];
 function sumarCajaArmada() { // cajas ya embaladas sobre la mesa
   const n = pilaArmada.length % 3;
-  pilaArmada.push(cajaCarton(0.5, 0.36, 0.5, DESPACHO.x + 1.0 + (n % 3) * 0.0, 0.9 + n * 0.37, DESPACHO.z - 0.1, (Math.random() - 0.5) * 0.2));
+  pilaArmada.push(cajaCarton(0.5, 0.36, 0.5, DESPACHO.x + 1.0 + (n % 3) * 0.0, ALTO_MESA + n * 0.37, DESPACHO.z - 0.1, (Math.random() - 0.5) * 0.2));
 }
 
 // PC de pedidos: ahí aparecen los pedidos para armar.
-const PC = new THREE.Vector3(5.4, 0, 7.6);
-caja(1.6, 0.06, 0.8, 0xf4f5f7, PC.x, 0.78, PC.z, { rough: 0.3 });
-for (const dx of [-0.75, 0.75]) caja(0.06, 0.78, 0.75, 0xe3e6ea, PC.x + dx, 0, PC.z, { rough: 0.4 });
+const PC = new THREE.Vector3(-8.4, 0, 1.4); // estación 1: ver el pedido
+caja(1.6, 0.06, 0.8, 0xf4f5f7, PC.x, 0.9, PC.z, { rough: 0.3 });
+for (const dx of [-0.75, 0.75]) caja(0.06, 0.9, 0.75, 0xe3e6ea, PC.x + dx, 0, PC.z, { rough: 0.4 });
 solidos.push({ minX: PC.x - 0.85, maxX: PC.x + 0.85, minZ: PC.z - 0.45, maxZ: PC.z + 0.45 });
-caja(0.06, 0.25, 0.06, 0x191b1f, PC.x, 0.84, PC.z - 0.2);
+caja(0.06, 0.25, 0.06, 0x191b1f, PC.x, 0.96, PC.z - 0.2);
 const canvasPC = document.createElement('canvas'); canvasPC.width = 512; canvasPC.height = 300;
 const texPC = new THREE.CanvasTexture(canvasPC); texPC.encoding = THREE.sRGBEncoding;
 function dibujarPC(lineas) {
@@ -572,21 +574,21 @@ function dibujarPC(lineas) {
 }
 dibujarPC();
 const monitorPC = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.56), new THREE.MeshBasicMaterial({ map: texPC, toneMapped: false }));
-monitorPC.position.set(PC.x, 1.38, PC.z - 0.18); scene.add(monitorPC);
-caja(1.0, 0.6, 0.04, 0x191b1f, PC.x, 1.08, PC.z - 0.22);
-caja(0.55, 0.02, 0.18, 0x2a2d33, PC.x, 0.84, PC.z + 0.12); // teclado
+monitorPC.position.set(PC.x, 1.5, PC.z - 0.18); scene.add(monitorPC);
+caja(1.0, 0.6, 0.04, 0x191b1f, PC.x, 1.2, PC.z - 0.22);
+caja(0.55, 0.02, 0.18, 0x2a2d33, PC.x, 0.96, PC.z + 0.12); // teclado
 
 // Canastos por tipo de envío, contra la pared derecha.
 const CANASTOS = {};
-[['Flex', '#1538be', 3.9], ['Colecta', '#ffb52e', 5.5], ['Retiro', '#3fa9ff', 7.1]].forEach(([nombre, color, z]) => {
-  const x = 12.0;
+[['Flex', '#1538be', 8.0], ['Colecta', '#e8a93a', 9.6], ['Retiro', '#4d7cff', 11.2]].forEach(([nombre, color, x]) => {
+  const z = -1.4; // estación 4: junto al portón de salida
   const matCanasto = new THREE.MeshStandardMaterial({ color: col(color), roughness: 0.5 });
   caja(0.95, 0.06, 1.15, 0, x, 0, z, { material: matCanasto });
-  for (const [dx, dz, w, d] of [[-0.45, 0, 0.05, 1.15], [0.45, 0, 0.05, 1.15], [0, -0.55, 0.95, 0.05], [0, 0.55, 0.95, 0.05]]) caja(w, 0.6, d, 0, x + dx, 0, z + dz, { material: matCanasto });
+  for (const [dx, dz, w, d] of [[-0.45, 0, 0.05, 1.15], [0.45, 0, 0.05, 1.15], [0, -0.55, 0.95, 0.05], [0, 0.55, 0.95, 0.05]]) caja(w, 0.72, d, 0, x + dx, 0, z + dz, { material: matCanasto });
   solidos.push({ minX: x - 0.5, maxX: x + 0.5, minZ: z - 0.6, maxZ: z + 0.6 });
   const cartelC = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto(nombre.toLowerCase() + '.', '#ffffff', { fondo: color }), depthWrite: false, toneMapped: false }));
   cartelC.scale.set(1.5, 0.38, 1); cartelC.position.set(x, 1.25, z); scene.add(cartelC);
-  CANASTOS[nombre] = { nombre, color, x, z, frente: new THREE.Vector3(x - 1.15, 0, z), cajas: 0 };
+  CANASTOS[nombre] = { nombre, color, x, z, frente: new THREE.Vector3(x, 0, z + 1.2), cajas: 0 };
 });
 function sumarCajaCanasto(c) {
   const n = c.cajas++ % 4;
@@ -594,7 +596,7 @@ function sumarCajaCanasto(c) {
 }
 
 // Tacho de reciclaje de papel y cartón.
-const RECICLAJE = new THREE.Vector3(7.7, 0, 9.0);
+const RECICLAJE = new THREE.Vector3(1.7, 0, 3.6); // al lado de la mesa: el papel sobrante va directo
 (function () {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.36, 0.95, 24), new THREE.MeshStandardMaterial({ color: col(0x1f9e57), roughness: 0.5 }));
   m.position.set(RECICLAJE.x, 0.475, RECICLAJE.z); m.castShadow = true; scene.add(m);
@@ -606,7 +608,7 @@ const RECICLAJE = new THREE.Vector3(7.7, 0, 9.0);
 })();
 
 // Bolsa de boxeo para descargar 🥊
-const BOLSA = new THREE.Vector3(-10.8, 0, -4.6);
+const BOLSA = new THREE.Vector3(-10.0, 0, 6.8); // rincón de descanso
 const bolsaPivote = new THREE.Group(); bolsaPivote.position.set(BOLSA.x, 3.0, BOLSA.z); scene.add(bolsaPivote);
 (function () {
   caja(0.12, 3.2, 0.12, 0x191b1f, BOLSA.x - 0.9, 0, BOLSA.z, { metal: 0.5 });
@@ -621,6 +623,49 @@ const bolsaPivote = new THREE.Group(); bolsaPivote.position.set(BOLSA.x, 3.0, BO
   solidos.push({ minX: BOLSA.x - 0.35, maxX: BOLSA.x + 0.35, minZ: BOLSA.z - 0.35, maxZ: BOLSA.z + 0.35 });
 })();
 const bolsaFisica = { angulo: 0, vel: 0, eje: new THREE.Vector3(1, 0, 0) };
+
+// ---------- Rincón de descanso: banco y mate ----------
+(function () {
+  const bx = -7.4, bz = 8.6;
+  caja(2.0, 0.08, 0.55, 0xb98a55, bx, 0.5, bz, { rough: 0.7 });
+  for (const dx of [-0.85, 0.85]) caja(0.08, 0.5, 0.5, 0x191b1f, bx + dx, 0, bz, { metal: 0.5 });
+  solidos.push({ minX: bx - 1.05, maxX: bx + 1.05, minZ: bz - 0.3, maxZ: bz + 0.3 });
+  const termo = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.38, 16), new THREE.MeshStandardMaterial({ color: col(0x1538be), roughness: 0.3, metalness: 0.6 }));
+  termo.position.set(bx + 0.5, 0.77, bz); termo.castShadow = true; scene.add(termo);
+  const mate = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.045, 0.1, 14), new THREE.MeshStandardMaterial({ color: col(0x6b4a2b), roughness: 0.8 }));
+  mate.position.set(bx + 0.25, 0.63, bz + 0.05); scene.add(mate);
+  calco(4.6, 3.4, -8.6, 7.6, lienzo(256, 192, (g, W, H) => {
+    g.fillStyle = 'rgba(25,27,31,.6)'; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '700 30px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('descanso.', 14, H - 16);
+  }));
+})();
+
+// ---------- Recorrido del pedido pintado en el piso: 1 pedidos → 2 buscar → 3 armar → 4 despachar ----------
+function cartelPiso(texto, x, z) {
+  calco(3.0, 0.9, x, z, lienzo(512, 154, (g, W, H) => {
+    g.fillStyle = 'rgba(21,56,190,.85)'; g.beginPath(); g.roundRect(4, 4, W - 8, H - 8, 24); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 74px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(texto, W / 2, H / 2 + 4);
+  }));
+}
+cartelPiso('1 · pedidos', PC.x, PC.z + 1.7);
+cartelPiso('2 · buscar', -5.2, -5.2);
+cartelPiso('3 · armar', DESPACHO.x, DESPACHO.z + 2.2);
+cartelPiso('4 · despachar', 9.6, 0.4);
+const texFlecha = lienzo(128, 128, (g) => {
+  g.fillStyle = 'rgba(143,162,255,.8)';
+  g.beginPath(); g.moveTo(20, 30); g.lineTo(70, 64); g.lineTo(20, 98); g.lineTo(40, 98); g.lineTo(90, 64); g.lineTo(40, 30); g.fill();
+});
+function flechasPiso(desde, hasta, cantidad) {
+  for (let i = 1; i <= cantidad; i++) {
+    const t = i / (cantidad + 1);
+    const x = desde[0] + (hasta[0] - desde[0]) * t, z = desde[1] + (hasta[1] - desde[1]) * t;
+    calco(0.7, 0.7, x, z, texFlecha, -Math.atan2(hasta[1] - desde[1], hasta[0] - desde[0]));
+  }
+}
+flechasPiso([PC.x + 0.6, PC.z - 1.0], [-6.2, -4.6], 3);
+flechasPiso([-3.6, -5.2], [DESPACHO.x - 1.6, DESPACHO.z - 1.0], 5);
+flechasPiso([DESPACHO.x + 1.8, DESPACHO.z - 0.4], [8.2, 0.2], 3);
 
 // ---------- Polvo en el aire ----------
 const polvo = (() => {
@@ -898,7 +943,7 @@ async function preguntar(texto) {
   try {
     const r = await servidor('botBuscar', texto, 'Todo');
     if (!r.total) {
-      botDice(Hottie.nada(texto, r.sugerencias.length > 0));
+      botDice(Hottie.nada(texto, r.sugerencias.length > 0, ctxCharla()));
       opciones(r.sugerencias.map((s) => ({ html: esc(s), accion: () => preguntar(s) })));
       return;
     }
@@ -1446,8 +1491,8 @@ $('retrato').src = BOT_AVATAR;
 servidor('botSalaInicio').then((datos) => {
   ini = datos;
   ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
-  bot = crearPersonaje('hottie', '#8fa2ff', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
-  jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 6));
+  bot = crearPersonaje('hottie', COLORES.bot, new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
+  jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 5.5));
   latido(); setInterval(latido, 2000);
   pintarJugador(); pintarRanking(); ponerMision(null); pintarPedido();
   setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);

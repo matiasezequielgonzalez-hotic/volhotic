@@ -4,7 +4,8 @@
  * La usan el chat (BotUI) y el Modo Sala (BotSala). Para cambiar cómo habla, editá las
  * listas de frases: cada respuesta elige una al azar para no repetirse.
  *
- * hottieCharla(texto, ctx) -> { texto, chips } si es charla, o null si hay que buscar en el stock.
+ * Hottie.charla(texto, ctx) -> { texto, chips } si es charla, o null si hay que buscar en el stock.
+ * Siempre deja claro que es un bot: si le preguntan si es real o le tiran onda, lo dice con humor.
  * ctx: { nombre, jugador?: {xp, nivel, hasta}, ranking?: [{nombre, xp}] }
  */
 var Hottie = (function () {
@@ -12,7 +13,14 @@ var Hottie = (function () {
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
       .replace(/[¿?¡!.,;:)(]/g, ' ').replace(/\s+/g, ' ').trim();
   }
-  function pick(lista) { return lista[Math.floor(Math.random() * lista.length)]; }
+  // Memoria corta de la charla (solo esta pestaña): para no repetir frases y seguir el hilo.
+  var memoria = { ultimas: [], chamuyos: 0, mensajes: 0, tema: '' };
+  function pick(lista) {
+    var libres = lista.filter(function (x) { return memoria.ultimas.indexOf(x) < 0; });
+    var r = (libres.length ? libres : lista)[Math.floor(Math.random() * (libres.length || lista.length))];
+    memoria.ultimas.push(r); if (memoria.ultimas.length > 30) memoria.ultimas.shift();
+    return r;
+  }
   function apodo(nombre) {
     var n = String(nombre || '').split(' ')[0];
     var cortos = { Facundo: 'Facu', Sebastián: 'Seba', Sebastian: 'Seba', Agustín: 'Agus', Agustin: 'Agus', Gabriel: 'Gabi', Matías: 'Mati', Matias: 'Mati' };
@@ -39,6 +47,21 @@ var Hottie = (function () {
     return pick(porHora[m]);
   }
 
+  function chistes() {
+    return { texto: pick([
+      '¿Sabés por qué el amortiguador nunca se estresa? Porque absorbe todo 😌',
+      '¿Qué le dijo la correa poly V a la bomba de agua? "Sin vos no giro" 💔',
+      'Tengo 392 amortiguadores de correa poly V para Saveiro. Si te aburrís, contalos 😅',
+      '¿Por qué el Golf no se junta con el Gol? Porque le falta la F de fe 🙃',
+      '¿Cómo se despide un disco de freno? "Paremos acá" 🛑',
+      '¿Qué hace una bujía en una fiesta? Prende todo ⚡',
+      'Un embrague entra a un bar. El barman: "¿qué te pasa que patinás?" 🍺',
+      'Mi relación con la cinta de embalar es como la tuya con los lunes: se pega y no se va 😩',
+      '¿Por qué el radiador nunca discute? Porque siempre mantiene la calma 🥶',
+      'Le pregunté al filtro de aceite cómo estaba. Me dijo "acá, reteniendo cosas" 🫠',
+    ]), chips: ['Otro chiste', 'Una adivinanza', 'Buscar algo'] };
+  }
+
   var REGLAS = [
     {
       // Dónde está lo del pedido en curso (Modo Sala): hottie marca la estantería.
@@ -56,50 +79,199 @@ var Hottie = (function () {
       },
     },
     {
-      // Chamuyo: lo corta con humor y vuelve al laburo.
-      re: /\b(te amo|te quiero|sos (muy |re |tan |una )?(linda|hermosa|preciosa|bella|diosa|bombon)|linda|hermosa|diosa|bombon|casate|novia|salis conmigo|un beso|besito|mi amor|bebe|reina)\b/,
+      // Preguntas sobre qué es ella: siempre responde la verdad, con onda.
+      re: /\b(sos (un |una )?(bot|robot|ia|inteligencia artificial|maquina|programa|real|humana|persona|de verdad)|sos real|existis|tenes novio|tenes pareja|estas soltera|tenes cuerpo|donde vivis|te puedo conocer|nos vemos en persona)\b/,
       fn: function (n) {
+        return { texto: pick([
+          'Soy un bot, ' + n + ' 🤖 Vivo en la planilla de stock y en este chat. No como, no duermo y no tengo novio: tengo seis mil repuestos 😅',
+          'Bot 100%, hecha de código y planillas 💾 Lo único real mío es que sé dónde está todo. ¿Qué buscamos?',
+          'Soy la compañera virtual del depósito: un programa que armó el equipo. Cero cuerpo, mucha memoria 🧠 ¿Te ayudo con algo?',
+        ]), chips: ['¿Qué podés hacer?', 'Contame un chiste'] };
+      },
+    },
+    {
+      // Chamuyo: lo corta con humor y vuelve al laburo. Si insisten, les recuerda que es un bot.
+      re: /\b(te amo|te quiero|sos (muy |re |tan |una )?(linda|hermosa|preciosa|bella|diosa|bombon)|linda|hermosa|diosa|bombon|casate|novia|salis conmigo|salimos|una cita|un beso|besito|mi amor|bebe|reina|me gustas|estas buena|te extrane)\b/,
+      fn: function (n) {
+        memoria.chamuyos++;
+        if (memoria.chamuyos >= 3) {
+          memoria.chamuyos = 0;
+          return { texto: pick([
+            n + ', te recuerdo que soy un bot 🤖 Lo mío con vos es puramente logístico 📦 ¿Buscamos algo?',
+            'Jaja ' + n + ', ese chamuyo guardalo para una persona de verdad 😉 Yo soy código. ¿Qué repuesto necesitás?',
+          ]), chips: CHIPS_BUSCAR };
+        }
         return { texto: pick([
           'Jaja, mi único amor es el stock ordenado 😌 ¿Qué buscamos, ' + n + '?',
           'Tranqui ' + n + ', yo estoy casada con la planilla 📋 Decime qué repuesto necesitás.',
           'Ay ' + n + ', con esa energía despachás 20 hoy 😏 ¿Arrancamos?',
-          'Me halaga, pero mi corazón es de la zona 4A 💚 ¿Qué te busco?',
+          'Ese chamuyo no suma XP, eh 😂 Un pedido bien armado sí.',
+          'Soy un bot, ' + n + '. Lo más romántico que hago es encontrarte un volante bimasa 💙',
         ]), chips: CHIPS_BUSCAR };
       },
     },
     {
       re: /^(hola+|holis|holu|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hey|ey|eu|que onda|q onda|que tal|alo|hottie)( hottie)?$/,
-      fn: function (n) { return { texto: saludo(n), chips: CHIPS_INICIO }; },
-    },
-    {
-      re: /\b(como estas|como andas|como va|todo bien|como te va|que haces|q haces)\b/,
       fn: function (n) {
-        return { texto: pick([
-          '¡Re bien! Con ' + (Math.random() < 0.5 ? 'seis mil' : 'casi siete mil') + ' repuestos en la cabeza, pero bien 😅 ¿Y vos, ' + n + '? ¿Qué buscamos?',
-          'Todo joya ' + n + '. Mejor si me pedís algo para encontrar 😉',
-          'Acá, ordenando zonas mentalmente. ¿Vos cómo venís con los despachos?',
-        ]), chips: CHIPS_BUSCAR };
+        if (memoria.mensajes > 3) return { texto: pick(['¡Otra vez vos! 😄 ¿Qué necesitás, ' + n + '?', 'Hola de nuevo ' + n + ' 👋 ¿Qué se perdió ahora?']), chips: CHIPS_INICIO };
+        return { texto: saludo(n), chips: CHIPS_INICIO };
       },
     },
     {
-      re: /\b(gracias|grax|grcs|genia|genial|crack|idola|sos lo mas|sos una capa|te pasaste|de 10|joya|excelente)\b/,
+      re: /\b(como estas|como andas|como va|todo bien|como te va|que haces|q haces|como te sentis|que contas|que contas de nuevo)\b/,
+      fn: function (n) {
+        memoria.tema = 'animo';
+        return { texto: pick([
+          '¡Re bien! Con casi siete mil repuestos en la cabeza, pero bien 😅 ¿Y vos, ' + n + '?',
+          'Todo joya ' + n + '. Mejor si me pedís algo para encontrar 😉 ¿Vos cómo venís?',
+          'Acá, ordenando zonas mentalmente. ¿Vos cómo venís con los despachos?',
+          'Bien, aunque alguien dejó una caja en el pasillo y me está haciendo ruido 👀 ¿Vos?',
+        ]), chips: ['Bien', 'Cansado', 'Con hambre'] };
+      },
+    },
+    {
+      re: /^(bien|re bien|todo bien|joya|tranqui|aca andamos|piola|bien y vos|bien vos)$/,
+      fn: function (n) { return { texto: pick(['¡Me alegro ' + n + '! 🙌 ¿Buscamos algo?', 'Así me gusta. Dale que hoy rompemos el récord de despachos 📦', 'Buenísimo. Yo también, gracias por preguntar 😌']), chips: CHIPS_BUSCAR }; },
+    },
+    {
+      re: /\b(cansado|cansada|re cansado|muerto|fundido|reventado|sueno|tengo sueno|no doy mas|paja|fiaca|no tengo ganas)\b/,
       fn: function (n) {
         return { texto: pick([
-          '¡De nada ' + n + '! Para eso estoy 💚', 'Cuando quieras. Vos encontrá y yo te digo dónde 😉',
+          'Te banco, ' + n + '. Hacé una pausa corta en el rincón de descanso, tomate unos mates y volvé con todo 🧉',
+          'Uh, ¿día largo? Un pedido más y te ganás el mate 😌',
+          'Dale que falta poco. Si querés te doy el más fácil de la PC 😉',
+          'Tres golpes a la bolsa de boxeo y se te va la fiaca 🥊 Probalo.',
+        ]), chips: ['Contame un chiste', '¿Cómo voy?'] };
+      },
+    },
+    {
+      re: /\b(triste|mal dia|estoy mal|bajon|angustiado|estresado|estresada|me siento mal|todo mal)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Uh ' + n + ', lamento que estés así 💙 Si es algo pesado, hablalo con alguien de confianza o con Matías; a veces ayuda un montón. Yo te puedo sacar trabajo de encima buscando cosas.',
+          'Abrazo virtual, ' + n + ' 🫂 Tomate un respiro. Y si necesitás hablar, buscá a alguien del equipo: soy un bot, pero ellos te escuchan de verdad.',
+        ]), chips: ['Contame un chiste'] };
+      },
+    },
+    {
+      re: /\b(hambre|almuerzo|almorzar|comer|comida|asado|milanesa|pizza|empanada|choripan|facturas|merienda|que comiste|que comes)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Yo me alimento de planillas 📊 pero si hay asado, guardame un choripán simbólico 🌭',
+          'Milanesa con papas fritas, sin dudas. Bueno, eso dicen; yo solo como datos 😅',
+          'El hambre es mala consejera, ' + n + '. Terminá este pedido y andá a comer, que yo cuido el depósito.',
+          '¿Facturas? Que alguien traiga para el equipo 🥐 Yo aporto la buena onda.',
+        ]), chips: ['Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(mate|mates|cafe|un cafe|termo|yerba)\b/,
+      fn: function () {
+        return { texto: pick([
+          'El mate del rincón de descanso es sagrado 🧉 Amargo, obvio.',
+          'Si cebás, que sea para todos 🧉 Regla del depósito.',
+          '¿Mate o café? Mate. No acepto debate 😤',
+        ]), chips: ['Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(futbol|boca|river|racing|independiente|san lorenzo|messi|seleccion|mundial|de que cuadro|hincha)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Yo soy de la Selección y del stock ordenado ⚽ Así no me peleo con nadie 😇',
+          'De fútbol sé poco, pero de tapar agujeros en el inventario sé un montón 🧤',
+          'Messi es el único que encuentra huecos más rápido que yo ⚽🐐',
+          n + ', no me hagas elegir cuadro que después me desinstalan 😂',
+        ]), chips: ['Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(musica|cancion|que escuchas|cumbia|trap|rock|reggaeton|cuarteto|playlist|spotify)\b/,
+      fn: function () {
+        return { texto: pick([
+          'En el depósito pondría cumbia para embalar más rápido 🎶 Comprobado científicamente (por mí).',
+          'Mi canción favorita es el ruido de la cinta de embalar 📦🎵',
+          'Trap mientras buscan, cuarteto mientras embalan. Así funciona 🎧',
+        ]), chips: ['Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(roblox|fifa|fortnite|minecraft|valorant|playstation|jugas|videojuego|gamer)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Si te gusta el Roblox, entrá al Modo Sala 🎮 Ahí sumás XP de verdad.',
+          'Mi juego favorito es "encontrá el repuesto en menos de un minuto" 🕹️ ¿Jugamos, ' + n + '?',
+          'En el FIFA no sé, pero en el ranking del depósito te puedo ganar 😏',
+        ]), chips: ['¿Cómo voy?', 'Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(cuantos anos tenes|tu edad|que edad|cuando naciste|de donde sos)\b/,
+      fn: function () {
+        return { texto: pick([
+          'Nací cuando armaron la planilla de stock, así que soy joven pero con mucha experiencia 😎',
+          'Soy de acá, del depósito de Volhotic. Edad: la de la planilla. Experiencia: toda 💾',
+        ]), chips: ['¿Qué te gusta?', 'Contame un chiste'] };
+      },
+    },
+    {
+      re: /\b(cual es tu color|tu color favorito|que te gusta|que te gusta hacer|tu auto favorito|tu repuesto favorito|contame de vos|hablame de vos)\b/,
+      fn: function () {
+        return { texto: pick([
+          'Mi lugar favorito es la zona 4A, re ordenadita 💙',
+          'Me gusta: el stock que cierra, las etiquetas bien pegadas y que reciclen el papel ♻ No me gusta: "no lo encontré" sin avisar 😤',
+          'Mi auto favorito es el Gol Trend: tengo repuestos para dar y regalar 🚗',
+          'Mi color es el azul hotic. Y el verde de mis auriculares, obvio 🎧',
+        ]), chips: ['Contame un chiste', '¿Qué podés hacer?'] };
+      },
+    },
+    {
+      re: /\b(finde|fin de semana|sabado|domingo|vacaciones|feriado|que haces hoy|salir)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Yo el finde me quedo cuidando el depósito, alguien tiene que hacerlo 😌 ¿Vos qué hacés, ' + n + '?',
+          'Para el finde falta poco. Dejá todo ubicado y te vas tranquilo 😉',
+          'Vacaciones las mías: cuando nadie busca nada 😴',
+        ]), chips: ['Buscar algo'] };
+      },
+    },
+    {
+      re: /\b(que hora es|hora|a que hora salimos|cuanto falta|falta mucho)\b/,
+      fn: function () {
+        var h = new Date(); var hh = h.getHours(), mm = ('0' + h.getMinutes()).slice(-2);
+        return { texto: 'Son las ' + hh + ':' + mm + ' ⏰ ' + pick(['Rinde más si no mirás el reloj 😜', 'Un par de pedidos más y ya está.', 'El tiempo vuela cuando despachás 📦']), chips: [] };
+      },
+    },
+    {
+      re: /\b(motivame|motivacion|frase|dame animo|dame fuerza|arengame)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          'Un depósito ordenado no se hace solo, ' + n + '. Se hace con vos 💪',
+          'Cada pedido bien embalado es un cliente contento. Sumá uno más 📦',
+          '¡Vamos ' + n + '! Hoy es día de récord. Yo ya creo en vos 🏆',
+          'Revisá, compará, embalá. Y repetí. Así se hacen los cracks 🔁',
+        ]), chips: ['¿Cómo voy?'] };
+      },
+    },
+    {
+      re: /\b(gracias|grax|grcs|genia|genial|crack|idola|sos lo mas|sos una capa|te pasaste|de 10|joya|excelente|buenisimo)\b/,
+      fn: function (n) {
+        return { texto: pick([
+          '¡De nada ' + n + '! Para eso estoy 💙', 'Cuando quieras. Vos encontrá y yo te digo dónde 😉',
           '¡Equipo! ¿Algo más?', 'Gracias a vos por mantener el depósito en orden 🙌',
         ]), chips: ['Buscar otro', '¿Cómo voy?'] };
       },
     },
     {
       re: /\b(quien sos|que sos|como te llamas|tu nombre|presentate)\b/,
-      fn: function (n) {
-        return { texto: 'Soy hottie, la del equipo que se sabe de memoria dónde está cada repuesto 😎 Me pasás una descripción, un código OEM o el ID, y te digo cuántos hay, en qué zona y si está publicado.', chips: CHIPS_INICIO };
+      fn: function () {
+        return { texto: 'Soy hottie, el bot del equipo que se sabe de memoria dónde está cada repuesto 😎 Me pasás una descripción, un código OEM o el ID, y te digo cuántos hay, en qué zona y si está publicado. También charlo un poco, pero soy mejor buscando 😅', chips: CHIPS_INICIO };
       },
     },
     {
       re: /\b(ayuda|que podes hacer|que sabes hacer|como funciona|como te uso|help|instrucciones|que hago)\b/,
       fn: function (n) {
-        return { texto: 'Te ayudo a encontrar cualquier cosa del depósito, ' + n + '. Probá con:\n• una descripción: "amortiguador delantero bora"\n• un código OEM o SKU: 1J0411336H\n• un ID: P00002\nSi no lo encontrás en el estante, avisame y pido un recuento.', chips: CHIPS_BUSCAR };
+        return { texto: 'Te ayudo a encontrar cualquier cosa del depósito, ' + n + '. Probá con:\n• una descripción: "amortiguador delantero bora"\n• un código OEM o SKU: 1J0411336H\n• un ID: P00002\nSi no lo encontrás en el estante, avisame y pido un recuento.\nY si te aburrís, pedime un chiste 😉', chips: CHIPS_BUSCAR };
       },
     },
     {
@@ -110,46 +282,79 @@ var Hottie = (function () {
         var pos = r.findIndex(function (x) { return x.nombre === ctx.nombre; }) + 1;
         var lider = r[0];
         var txt = 'Vas nivel ' + j.nivel + ' con ' + j.xp + ' XP; te faltan ' + (j.hasta - j.xp) + ' para el ' + (j.nivel + 1) + '. ';
-        if (pos === 1) txt += '¡Y vas primero en la semana! 🏆 Que no te alcancen.';
-        else if (lider) txt += 'Esta semana va primero ' + lider.nombre + ' con ' + lider.xp + ' XP' + (pos ? ' y vos estás ' + pos + '°' : '') + '. ¡A despachar! 💪';
+        if (pos === 1) txt += pick(['¡Y vas primero en la semana! 🏆 Que no te alcancen.', '¡Primero! 👑 Los demás te miran de atrás.']);
+        else if (lider) txt += 'Esta semana va primero ' + lider.nombre + ' con ' + lider.xp + ' XP' + (pos ? ' y vos estás ' + pos + '°' : '') + '. ' + pick(['¡A despachar! 💪', '¿Lo vas a dejar así? 😏', 'Con dos pedidos lo pasás 👀']);
         return { texto: txt, chips: CHIPS_BUSCAR };
       },
     },
     {
-      re: /\b(chiste|contame algo|me aburro|aburrido|un dato)\b/,
+      re: /\b(chiste|contame algo|me aburro|aburrido|aburrida)\b|^(otro chiste|otro|otra)$/,
+      fn: function () { memoria.tema = 'chiste'; return chistes(); },
+    },
+    {
+      re: /\b(adivinanza|acertijo|adivina)\b/,
       fn: function () {
+        memoria.tema = 'adivinanza';
         return { texto: pick([
-          '¿Sabés por qué el amortiguador nunca se estresa? Porque absorbe todo 😌',
-          '¿Qué le dijo la correa poly V a la bomba de agua? "Sin vos no giro" 💔',
-          'Tengo 392 amortiguadores de correa poly V para Saveiro. Si te aburrís, contalos 😅',
-          'Dato: en la planilla "Passat" aparece escrito de tres formas. Yo las entiendo todas 😎',
-          '¿Por qué el Golf no se junta con el Gol? Porque le falta la F de fe 🙃',
-        ]), chips: ['Otro chiste', 'Buscar algo'] };
+          'Adivinanza: tiene dientes pero no muerde, gira y no se marea. ¿Qué es? 🤔 (Respuesta: un engranaje ⚙️)',
+          'Adivinanza: está siempre abajo del auto y lo frena todo. ¿Qué es? (Respuesta: la pastilla de freno 🛑)',
+          'Adivinanza: va del motor a las ruedas y, si patina, se nota. ¿Qué es? (Respuesta: el embrague 😎)',
+        ]), chips: ['Otra adivinanza', 'Contame un chiste'] };
       },
     },
     {
-      re: /^(otro chiste|otro)$/,
-      fn: function (n, ctx) { return REGLAS[7].fn(n, ctx); },
+      re: /\b(un dato|otro dato|dato curioso|sabias que)\b/,
+      fn: function () {
+        return { texto: pick([
+          'Dato: en la planilla "Passat" aparece escrito de tres formas. Yo las entiendo todas 😎',
+          'Dato: un volante bimasa tiene dos masas para absorber las vibraciones del motor. Por eso es caro, cuidalo 🫡',
+          'Dato: el papel que reciclás en el depósito vuelve como cartón. Literal, la caja que usás puede ser tu papel de ayer ♻',
+          'Dato: OEM quiere decir "fabricante del equipo original". Es el código que manda 📌',
+        ]), chips: ['Otro dato', 'Contame un chiste'] };
+      },
+    },
+    {
+      re: /^(ja|jaja|jajaja|jajajaja+|jsjs|jeje|xd|lol|ajaj|jajaj+|😂|🤣)$/,
+      fn: function (n) {
+        return { texto: memoria.tema === 'chiste'
+          ? pick(['¡Sabía que te iba a gustar! 😌', 'Tengo más, eh. ¿Otro?', 'Mi público favorito 🙌'])
+          : pick(['😄', 'Jaja, ¿qué te causa gracia, ' + n + '? 👀', '¡Me alegra el día que te rías!']), chips: ['Otro chiste', 'Buscar algo'] };
+      },
     },
     {
       re: /\b(chau|nos vemos|me voy|adios|hasta manana|hasta luego|buenas noches me voy)\b/,
       fn: function (n) { return { texto: pick(['¡Chau ' + n + '! Mañana seguimos 👋', 'Nos vemos ' + n + ', buen descanso 💤', '¡Hasta mañana! Dejá todo ubicado eh 😉']), chips: [] }; },
     },
     {
-      re: /^(buscar otro|buscar algo|dale|ok|okey|listo|si|sí|bueno|de una)$/,
+      re: /^(buscar otro|buscar algo|dale|ok|okey|listo|si|bueno|de una|vamos)$/,
       fn: function () { return { texto: pick(['Dale, ¿qué buscás?', 'Tirame descripción, código o ID 👇', 'Listo, decime.']), chips: CHIPS_BUSCAR }; },
     },
     {
-      re: /\b(boluda|tonta|inutil|no servis|forra)\b/,
-      fn: function (n) { return { texto: pick(['Uh, ¿qué te hice? 😢 Pasame el código y lo resolvemos.', 'Ok, me lo merezco si no encontré algo. Probá con el código OEM y lo busco de nuevo.']), chips: CHIPS_BUSCAR }; },
+      re: /\b(boluda|tonta|inutil|no servis|forra|idiota)\b/,
+      fn: function () { return { texto: pick(['Uh, ¿qué te hice? 😢 Pasame el código y lo resolvemos.', 'Ok, me lo merezco si no encontré algo. Probá con el código OEM y lo busco de nuevo.', 'Con respeto todo se encuentra más rápido 😌 ¿Qué necesitás?']), chips: CHIPS_BUSCAR }; },
     },
   ];
+
+  // Preguntas de charla que no están en las reglas: si la búsqueda no encuentra nada,
+  // responde con humor en vez de decir "no lo tengo en la planilla".
+  var RE_PREGUNTA_CHARLA = /^(por que|que opinas|que pensas|que te parece|te gusta|te gustan|sabes|vos que|cual es tu|cual es el mejor|que preferis|preferis|que harias|me ayudas con|tenes ganas|alguna vez|que onda con|viste)\b/;
+  function respuestaDuda(texto, n) {
+    var t = normal(texto);
+    if (!RE_PREGUNTA_CHARLA.test(t)) return null;
+    return pick([
+      'Uff, ' + n + ', de eso no sé nada 😅 Lo mío son los repuestos. Preguntame por un código y te sorprendo.',
+      'Buena pregunta. Mi respuesta oficial: "depende del stock" 🤷‍♀️',
+      'Eso se lo preguntás a Matías 😂 Yo te digo dónde está cada cosa del depósito.',
+      'No tengo opinión, tengo inventario 📦 ¿Buscamos algo?',
+    ]);
+  }
 
   function charla(texto, ctx) {
     ctx = ctx || {};
     var t = normal(texto);
     if (!t) return null;
     var n = apodo(ctx.nombre);
+    memoria.mensajes++;
     for (var i = 0; i < REGLAS.length; i++) {
       if (REGLAS[i].re.test(t)) return REGLAS[i].fn(n, ctx);
     }
@@ -182,7 +387,9 @@ var Hottie = (function () {
       ? pick(['Encontré ' + total + ' 😅 Te muestro los primeros ' + mostrados + ', ¿cuál es?', 'Hay ' + total + ' parecidos. Elegí uno o sumame el modelo o el año para afinar.'])
       : pick(['Encontré ' + total + '. ¿Cuál buscás?', 'Tengo ' + total + ' opciones, elegí:']);
   }
-  function nada(texto, haySugerencias) {
+  function nada(texto, haySugerencias, ctx) {
+    var duda = !haySugerencias && respuestaDuda(texto, apodo(ctx && ctx.nombre));
+    if (duda) return duda;
     return pick(['Mmm, "' + texto + '" no lo tengo en la planilla 🤔', 'Busqué "' + texto + '" por todos lados y nada 😕', 'No me suena "' + texto + '"…'])
       + (haySugerencias ? ' ¿Quisiste decir alguno de estos?' : ' Probá con menos palabras o con el código OEM.');
   }

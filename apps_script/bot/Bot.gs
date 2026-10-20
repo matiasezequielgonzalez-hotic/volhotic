@@ -866,7 +866,10 @@ function botSalaAvisar(texto) {
 // Avatar de cada persona (hoja Equipo: Foto, Icono)
 // ---------------------------------------------------------------------------
 
-const BOT_COLORES_AVATAR = ['#5ef2c4', '#7fb0ea', '#f2b84b', '#ff8a80', '#c39bf2', '#7fe08a'];
+// Paleta del equipo: un color por persona, los mismos que usan la sala y los retratos.
+const BOT_COLOR_PERSONA = { hottie: '#5ef2c4', facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a' };
+// Para quien no esté en la paleta (gente nueva), uno fijo según el nombre.
+const BOT_COLORES_AVATAR = ['#4d8dff', '#f2b84b', '#a98bff', '#ff7a7a', '#7fe08a', '#8fa2ff'];
 const BOT_MAX_FOTO_BYTES = 300 * 1024;
 
 /**
@@ -877,7 +880,8 @@ function botAvatarPersona_(u) {
   const src = botFotoEquipo_(u.foto);
   if (src) return { tipo: 'foto', src };
   const icono = u.icono && !/^(no|si|sí)$/i.test(u.icono) ? u.icono : '';
-  const color = BOT_COLORES_AVATAR[[...u.nombre].reduce((a, c) => a + c.charCodeAt(0), 0) % BOT_COLORES_AVATAR.length];
+  const color = BOT_COLOR_PERSONA[botNormalizar_(u.nombre).split(' ')[0]] ||
+    BOT_COLORES_AVATAR[[...u.nombre].reduce((a, c) => a + c.charCodeAt(0), 0) % BOT_COLORES_AVATAR.length];
   if (icono) return { tipo: 'icono', texto: icono, color };
   const iniciales = u.nombre.split(/\s+/).map((p) => p[0] || '').join('').slice(0, 2).toUpperCase();
   return { tipo: 'iniciales', texto: iniciales, color };
