@@ -21,7 +21,9 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 
 ## Instalación
 
-1. En tu proyecto de Apps Script, creá `Bot.gs`, `BotUI.html` y `BotAvatar.html` y pegá el contenido.
+1. En tu proyecto de Apps Script, creá un archivo por cada uno de la tabla de arriba, con el mismo
+   nombre (sin la extensión): `Bot` (script) y los HTML `BotUI`, `BotAvatar`, `BotWidget`, `BotSala`,
+   `BotSprites`, `BotEscenas`, `BotVideos` y `BotCharla`. Pegá el contenido de cada uno.
    Todo empieza con `bot`/`BOT` para no chocar con tu código.
 2. **Quién está logueado:** cambiá `botEmailActual_()` en `Bot.gs` para que devuelva el Gmail del
    usuario como lo hace tu app. Por defecto usa `Session.getActiveUser().getEmail()`, que solo
@@ -45,9 +47,11 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 
 ## Reglas que ya trae
 
-- **Línea:** SEX = Marca Sexhotic (solo para los Gmail de `SEX_ADMIN` en Config); Pet = SKU que
-  empieza con `BIO`; Tecnología = SKU que empieza con `TEC`; el resto, Autopartes. Se cambia en
-  `BOT_LINEAS`.
+- **Línea:** si la hoja tiene columna `Linea`, manda esa (Autopartes, Pethotic, Biohotic, Kidhotic,
+  Techotic, Ofihotic). Todo lo de Sexhotic (por línea, cuenta o marca) pasa a `SEX`: lo ven los Gmail de
+  `SEX_ADMIN` en Config y quien entre a la sala sexhotic. con la clave `SEX_CLAVE`. Sin columna `Linea`:
+  Pet = SKU que empieza con `BIO`, Tecnología = SKU que empieza con `TEC`, el resto Autopartes.
+  Se cambia en `BOT_LINEAS`.
 - **Búsqueda por código** si todas las partes de lo escrito tienen números (`1J0411336H`,
   `415 0491 09`, `P00002`). Ignora espacios, guiones, puntos y barras, y acepta códigos parciales.
   Si no encuentra, busca por palabras.
