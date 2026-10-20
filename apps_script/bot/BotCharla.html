@@ -1,6 +1,6 @@
 <script>
 /**
- * La personalidad de Hottie (sin IA): charla, saludos y frases para las búsquedas.
+ * La personalidad de hottie (sin IA): charla, saludos y frases para las búsquedas.
  * La usan el chat (BotUI) y el Modo Sala (BotSala). Para cambiar cómo habla, editá las
  * listas de frases: cada respuesta elige una al azar para no repetirse.
  *
@@ -41,6 +41,21 @@ var Hottie = (function () {
 
   var REGLAS = [
     {
+      // Dónde está lo del pedido en curso (Modo Sala): hottie marca la estantería.
+      re: /\b(mi pedido|lo del pedido|del pedido|donde lo busco|donde esta lo que tengo que buscar|para el pedido)\b/,
+      fn: function (n, ctx) {
+        if (!ctx.pedido) return { texto: 'No tenés un pedido en curso, ' + n + '. Pasá por la PC de pedidos y tomá uno 🖥️', chips: [] };
+        var it = ctx.pedido;
+        return { texto: it.descripcion + ' está en la zona ' + it.zona + (it.piso ? ', piso ' + it.piso : '') + '. Te lo marco 💡 Acordate: compará la etiqueta ' + it.etiqueta + ' antes de llevarlo.', chips: [], accion: 'marcarPedido' };
+      },
+    },
+    {
+      re: /\b(como armo|armar (un )?pedido|como despacho|proceso|los pasos|que pasos|como se embala|como embalo)\b/,
+      fn: function (n) {
+        return { texto: 'Así se arma un pedido, ' + n + ':\n1. Lo ves en la PC\n2. Lo buscás en su zona\n3. Comparás el SKU con la etiqueta\n4. Verificás la cantidad\n5. Revisás que esté sano\n6. Embalás: caja justa → papel → cinta → etiqueta\n7. Al canasto de su envío\n8. Reciclás el papel que sobra ♻', chips: ['¿Dónde está lo de mi pedido?'] };
+      },
+    },
+    {
       // Chamuyo: lo corta con humor y vuelve al laburo.
       re: /\b(te amo|te quiero|sos (muy |re |tan |una )?(linda|hermosa|preciosa|bella|diosa|bombon)|linda|hermosa|diosa|bombon|casate|novia|salis conmigo|un beso|besito|mi amor|bebe|reina)\b/,
       fn: function (n) {
@@ -78,7 +93,7 @@ var Hottie = (function () {
     {
       re: /\b(quien sos|que sos|como te llamas|tu nombre|presentate)\b/,
       fn: function (n) {
-        return { texto: 'Soy Hottie, la del equipo que se sabe de memoria dónde está cada repuesto 😎 Me pasás una descripción, un código OEM o el ID, y te digo cuántos hay, en qué zona y si está publicado.', chips: CHIPS_INICIO };
+        return { texto: 'Soy hottie, la del equipo que se sabe de memoria dónde está cada repuesto 😎 Me pasás una descripción, un código OEM o el ID, y te digo cuántos hay, en qué zona y si está publicado.', chips: CHIPS_INICIO };
       },
     },
     {

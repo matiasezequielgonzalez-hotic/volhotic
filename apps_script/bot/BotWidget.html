@@ -1,5 +1,5 @@
 <!--
-  Ventana emergente de Hottie. Pegala al final de cualquier página de tu app con el
+  Ventana emergente de hottie. Pegala al final de cualquier página de tu app con el
   scriptlet que imprime botWidget() (ver README). No lo escribas acá: Apps Script
   ejecuta los scriptlets aunque estén dentro de un comentario.
   Muestra un botón flotante con su cara; al tocarlo abre el chat en un panel.
@@ -41,11 +41,11 @@
 </style>
 
 <div class="hottie-saludo" id="hottie-saludo" hidden>¿Buscás algo? Preguntame 😉</div>
-<button class="hottie-lanzador" id="hottie-lanzador" type="button" aria-label="Abrir chat con Hottie" aria-expanded="false">
+<button class="hottie-lanzador" id="hottie-lanzador" type="button" aria-label="Abrir chat con hottie" aria-expanded="false">
   <img src="<?!= botInclude('BotAvatar') ?>" alt="">
   <span class="hottie-punto"></span>
 </button>
-<div class="hottie-panel" id="hottie-panel" hidden role="dialog" aria-label="Chat con Hottie"></div>
+<div class="hottie-panel" id="hottie-panel" hidden role="dialog" aria-label="Chat con hottie"></div>
 
 <script>
 (function () {
@@ -58,7 +58,7 @@
     if (si && !panel.firstChild) {
       // El chat se carga recién la primera vez que se abre.
       var f = document.createElement('iframe');
-      f.src = URL_CHAT; f.title = 'Chat con Hottie'; f.allow = 'clipboard-write';
+      f.src = URL_CHAT; f.title = 'Chat con hottie'; f.allow = 'clipboard-write';
       panel.appendChild(f);
     }
     panel.hidden = !si; saludo.hidden = true;

@@ -1,5 +1,5 @@
 /**
- * Hottie, la bot de stock de Volhotic: servidor.
+ * hottie, la bot de stock de Volhotic: servidor.
  *
  * Buscador (sin IA) sobre la hoja General de vol_ml_listings(No_tocar).
  * Funciones públicas que llama la pantalla (BotUI.html) con google.script.run:
@@ -13,6 +13,8 @@
  *   botSumarXP(accion, ref)            -> { ganado, total, nivel } (solo 'encontrado' y 'despachado')
  *   botSalaLatido(estado)              -> sala compartida: { jugadores, eventos, desafio } (cada ~2 s)
  *   botSalaResponder(desafioId, zona)  -> { ok, correcta, mensaje, xp }
+ *   botSalaNuevoPedido(zonas)          -> pedido de práctica: productos reales, etiquetas parecidas, envío
+ *   botSalaCompletarPedido(id, errores)-> { xp } (+25 sin errores, +10 con errores)
  *
  * Integración con tu app:
  *   1. Reemplazá botEmailActual_() por como tu app sabe quién está logueado.
@@ -526,10 +528,12 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
 // XP del Modo Sala
 // ---------------------------------------------------------------------------
 
-const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15, desafio: 20 };
+const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15, desafio: 20, pedido: 25, pedido_err: 10, limpieza: 2 };
 // Lo que la pantalla puede pedir directamente. Reporte y ubicado los suma el servidor
 // al hacer la acción real, así nadie se los puede dar sin hacerla.
-const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado'];
+const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado', 'limpieza'];
+// Topes diarios por acción (además del tope general).
+const BOT_XP_TOPE_ACCION = { limpieza: 20 };
 const BOT_XP_TOPE_DIARIO = 300;
 
 function botHojaXp_() {
@@ -564,9 +568,11 @@ function botTotalesXp_() {
     const fecha = botParsearFecha_(fechaTxt);
     if (fecha && fecha >= lunes) semana[nombre] = (semana[nombre] || 0) + xp;
     if (fechaTxt.startsWith(hoy)) {
-      const d = delDia[nombre] || (delDia[nombre] = { xp: 0, claves: new Set() });
+      const d = delDia[nombre] || (delDia[nombre] = { xp: 0, claves: new Set(), porAccion: {} });
+      const accion = String(t.get(f, 'Accion'));
       d.xp += xp;
-      d.claves.add(t.get(f, 'Accion') + '|' + t.get(f, 'Ref'));
+      d.porAccion[accion] = (d.porAccion[accion] || 0) + xp;
+      d.claves.add(accion + '|' + t.get(f, 'Ref'));
     }
   });
   return { total, semana, delDia };
@@ -580,9 +586,11 @@ function botDarXp_(u, accion, ref) {
   lock.waitLock(15000);
   try {
     const { total, delDia } = botTotalesXp_();
-    const hoy = delDia[u.nombre] || { xp: 0, claves: new Set() };
+    const hoy = delDia[u.nombre] || { xp: 0, claves: new Set(), porAccion: {} };
+    const topeAccion = BOT_XP_TOPE_ACCION[accion];
+    const dentroTopeAccion = !topeAccion || (hoy.porAccion[accion] || 0) + puntos <= topeAccion;
     let ganado = 0;
-    if (!hoy.claves.has(accion + '|' + ref) && hoy.xp + puntos <= BOT_XP_TOPE_DIARIO) {
+    if (!hoy.claves.has(accion + '|' + ref) && hoy.xp + puntos <= BOT_XP_TOPE_DIARIO && dentroTopeAccion) {
       botAgregarFila_(BOT.HOJAS.xp, { Fecha: botAhora_(), Nombre: u.nombre, Accion: accion, Ref: ref, XP: puntos });
       ganado = puntos;
     }
@@ -596,8 +604,8 @@ function botDarXp_(u, accion, ref) {
 function botSumarXP(accion, ref) {
   const u = botExigir_();
   if (!BOT_XP_DESDE_CLIENTE.includes(accion)) throw new Error('Esa XP se gana haciendo la acción.');
-  ref = String(ref || '').trim();
-  if (!botVisibles_(u).some((f) => f.id === ref)) throw new Error('No encontré el producto ' + ref + '.');
+  ref = String(ref || '').trim().slice(0, 40);
+  if (accion !== 'limpieza' && !botVisibles_(u).some((f) => f.id === ref)) throw new Error('No encontré el producto ' + ref + '.');
   return botDarXp_(u, accion, ref);
 }
 
@@ -741,7 +749,7 @@ function botSalaLatido(estado) {
         d = botSalaNuevoDesafio_(u, zonas);
         if (d) {
           botSalaGuardar_('sala_desafio', d);
-          botSalaEvento_('desafio', '⚡ Nuevo desafío: ¿dónde está ' + d.producto.descripcion + (d.producto.marca ? ' (' + d.producto.marca + ')' : '') + '?', 'Hottie');
+          botSalaEvento_('desafio', '⚡ Nuevo desafío: ¿dónde está ' + d.producto.descripcion + (d.producto.marca ? ' (' + d.producto.marca + ')' : '') + '?', 'hottie');
         }
       }
     } finally {
@@ -751,7 +759,7 @@ function botSalaLatido(estado) {
   // Nadie lo encontró en 2 minutos: se cierra y sale otro.
   if (d && !d.fin && ahora - d.inicio > 120000) {
     d.fin = ahora; botSalaGuardar_('sala_desafio', d);
-    botSalaEvento_('desafio', 'Nadie llegó 😅 ' + d.producto.descripcion + ' estaba en la zona ' + d.zona + '.', 'Hottie');
+    botSalaEvento_('desafio', 'Nadie llegó 😅 ' + d.producto.descripcion + ' estaba en la zona ' + d.zona + '.', 'hottie');
   }
 
   const desde = Number(estado.ultimoEvento) || 0;
@@ -791,6 +799,60 @@ function botSalaResponder(desafioId, zona) {
     botSalaEvento_('error', u.nombre + ' probó en la zona ' + zona + ' ❌', u.nombre);
   }
   return resultado;
+}
+
+// ---------- Pedidos de práctica: ver en la PC, buscar, comparar SKU, embalar, canasto ----------
+
+const BOT_ENVIOS = ['Flex', 'Colecta', 'Retiro'];
+
+/** Arma un pedido con productos reales que estén en las zonas de la sala. */
+function botSalaNuevoPedido(zonas) {
+  const u = botExigir_();
+  zonas = (Array.isArray(zonas) ? zonas : []).map(String);
+  const conEtiqueta = botVisibles_(u).filter((f) => f.linea === 'Autopartes' && f.stock > 0 && (f.sku || f.oem));
+  const candidatos = conEtiqueta.filter((f) => zonas.includes(f.zona));
+  if (!candidatos.length) throw new Error('No hay productos con zona en la sala para armar un pedido.');
+  const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
+  const cantidadItems = Math.random() < 0.7 ? 1 : 2;
+  const items = [];
+  while (items.length < cantidadItems) {
+    const f = azar(candidatos);
+    if (items.some((i) => i.id === f.id)) continue;
+    const etiqueta = f.sku || f.oem;
+    // Etiquetas "trampa": productos parecidos (misma primera palabra) para practicar la comparación.
+    const primera = botNormalizar_(f.descripcion).split(' ')[0];
+    let parecidas = conEtiqueta.filter((x) => x.id !== f.id && (x.sku || x.oem) !== etiqueta && botNormalizar_(x.descripcion).startsWith(primera));
+    if (parecidas.length < 2) parecidas = conEtiqueta.filter((x) => x.id !== f.id && (x.sku || x.oem) !== etiqueta);
+    const trampas = [];
+    while (trampas.length < 2 && parecidas.length) {
+      const x = parecidas.splice(Math.floor(Math.random() * parecidas.length), 1)[0];
+      if (!trampas.some((t) => t.etiqueta === (x.sku || x.oem))) trampas.push({ etiqueta: x.sku || x.oem, descripcion: x.descripcion });
+    }
+    items.push({
+      id: f.id, descripcion: f.descripcion, marca: f.marca, zona: f.zona, piso: f.piso, etiqueta,
+      cantidad: f.stock >= 2 && Math.random() < 0.3 ? 2 : 1,
+      danado: Math.random() < 0.2, // a veces la primera unidad viene golpeada
+      trampas,
+    });
+  }
+  const pedido = { id: 'ML-' + Date.now().toString(36).slice(-5).toUpperCase(), items, envio: azar(BOT_ENVIOS), creado: Date.now() };
+  botSalaGuardar_('sala_pedido_' + botNormalizarCodigo_(u.nombre), pedido, 7200);
+  return pedido;
+}
+
+function botSalaCompletarPedido(id, errores) {
+  const u = botExigir_();
+  const clave = 'sala_pedido_' + botNormalizarCodigo_(u.nombre);
+  const pedido = botSalaLeer_(clave, null);
+  if (!pedido || pedido.id !== id) throw new Error('Ese pedido no es tuyo o ya se cerró.');
+  if (Date.now() - pedido.creado < 20000) throw new Error('Muy rápido 😅 Revisá bien el pedido antes de cerrarlo.');
+  CacheService.getScriptCache().remove(clave);
+  errores = Math.max(0, Number(errores) || 0);
+  const xp = botDarXp_(u, errores === 0 ? 'pedido' : 'pedido_err', id);
+  botSalaEvento_('logro', errores === 0
+    ? '✅ ' + u.nombre + ' armó el pedido ' + id + ' perfecto (+' + BOT_XP.pedido + ' XP)'
+    : '📦 ' + u.nombre + ' armó el pedido ' + id + ' con ' + errores + (errores === 1 ? ' error' : ' errores'), u.nombre);
+  return { xp, errores };
 }
 
 /** Eventos que avisa la pantalla (encontró, despachó) para el feed de todos. */
@@ -863,7 +925,7 @@ function botInicio() {
 
 function botPagina() {
   return HtmlService.createTemplateFromFile('BotUI').evaluate()
-    .setTitle('Hottie · Consultas de stock')
+    .setTitle('hottie · Consultas de stock')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     // Para poder abrirse dentro de la ventana emergente (iframe) de tu app.
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);

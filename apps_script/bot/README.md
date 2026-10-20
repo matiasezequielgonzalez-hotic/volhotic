@@ -1,6 +1,6 @@
-# Hottie: kit del bot de stock para Apps Script
+# hottie: kit del bot de stock para Apps Script
 
-Hottie es la compañera del equipo que sabe dónde está cada repuesto. Buscador de stock (sin IA)
+hottie es la compañera del equipo que sabe dónde está cada repuesto. Buscador de stock (sin IA)
 para sumar a la app del equipo, en tres formas: página de chat, **ventana emergente** y
 **Modo Sala** (sala 3D tipo videojuego con XP y ranking). Lee la planilla
 **vol_ml_listings(No_tocar)** en el momento. Diseño completo: ver el documento de diseño del bot.
@@ -13,7 +13,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 | `BotWidget.html` | Ventana emergente (botón flotante + chat) | Archivo HTML `BotWidget` |
 | `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
 | `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
-| `BotCharla.html` | Personalidad de Hottie: charla y frases | Archivo HTML `BotCharla` |
+| `BotCharla.html` | Personalidad de hottie: charla y frases | Archivo HTML `BotCharla` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
 | `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
 
@@ -66,7 +66,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   de `Icono` en un círculo; si tampoco hay, las iniciales con un color fijo por persona. La foto
   tiene que pesar menos de 300 KB (256 px alcanza) y el dueño del script tiene que poder abrirla.
   La primera vez Apps Script pide permiso de Drive.
-- **Personalidad (`BotCharla.html`):** antes de buscar, Hottie reconoce charla: saludos según la
+- **Personalidad (`BotCharla.html`):** antes de buscar, hottie reconoce charla: saludos según la
   hora y con apodo (Facu, Seba, Gabi, Agus), "¿cómo estás?", "gracias", "¿quién sos?", "¿qué podés
   hacer?", "¿cómo voy?" (nivel y ranking, en la sala), chistes de depósito, "chau", y si alguien la
   chamuya lo corta con humor y vuelve al laburo. Las búsquedas también tienen frases que rotan y
@@ -74,7 +74,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   respuesta rápida. Para cambiar cómo habla, editá las listas de frases de ese archivo.
   "Hola hottie, ¿tenés disco de freno para gol?" igual busca: las palabras de charla se ignoran.
 - **Modo Sala (3D, three.js r128 desde cdnjs):** cada uno maneja su figura con WASD/flechas, tocando
-  el piso o arrastrando para girar la cámara. Con **E** habla con Hottie en su terminal; le pregunta
+  el piso o arrastrando para girar la cámara. Con **E** habla con hottie en su terminal; le pregunta
   por un repuesto (búsqueda real) y ella marca con un rayo de luz la estantería de esa zona. Ahí
   elige "¡Lo encontré!" (+10 XP, lleva la caja a Despacho: +5 XP) o "No estaba" (crea el recuento:
   +3 XP). Si el producto no tiene ubicación y la persona tiene `ubicar`, lo deja en una estantería
@@ -84,9 +84,21 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   (`botSalaLatido`) y recibe dónde están los demás, que se ven caminar con su figura y su nombre.
   Todo vive en `CacheService` (no toca la planilla). Si la pestaña queda en segundo plano, deja de
   avisar. Con **T** (o el botón "💬 Decir") le escribís al equipo: sale como globito y en el feed.
-  Lo que le preguntás a Hottie también se ve como globito. El feed muestra quién entra, chats,
+  Lo que le preguntás a hottie también se ve como globito. El feed muestra quién entra, chats,
   hallazgos y despachos.
-- **Desafío ⚡ (aprender jugando):** Hottie elige un repuesto real de las zonas de la sala y
+- **Pedidos (el proceso real, en juego):** en la **PC de pedidos** se toma un pedido de práctica
+  armado por el servidor con productos reales (1 o 2 ítems, cantidad y tipo de envío Flex, Colecta o
+  Retiro). Pasos: buscarlo en su zona (si no sabés, preguntale a hottie "¿dónde está lo de mi
+  pedido?" y te marca el rack) → **comparar el SKU con la etiqueta** entre 3 cajas con códigos
+  parecidos → **verificar la cantidad** → **revisar el estado** (a veces viene golpeada: hay que
+  separarla) → en la **mesa de armado**, embalar en orden: caja del tamaño justo → proteger con papel →
+  cinta → etiqueta → **canasto** del envío. Cada error tiene su explicación. Pedido perfecto +25 XP,
+  con errores +10; el servidor solo paga pedidos que él entregó y no antes de 20 segundos.
+- **Orden y limpieza:** cada tanto aparecen papeles y cartones tirados, y el embalaje deja papel
+  sobrante. Se juntan (hasta 3) y se llevan al tacho de **reciclaje**: +2 XP cada uno, hasta 20 XP
+  por día.
+- **Bolsa de boxeo 🥊** para descargar: no da XP, hottie comenta cada 10 golpes.
+- **Desafío ⚡ (aprender jugando):** hottie elige un repuesto real de las zonas de la sala y
   pregunta a todos dónde está, sin decir la zona. El primero que llega a la estantería correcta y
   aprieta E gana +20 XP; si errás, todos lo ven y esperás 10 s. A los 30 s hay pista (piso o
   código), al minuto se revela la zona y a los 2 minutos se cierra. 15 s después sale otro. El
@@ -96,7 +108,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 - **XP:** se guarda en la hoja `BotXP` (la crea el bot). El servidor no da XP dos veces por la misma
   acción y producto en el día (el desafío da +20 una vez por desafío), tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
   acción real. Nivel n desde 50·(n-1)² XP (50, 200, 450…).
-- **Figuras:** `BotSprites.html` tiene a Hottie, Facundo, Gabriel y Sebastián. El nombre del
+- **Figuras:** `BotSprites.html` tiene a hottie, Facundo, Gabriel y Sebastián. El nombre del
   jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una
   silueta de su color con la inicial. Para sumar a Agustín: agregá `"agustin": "data:image/webp;base64,..."`.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.

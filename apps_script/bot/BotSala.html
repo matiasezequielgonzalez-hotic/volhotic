@@ -42,8 +42,9 @@
   #ranking li span:first-child::before { content: attr(data-pos) "  "; color: var(--muted); font-family: var(--display); }
 
   /* Misión */
-  #mision { left: 50%; bottom: 14px; transform: translateX(-50%); padding: 10px 16px; max-width: min(560px, calc(100vw - 24px)); text-align: center; }
-  #mision p { margin: 0; font-size: 14px; }
+  /* Misión / checklist del pedido: a la derecha, debajo del ranking. */
+  #mision { right: 12px; top: 132px; padding: 10px 14px; width: 300px; text-align: left; }
+  #mision p { margin: 0; font-size: 13px; line-height: 1.55; }
   #mision b { color: var(--mint); }
 
   /* Acción cercana */
@@ -74,7 +75,9 @@
   /* Chat con el equipo (tecla T) */
   #decir { left: 50%; bottom: 150px; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px; width: min(460px, calc(100vw - 24px)); }
   #decir input { flex: 1; min-width: 0; background: #111316; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; font: inherit; }
-  @media (max-width: 720px) { #ayuda { display: none; } #ranking { display: none; } #mision { bottom: 10px; }
+  @media (max-width: 720px) { #ayuda { display: none; } #ranking { display: none; }
+    #mision { top: auto; right: auto; left: 50%; bottom: 10px; transform: translateX(-50%); width: calc(100vw - 24px); }
+    #accion { bottom: 190px; }
     #desafio { top: 70px; max-width: calc(100vw - 24px); } #feed { width: calc(100vw - 24px); bottom: 84px; max-height: 120px; } #conectados { display: none; } }
 
   /* Diálogo con la bot */
@@ -116,20 +119,20 @@
 
 <div id="jugador" class="hud caja"></div>
 <div id="ranking" class="hud caja"><h3>RANKING SEMANAL</h3><ol id="lista-ranking"></ol></div>
-<div id="mision" class="hud caja"><h3>MISIÓN</h3><p id="texto-mision">Andá a hablar con Hottie a la terminal.</p></div>
+<div id="mision" class="hud caja"><h3>MISIÓN</h3><p id="texto-mision">Andá a hablar con hottie a la terminal.</p></div>
 <div id="accion" class="hud" hidden></div>
 <button id="btn-decir" class="hud btn" type="button">💬 Decir</button>
-<a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">Chat con Hottie</a>
+<a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">Chat con hottie</a>
 <div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> interactuar · <b>T</b> hablarle al equipo</div>
 <div id="conectados" class="hud caja">Conectando…</div>
 <div id="desafio" class="hud caja" hidden></div>
 <div id="feed" class="hud"></div>
 <form id="decir" class="hud caja" hidden><input id="decir-texto" maxlength="140" autocomplete="off" placeholder="Decile algo al equipo…" aria-label="Mensaje para el equipo"><button class="btn" type="submit">Enviar</button></form>
 
-<div id="dialogo" class="caja" hidden role="dialog" aria-label="Hablar con Hottie">
+<div id="dialogo" class="caja" hidden role="dialog" aria-label="Hablar con hottie">
   <img class="retrato" id="retrato" alt="">
   <div style="min-width:0">
-    <div class="nombre">Hottie<span>.</span></div>
+    <div class="nombre">hottie<span>.</span></div>
     <div class="texto" id="texto-bot"></div>
     <div id="opciones"></div>
     <form id="form-bot">
@@ -194,6 +197,12 @@ const demo = {
     return { ok: true, correcta: false, mensaje: 'No, no está en la zona ' + zona + ' ❌ Probá en otra en 10 s.' };
   },
   botSalaAvisar: () => true,
+  botSalaNuevoPedido: () => ({
+    id: 'ML-DEMO' + Math.floor(Math.random() * 90 + 10), envio: 'Flex', creado: Date.now(),
+    items: [{ id: 'P06306', descripcion: 'Volante Bimasa Vento 1.9', marca: 'Luk', zona: '3', piso: '1', etiqueta: '415 0491 09', cantidad: 1, danado: true,
+      trampas: [{ etiqueta: '415 0581 09', descripcion: 'Volante Bimasa Vento 2.0 TDI' }, { etiqueta: '415 0431 10', descripcion: 'Volante Bimasa Vento 2.0 TDI' }] }],
+  }),
+  botSalaCompletarPedido: (id, errores) => ({ errores, xp: { ganado: errores ? 10 : 25, total: 145, nivel: 2, desde: 50, hasta: 200 } }),
   botNoLoEncontre: () => ({ ok: true, mensaje: 'Listo, pedí un recuento.', xp: { ganado: 3, total: 133, nivel: 2, desde: 50, hasta: 200 } }),
   botOpcionesUbicacion: () => ({ pisos: ['-1', '0', '1', '2', '3'], zonas: ['1', '2', '3', '4A'] }),
   botCorregirUbicacion: () => ({ ok: true, mensaje: 'Ubicación actualizada.', xp: { ganado: 15, total: 148, nivel: 2, desde: 50, hasta: 200 } }),
@@ -363,7 +372,7 @@ function calco(w, d, x, z, textura, rot = 0) {
   return m;
 }
 const texLinea = (color) => lienzo(64, 64, (g, w, h) => { g.fillStyle = color; g.fillRect(0, 0, w, h); ruido(g, w, h, 300, 0.25, false); });
-// Pasillo amarillo frente a los racks y camino azul hasta Hottie.
+// Pasillo amarillo frente a los racks y camino azul hasta hottie.
 calco(ANCHO - 2, 0.12, 0, -FONDO / 2 + 2.6, texLinea('#e8b923'));
 calco(ANCHO - 2, 0.12, 0, -FONDO / 2 + 5.0, texLinea('#e8b923'));
 calco(0.12, FONDO - 6, -6.5, 1, texLinea('rgba(21,56,190,.9)'));
@@ -413,7 +422,7 @@ for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) {
   const conductor = caja(0.7, 0.5, 0.6, 0x26292f, x, 1.15, z + 0.3);
   conductor.material.roughness = 0.8;
 })(9.5, -1);
-for (const [x, z, alto] of [[11.4, 2.6, 3], [11.4, 4.0, 2], [-11.6, 8.4, 2]]) {
+for (const [x, z, alto] of [[11.4, -5.6, 3], [11.4, -4.2, 2], [-11.6, 8.4, 2]]) {
   for (let n = 0; n < alto; n++) {
     pallet(x, n * 0.62, z);
     cajaCarton(0.5, 0.42, 0.5, x - 0.26, n * 0.62 + 0.14, z - 0.25); cajaCarton(0.5, 0.42, 0.5, x + 0.26, n * 0.62 + 0.14, z - 0.25);
@@ -467,7 +476,7 @@ function estanteria(zona, i, total) {
   estanterias[normal(zona)] = { zona, color, x, z, frente };
 }
 
-// ---------- Terminal de Hottie ----------
+// ---------- Terminal de hottie ----------
 const TERMINAL = new THREE.Vector3(-9.5, 0, 3);
 caja(2.8, 0.06, 1.2, 0xf4f5f7, TERMINAL.x, 0.95, TERMINAL.z - 0.45, { rough: 0.3 });
 caja(2.6, 0.95, 0.08, 0xe3e6ea, TERMINAL.x, 0, TERMINAL.z - 0.95, { rough: 0.4 });
@@ -503,8 +512,8 @@ const luzBot = new THREE.PointLight(col(0x4d6bff), 1.6, 8); luzBot.position.set(
 const aroHottie = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: col(0x8fa2ff), toneMapped: false }));
 aroHottie.rotation.x = -Math.PI / 2; aroHottie.position.set(TERMINAL.x + 0.2, 0.05, TERMINAL.z + 0.9); scene.add(aroHottie);
 
-// ---------- Despacho ----------
-const DESPACHO = new THREE.Vector3(9, 0, 6.5);
+// ---------- Mesa de armado de pedidos ----------
+const DESPACHO = new THREE.Vector3(9, 0, 6.5); // la mesa de armado
 caja(3.2, 0.08, 1.4, 0xb98a55, DESPACHO.x, 0.86, DESPACHO.z, { rough: 0.8 });
 for (const [dx, dz] of [[-1.5, -0.6], [1.5, -0.6], [-1.5, 0.6], [1.5, 0.6]]) caja(0.08, 0.86, 0.08, 0x9aa0aa, DESPACHO.x + dx, 0, DESPACHO.z + dz, { metal: 0.6, rough: 0.35 });
 caja(3.0, 0.05, 1.2, 0x9aa0aa, DESPACHO.x, 0.25, DESPACHO.z, { metal: 0.6, rough: 0.4 });
@@ -517,7 +526,7 @@ calco(4.4, 2.8, DESPACHO.x, DESPACHO.z + 0.4, lienzo(256, 160, (g, W, H) => {
 }));
 const cartelDesp = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.62), new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(512, 144, (g, W, H) => {
   g.fillStyle = '#1538be'; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#fff'; g.font = '700 84px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('despacho.', W / 2, 96);
+  g.fillStyle = '#fff'; g.font = '700 84px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('armado.', W / 2, 96);
 }) }));
 cartelDesp.position.set(DESPACHO.x, 3.4, DESPACHO.z); scene.add(cartelDesp);
 for (const dx of [-0.9, 0.9]) caja(0.015, 1.8, 0.015, 0x15171b, DESPACHO.x + dx, 3.7, DESPACHO.z, { sombra: false });
@@ -526,7 +535,90 @@ function sumarCajaDespacho() { // cajas de cartón que se van apilando en la mes
   const n = pilaDespacho.length, colN = n % 4, fila = Math.floor(n / 4) % 4;
   pilaDespacho.push(cajaCarton(0.6, 0.42, 0.6, DESPACHO.x - 1.1 + colN * 0.72, 0.9 + fila * 0.43, DESPACHO.z, (Math.random() - 0.5) * 0.2));
 }
-for (let i = 0; i < 5; i++) sumarCajaDespacho();
+// Sobre la mesa: cajas desarmadas, rollos de cinta y papel para proteger.
+caja(0.9, 0.12, 0.7, 0, DESPACHO.x - 1.0, 0.9, DESPACHO.z, { material: mat('carton1', () => new THREE.MeshStandardMaterial({ map: texturasCaja[1], roughness: 0.9 })) });
+caja(0.9, 0.06, 0.7, 0, DESPACHO.x - 1.0, 1.02, DESPACHO.z, { material: mat('carton2', () => new THREE.MeshStandardMaterial({ map: texturasCaja[2], roughness: 0.9 })) });
+const matCinta = new THREE.MeshStandardMaterial({ color: col(0xd8b46a), roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.92 });
+for (const dx of [0.05, 0.35]) {
+  const r = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.045, 10, 24), matCinta);
+  r.rotation.x = Math.PI / 2; r.position.set(DESPACHO.x + dx, 0.95, DESPACHO.z + 0.35); r.castShadow = true; scene.add(r);
+}
+const rolloPapel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 20), new THREE.MeshStandardMaterial({ color: col(0xf1ede4), roughness: 0.95 }));
+rolloPapel.rotation.z = Math.PI / 2; rolloPapel.position.set(DESPACHO.x + 0.9, 1.06, DESPACHO.z - 0.3); rolloPapel.castShadow = true; scene.add(rolloPapel);
+const pilaArmada = [];
+function sumarCajaArmada() { // cajas ya embaladas sobre la mesa
+  const n = pilaArmada.length % 3;
+  pilaArmada.push(cajaCarton(0.5, 0.36, 0.5, DESPACHO.x + 1.0 + (n % 3) * 0.0, 0.9 + n * 0.37, DESPACHO.z - 0.1, (Math.random() - 0.5) * 0.2));
+}
+
+// PC de pedidos: ahí aparecen los pedidos para armar.
+const PC = new THREE.Vector3(5.4, 0, 7.6);
+caja(1.6, 0.06, 0.8, 0xf4f5f7, PC.x, 0.78, PC.z, { rough: 0.3 });
+for (const dx of [-0.75, 0.75]) caja(0.06, 0.78, 0.75, 0xe3e6ea, PC.x + dx, 0, PC.z, { rough: 0.4 });
+solidos.push({ minX: PC.x - 0.85, maxX: PC.x + 0.85, minZ: PC.z - 0.45, maxZ: PC.z + 0.45 });
+caja(0.06, 0.25, 0.06, 0x191b1f, PC.x, 0.84, PC.z - 0.2);
+const canvasPC = document.createElement('canvas'); canvasPC.width = 512; canvasPC.height = 300;
+const texPC = new THREE.CanvasTexture(canvasPC); texPC.encoding = THREE.sRGBEncoding;
+function dibujarPC(lineas) {
+  const g = canvasPC.getContext('2d');
+  g.fillStyle = '#191b1f'; g.fillRect(0, 0, 512, 300);
+  g.fillStyle = '#1538be'; g.fillRect(0, 0, 512, 56);
+  g.fillStyle = '#fff'; g.font = '700 34px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('pedidos.', 18, 40);
+  g.font = '500 24px "Helvetica Neue", Helvetica, Arial, sans-serif';
+  (lineas || ['Tocá E para ver', 'el próximo pedido']).forEach((l, i) => { g.fillStyle = i ? '#a4a8b1' : '#ffffff'; g.fillText(l, 18, 100 + i * 36); });
+  texPC.needsUpdate = true;
+}
+dibujarPC();
+const monitorPC = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.56), new THREE.MeshBasicMaterial({ map: texPC, toneMapped: false }));
+monitorPC.position.set(PC.x, 1.38, PC.z - 0.18); scene.add(monitorPC);
+caja(1.0, 0.6, 0.04, 0x191b1f, PC.x, 1.08, PC.z - 0.22);
+caja(0.55, 0.02, 0.18, 0x2a2d33, PC.x, 0.84, PC.z + 0.12); // teclado
+
+// Canastos por tipo de envío, contra la pared derecha.
+const CANASTOS = {};
+[['Flex', '#1538be', 3.9], ['Colecta', '#ffb52e', 5.5], ['Retiro', '#3fa9ff', 7.1]].forEach(([nombre, color, z]) => {
+  const x = 12.0;
+  const matCanasto = new THREE.MeshStandardMaterial({ color: col(color), roughness: 0.5 });
+  caja(0.95, 0.06, 1.15, 0, x, 0, z, { material: matCanasto });
+  for (const [dx, dz, w, d] of [[-0.45, 0, 0.05, 1.15], [0.45, 0, 0.05, 1.15], [0, -0.55, 0.95, 0.05], [0, 0.55, 0.95, 0.05]]) caja(w, 0.6, d, 0, x + dx, 0, z + dz, { material: matCanasto });
+  solidos.push({ minX: x - 0.5, maxX: x + 0.5, minZ: z - 0.6, maxZ: z + 0.6 });
+  const cartelC = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto(nombre.toLowerCase() + '.', '#ffffff', { fondo: color }), depthWrite: false, toneMapped: false }));
+  cartelC.scale.set(1.5, 0.38, 1); cartelC.position.set(x, 1.25, z); scene.add(cartelC);
+  CANASTOS[nombre] = { nombre, color, x, z, frente: new THREE.Vector3(x - 1.15, 0, z), cajas: 0 };
+});
+function sumarCajaCanasto(c) {
+  const n = c.cajas++ % 4;
+  cajaCarton(0.36, 0.26, 0.36, c.x - 0.18 + (n % 2) * 0.36, 0.08 + Math.floor(n / 2) * 0.27, c.z - 0.2 + (n % 2) * 0.3, Math.random());
+}
+
+// Tacho de reciclaje de papel y cartón.
+const RECICLAJE = new THREE.Vector3(7.7, 0, 9.0);
+(function () {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.36, 0.95, 24), new THREE.MeshStandardMaterial({ color: col(0x1f9e57), roughness: 0.5 }));
+  m.position.set(RECICLAJE.x, 0.475, RECICLAJE.z); m.castShadow = true; scene.add(m);
+  const tapa = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 24), new THREE.MeshStandardMaterial({ color: col(0x17804a), roughness: 0.5 }));
+  tapa.position.set(RECICLAJE.x, 0.98, RECICLAJE.z); scene.add(tapa);
+  const cartelR = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('♻ reciclaje', '#ffffff', { fondo: '#1f9e57' }), depthWrite: false, toneMapped: false }));
+  cartelR.scale.set(1.5, 0.38, 1); cartelR.position.set(RECICLAJE.x, 1.55, RECICLAJE.z); scene.add(cartelR);
+  solidos.push({ minX: RECICLAJE.x - 0.45, maxX: RECICLAJE.x + 0.45, minZ: RECICLAJE.z - 0.45, maxZ: RECICLAJE.z + 0.45 });
+})();
+
+// Bolsa de boxeo para descargar 🥊
+const BOLSA = new THREE.Vector3(-10.8, 0, -4.6);
+const bolsaPivote = new THREE.Group(); bolsaPivote.position.set(BOLSA.x, 3.0, BOLSA.z); scene.add(bolsaPivote);
+(function () {
+  caja(0.12, 3.2, 0.12, 0x191b1f, BOLSA.x - 0.9, 0, BOLSA.z, { metal: 0.5 });
+  caja(1.0, 0.1, 0.1, 0x191b1f, BOLSA.x - 0.45, 3.05, BOLSA.z, { metal: 0.5 });
+  caja(0.9, 0.06, 0.9, 0x191b1f, BOLSA.x - 0.9, 0, BOLSA.z);
+  const cadena = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.5, 6), new THREE.MeshStandardMaterial({ color: col(0x9aa0aa), metalness: 0.8, roughness: 0.3 }));
+  cadena.position.y = -0.25; bolsaPivote.add(cadena);
+  const cuero = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.25, 24), new THREE.MeshStandardMaterial({ color: col(0xc0262d), roughness: 0.45 }));
+  cuero.position.y = -1.15; cuero.castShadow = true; bolsaPivote.add(cuero);
+  for (const y of [-0.62, -1.68]) { const aro = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.12, 24), new THREE.MeshStandardMaterial({ color: col(0x191b1f), roughness: 0.5 })); aro.position.y = y; bolsaPivote.add(aro); }
+  calco(1.8, 1.8, BOLSA.x, BOLSA.z, lienzo(128, 128, (g) => { g.fillStyle = 'rgba(25,27,31,.95)'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#c0262d'; g.lineWidth = 6; g.strokeRect(6, 6, 116, 116); }));
+  solidos.push({ minX: BOLSA.x - 0.35, maxX: BOLSA.x + 0.35, minZ: BOLSA.z - 0.35, maxZ: BOLSA.z + 0.35 });
+})();
+const bolsaFisica = { angulo: 0, vel: 0, eje: new THREE.Vector3(1, 0, 0) };
 
 // ---------- Polvo en el aire ----------
 const polvo = (() => {
@@ -713,7 +805,7 @@ function textoMision(html) { $('texto-mision').innerHTML = html; }
 
 function ponerMision(m) {
   mision = m;
-  if (!m) { marcar(null); textoMision('Andá a hablar con Hottie a la terminal.'); return; }
+  if (!m) { if (typeof pintarPedido === 'function' && jugador) pintarPedido(); else { marcar(null); textoMision('Andá a hablar con hottie a la terminal.'); } return; }
   if (m.tipo === 'buscar') {
     marcar(m.est.frente, m.est.color);
     textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">Zona ${esc(m.ficha.zona)}</b>${m.ficha.piso ? ' · piso ' + esc(m.ficha.piso) : ''}`);
@@ -738,7 +830,7 @@ function botDice(texto) {
   escribiendo = setInterval(() => { el.textContent = texto.slice(0, ++i); if (i >= texto.length) clearInterval(escribiendo); }, 16);
   decir(bot, texto.length > 70 ? texto.slice(0, 68) + '…' : texto, 4);
 }
-function ctxCharla() { return { nombre: ini.jugador.nombre, jugador: ini.jugador, ranking: ini.ranking }; }
+function ctxCharla() { return { nombre: ini.jugador.nombre, jugador: ini.jugador, ranking: ini.ranking, pedido: pedido && pedido.fase === 'buscar' ? pedido.items[pedido.idx] : null }; }
 function chips(lista) {
   $('chips').innerHTML = '';
   (lista || []).forEach((t) => {
@@ -772,6 +864,12 @@ function lineaFicha(f) {
 
 function elegirFicha(f) {
   opciones([]); chips([]);
+  // Si es lo del pedido en curso, se marca dentro del pedido (sin misión aparte).
+  if (pedido && pedido.fase === 'buscar' && pedido.items[pedido.idx].id === f.id) {
+    pedido.ayuda = true; pintarPedido();
+    botDice(`Es lo de tu pedido 😉 Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Te lo marco. Compará la etiqueta ${pedido.items[pedido.idx].etiqueta} antes de llevarlo.`);
+    return;
+  }
   if (!f.zona) {
     if (ini.puedeUbicar) {
       botDice(`Uh, ${f.descripcion} anda perdido, no tiene ubicación 😬. ¿Me hacés el favor? Agarralo y llevalo a la estantería donde lo vas a dejar. Te doy +${ini.xpPorAccion.ubicado} XP 😉`);
@@ -789,7 +887,11 @@ function elegirFicha(f) {
 async function preguntar(texto) {
   opciones([]); chips([]);
   const charla = Hottie.charla(texto, ctxCharla());
-  if (charla) { botDice(charla.texto); chips(charla.chips); return; }
+  if (charla) {
+    botDice(charla.texto); chips(charla.chips);
+    if (charla.accion === 'marcarPedido' && pedido) { pedido.ayuda = true; pintarPedido(); }
+    return;
+  }
   botDice(Hottie.buscando());
   try {
     const r = await servidor('botBuscar', texto, 'Todo');
@@ -818,19 +920,29 @@ let accionActual = null;
 let menu = null; // menú abierto junto a una estantería o despacho: { pos }
 function accionCercana() {
   const pos = jugador.grupo.position;
-  if (pos.distanceTo(bot.grupo.position) < 3.0) return { texto: 'Hablar con Hottie', fn: abrirDialogo };
+  if (pos.distanceTo(bot.grupo.position) < 3.0) return { texto: 'Hablar con hottie', fn: abrirDialogo };
+  // Con papeles en la mano, reciclar va primero (el tacho está cerca de la PC).
+  if (enMano && pos.distanceTo(RECICLAJE) < 1.9) return { texto: `♻ Reciclar (${enMano})`, fn: reciclar };
+  const pa = accionPedido(pos);
   if (desafio && !desafio.ganador) {
     const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
     if (est && !(mision && mision.tipo === 'buscar' && mision.est === est) && !(mision && mision.tipo === 'ubicar')) {
-      return { texto: `⚡ Desafío: está en la zona ${est.zona}`, fn: () => responderDesafio(est) };
+      const da = { texto: `⚡ Desafío: está en la zona ${est.zona}`, fn: () => responderDesafio(est) };
+      // Con pedido en curso en el mismo rack, se elige qué hacer.
+      if (pa) return { texto: 'Pedido o desafío', fn: () => opcionesFlotantes('¿Qué hacés acá?', [{ texto: '📦 ' + pa.texto, fn: pa.fn }, { texto: da.texto, fn: da.fn }]) };
+      return da;
     }
   }
   if (mision && mision.tipo === 'buscar' && pos.distanceTo(mision.est.frente) < 1.8) return { texto: 'Buscar en la estantería', fn: buscarEnEstanteria };
-  if (mision && mision.tipo === 'despachar' && pos.distanceTo(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6)) < 2.2) return { texto: 'Despachar', fn: despachar };
+  if (pa) return pa;
   if (mision && mision.tipo === 'ubicar') {
     const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
     if (est) return { texto: `Dejarlo en Zona ${est.zona}`, fn: () => ubicarEn(est) };
   }
+  const basura = basuras.find((b) => pos.distanceTo(b.mesh.position) < 1.3);
+  if (basura && enMano < 3) return { texto: 'Juntar ' + basura.tipo, fn: () => juntarBasura(basura) };
+  if (enMano && pos.distanceTo(RECICLAJE) < 1.9) return { texto: `♻ Reciclar (${enMano})`, fn: reciclar };
+  if (pos.distanceTo(BOLSA) < 1.8) return { texto: 'Pegarle a la bolsa 🥊', fn: golpearBolsa };
   return null;
 }
 function pintarAccion() {
@@ -840,27 +952,21 @@ function pintarAccion() {
     menu = null; accionActual = null; $('accion').hidden = true;
   }
   const a = dialogoAbierto ? null : accionCercana();
-  if ((a && a.texto) === (accionActual && accionActual.texto)) return;
+  const mismoTexto = (a && a.texto) === (accionActual && accionActual.texto);
+  // Siempre se guarda la acción nueva: con el mismo texto puede apuntar a otro rack u otro papel.
   accionActual = a;
+  if (mismoTexto) return;
   $('accion').hidden = !a;
   if (a) $('accion').innerHTML = `<button type="button"><kbd>E</kbd>${esc(a.texto)}</button>`;
-  if (a) $('accion').firstChild.onclick = () => a.fn();
+  if (a) $('accion').firstChild.onclick = () => accionActual && accionActual.fn && accionActual.fn();
 }
 
 function buscarEnEstanteria() {
   const f = mision.ficha;
   opcionesFlotantes(`¿Está ${f.descripcion}?`, [
-    { texto: '¡Lo encontré!', fn: async () => { ponerCarga(jugador, true); decir(jugador, pick(['¡Acá está!', 'Lo tengo 💪', 'Encontrado'])); ponerMision({ tipo: 'despachar', ficha: f }); ganarXp(await servidor('botSumarXP', 'encontrado', f.id).catch(() => null)); servidor('botSalaAvisar', 'encontró ' + f.descripcion + ' 📦').catch(() => {}); } },
+    { texto: '¡Lo encontré!', fn: async () => { decir(jugador, pick(['¡Acá está!', 'Lo tengo 💪', 'Encontrado'])); ponerMision(null); decir(bot, 'Bien ahí 💚 Si es para un pedido, tomalo desde la PC de pedidos.', 4); ganarXp(await servidor('botSumarXP', 'encontrado', f.id).catch(() => null)); servidor('botSalaAvisar', 'encontró ' + f.descripcion + ' 📦').catch(() => {}); } },
     { texto: 'No estaba', sec: true, fn: async () => { decir(jugador, 'No está…'); ponerMision(null); const r = await servidor('botNoLoEncontre', f.id).catch(() => null); decir(bot, 'Gracias por avisar, pedí un recuento 🙏', 3); if (r) ganarXp(r.xp); } },
   ]);
-}
-
-async function despachar() {
-  const f = mision.ficha;
-  ponerCarga(jugador, false); sumarCajaDespacho(); ponerMision(null);
-  decir(bot, pick([`¡Crack ${ini.jugador.nombre}! Otro despachado`, 'Así me gusta 💚', '¡Vamos que llegamos a la meta!']), 3);
-  ganarXp(await servidor('botSumarXP', 'despachado', f.id).catch(() => null));
-  servidor('botSalaAvisar', 'despachó ' + f.descripcion + ' 🚚').catch(() => {});
 }
 
 async function ubicarEn(est) {
@@ -893,6 +999,252 @@ function opcionesFlotantes(titulo, botones) {
 // ---------------------------------------------------------------------------
 // Controles
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Pedidos: ver en la PC → buscar → comparar SKU → cantidad → estado → embalar → canasto
+// ---------------------------------------------------------------------------
+let pedido = null; // { id, items, envio, idx, fase: 'buscar'|'armar'|'canasto', errores, pasoArmado }
+const PASOS_ARMADO = [
+  { clave: 'caja', texto: '📦 Elegir caja' },
+  { clave: 'proteger', texto: '🧻 Proteger con papel' },
+  { clave: 'cinta', texto: '🧷 Cerrar con cinta' },
+  { clave: 'etiqueta', texto: '🏷️ Pegar etiqueta' },
+];
+const LECCION_ARMADO = {
+  caja: 'Primero va la caja: sin caja no hay dónde proteger nada 📦',
+  proteger: 'Antes de cerrar, protegé la pieza con papel. ¡Si no, se rompe en el viaje! 🧻',
+  cinta: 'La cinta va después de proteger y antes de la etiqueta 🧷',
+  etiqueta: 'La etiqueta va al final, sobre la caja cerrada 🏷️',
+};
+// Tamaño de caja según la pieza (lo más grande del pedido manda).
+function tamanoCaja(items) {
+  const orden = { S: 0, M: 1, L: 2 };
+  return items.map((i) => {
+    const d = normal(i.descripcion);
+    if (/volante|amortiguador|disco|paragolpe|radiador|alternador|burro|caja|electroventilador|optica|faro|espejo|puerta/.test(d)) return 'L';
+    if (/bujia|junta|reten|sensor|bulbo|abrazadera|abrasadera|tornillo|buje|filtro|fusible|clip/.test(d)) return 'S';
+    return 'M';
+  }).sort((a, b) => orden[b] - orden[a])[0];
+}
+
+function errorPedido(leccion) {
+  pedido.errores++;
+  decir(bot, leccion, 5);
+  toast('❌');
+}
+
+function pintarPedido() {
+  if (!pedido) { textoMision('Pasá por la <b>PC de pedidos</b> para tomar uno, o hablale a hottie.'); marcar(null); return; }
+  const item = pedido.items[pedido.idx];
+  const pasos = [
+    ['Ver pedido en la PC', true],
+    ...pedido.items.map((it, i) => [`Buscar ${it.cantidad}× <b>${esc(it.descripcion)}</b> · etiqueta <b>${esc(it.etiqueta)}</b>`, i < pedido.idx || pedido.fase !== 'buscar']),
+    ['Embalar en la mesa de armado', pedido.fase === 'canasto'],
+    [`Dejar en el canasto <b>${esc(pedido.envio)}</b>`, false],
+  ];
+  const actual = pasos.findIndex((p) => !p[1]);
+  textoMision(`<span style="color:var(--muted)">Pedido ${esc(pedido.id)} · ${pedido.errores ? pedido.errores + ' error(es)' : 'sin errores'}</span><br>` +
+    pasos.map((p, i) => `${p[1] ? '✅' : i === actual ? '▶️' : '⬜'} ${p[0]}`).join('<br>'));
+  if (pedido.fase === 'armar') marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
+  else if (pedido.fase === 'canasto') marcar(CANASTOS[pedido.envio].frente, CANASTOS[pedido.envio].color);
+  else if (pedido.ayuda) marcar(estanterias[normal(item.zona)].frente, '#8fa2ff'); // solo si le preguntó a hottie
+  else marcar(null);
+}
+
+async function verPC() {
+  if (pedido) {
+    opcionesFlotantes(`Pedido ${pedido.id} · envío ${pedido.envio}: ` + pedido.items.map((i) => `${i.cantidad}× ${i.descripcion} (${i.etiqueta})`).join(' + '), [
+      { texto: 'Sigo con este', fn: () => {} },
+      { texto: 'Abandonar', sec: true, fn: () => { pedido = null; ponerCarga(jugador, false); dibujarPC(); pintarPedido(); decir(bot, 'Ok, lo dejamos. Tomá otro cuando quieras.', 3); } },
+    ]);
+    return;
+  }
+  dibujarPC(['Buscando pedido…']);
+  try {
+    const p = await servidor('botSalaNuevoPedido', ini.zonas);
+    pedido = Object.assign(p, { idx: 0, fase: 'buscar', errores: 0, pasoArmado: 0, ayuda: false });
+    dibujarPC([`Pedido ${p.id} · ${p.envio}`, ...p.items.map((i) => `${i.cantidad}× ${i.descripcion.slice(0, 30)}`), ...p.items.map((i) => `SKU ${i.etiqueta}`)]);
+    decir(jugador, 'Tomo el pedido ' + p.id, 3);
+    decir(bot, pick(['¡Pedido nuevo! Fijate el SKU y andá a buscarlo. Si no sabés dónde está, preguntame 😉', 'Arrancamos: buscalo, compará la etiqueta, contá y revisá el estado 💪']), 5);
+    pintarPedido();
+  } catch (e) { dibujarPC(['No pude traer pedidos', String(e.message || e).slice(0, 34)]); }
+}
+
+function accionPedido(pos) {
+  if (pos.distanceTo(PC) < 1.9) return { texto: pedido ? 'Ver mi pedido en la PC' : 'Ver pedidos en la PC', fn: verPC };
+  if (!pedido) return null;
+  if (pedido.fase === 'buscar') {
+    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
+    if (est) return { texto: 'Buscar el producto del pedido acá', fn: () => buscarParaPedido(est) };
+  }
+  if (pedido.fase === 'armar' && pos.distanceTo(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.4)) < 2.2) return { texto: 'Embalar el pedido', fn: armarPedido };
+  if (pedido.fase === 'canasto') {
+    const c = Object.values(CANASTOS).find((k) => pos.distanceTo(k.frente) < 1.3);
+    if (c) return { texto: `Dejar en canasto ${c.nombre}`, fn: () => dejarEnCanasto(c) };
+  }
+  return null;
+}
+
+function buscarParaPedido(est) {
+  const item = pedido.items[pedido.idx];
+  if (normal(est.zona) !== normal(item.zona)) {
+    errorPedido(`Acá en la zona ${est.zona} no está 🤔 Mirá bien el pedido o preguntame dónde está.`);
+    return;
+  }
+  compararEtiqueta(item);
+}
+
+function compararEtiqueta(item) {
+  const opciones = [item.etiqueta, ...item.trampas.map((t) => t.etiqueta)].sort(() => Math.random() - 0.5);
+  opcionesFlotantes(`Compará con el pedido: ¿qué caja tiene la etiqueta ${item.etiqueta}?`, opciones.map((et) => ({
+    texto: '🏷️ ' + et,
+    fn: () => {
+      if (et !== item.etiqueta) {
+        const t = item.trampas.find((x) => x.etiqueta === et);
+        errorPedido(`Ojo: esa etiqueta es ${et}${t ? ' (' + t.descripcion + ')' : ''}. El pedido pide ${item.etiqueta}. Compará el código completo, dígito por dígito.`);
+        setTimeout(() => compararEtiqueta(item), 400);
+      } else verificarCantidad(item);
+    },
+  })));
+}
+
+function verificarCantidad(item) {
+  opcionesFlotantes(`SKU correcto ✅ ¿Cuántas unidades lleva el pedido?`, [1, 2, 3].map((n) => ({
+    texto: n + (n === 1 ? ' unidad' : ' unidades'),
+    fn: () => {
+      if (n !== item.cantidad) { errorPedido(`El pedido pide ${item.cantidad}. Siempre contá antes de embalar 🔢`); setTimeout(() => verificarCantidad(item), 400); }
+      else revisarEstado(item);
+    },
+  })));
+}
+
+function revisarEstado(item) {
+  const texto = item.danado
+    ? 'Revisás la pieza: la caja está abollada y la pieza tiene un golpe. ¿Cómo está?'
+    : 'Revisás la pieza: caja sana, sin golpes ni rayones. ¿Cómo está?';
+  opcionesFlotantes(texto, [
+    { texto: '✔ Está bien', fn: () => {
+      if (item.danado) errorPedido('Estaba golpeada 😬 Si sale así, vuelve. Siempre revisá el estado antes de embalar.');
+      else decir(bot, 'Perfecto, sana 👌', 2);
+      tomarItem(item);
+    } },
+    { texto: '✖ Está dañada', sec: true, fn: () => {
+      if (item.danado) { decir(bot, '¡Bien visto! 👀 La separás, avisás y tomás otra unidad sana.', 4); servidor('botSalaAvisar', `separó una unidad dañada de ${item.descripcion} 👀`).catch(() => {}); }
+      else errorPedido('Estaba bien, no hacía falta descartarla. Revisá con calma 🙂');
+      tomarItem(item);
+    } },
+  ]);
+}
+
+function tomarItem(item) {
+  ponerCarga(jugador, true);
+  decir(jugador, `${item.cantidad}× ${item.descripcion} ✔`, 3);
+  pedido.idx++; pedido.ayuda = false;
+  if (pedido.idx >= pedido.items.length) {
+    pedido.fase = 'armar';
+    setTimeout(() => decir(bot, '¡Tenés todo! Llevalo a la mesa de armado para embalarlo 📦', 4), 600);
+  } else setTimeout(() => decir(bot, 'Uno listo. Falta ' + pedido.items[pedido.idx].descripcion + ' 💪', 4), 600);
+  pintarPedido();
+}
+
+function armarPedido() {
+  const siguiente = PASOS_ARMADO[pedido.pasoArmado];
+  if (!siguiente) return;
+  const botones = PASOS_ARMADO.slice().sort(() => Math.random() - 0.5).filter((p, i, arr) => PASOS_ARMADO.indexOf(p) >= pedido.pasoArmado);
+  opcionesFlotantes(`Embalaje (paso ${pedido.pasoArmado + 1} de 4): ¿qué hacés ahora?`, botones.map((p) => ({
+    texto: p.texto,
+    fn: () => {
+      if (p.clave !== siguiente.clave) { errorPedido(LECCION_ARMADO[siguiente.clave]); setTimeout(armarPedido, 400); return; }
+      if (p.clave === 'caja') return elegirCaja();
+      avanzarArmado();
+    },
+  })));
+}
+
+function elegirCaja() {
+  const justa = tamanoCaja(pedido.items);
+  opcionesFlotantes('¿Qué tamaño de caja?', ['S', 'M', 'L'].map((t) => ({
+    texto: { S: 'Chica (S)', M: 'Mediana (M)', L: 'Grande (L)' }[t],
+    fn: () => {
+      if (t !== justa) {
+        errorPedido(t === 'L' || (t === 'M' && justa === 'S') ? 'Muy grande: la pieza baila y se golpea, y gastamos cartón de más 📦' : 'Muy chica: no entra o queda apretada sin lugar para protegerla 📦');
+        setTimeout(elegirCaja, 400); return;
+      }
+      avanzarArmado();
+    },
+  })));
+}
+
+function avanzarArmado() {
+  pedido.pasoArmado++;
+  if (pedido.pasoArmado < PASOS_ARMADO.length) { setTimeout(armarPedido, 250); return; }
+  sumarCajaArmada();
+  soltarBasura(new THREE.Vector3(DESPACHO.x + (Math.random() - 0.5) * 1.5, 0, DESPACHO.z + 1.3), 'papel sobrante');
+  pedido.fase = 'canasto';
+  decir(bot, `¡Embalado! Quedó papel sobrante: juntalo y reciclalo ♻ Y el paquete va al canasto ${pedido.envio}.`, 5);
+  pintarPedido();
+}
+
+async function dejarEnCanasto(c) {
+  if (c.nombre !== pedido.envio) { errorPedido(`Ese canasto es ${c.nombre}; este pedido sale por ${pedido.envio}. Si va al canasto equivocado, no llega 🚚`); return; }
+  const p = pedido; pedido = null;
+  ponerCarga(jugador, false); sumarCajaCanasto(c); dibujarPC(); pintarPedido();
+  try {
+    const r = await servidor('botSalaCompletarPedido', p.id, p.errores);
+    ganarXp(r.xp);
+    toast(p.errores ? `📦 Pedido listo · ${p.errores} error(es)` : '✅ ¡Pedido perfecto!');
+    decir(bot, p.errores ? `Listo, despachado. Tuviste ${p.errores} error(es): la próxima sale perfecto 💪` : pick(['¡Pedido perfecto! Así se trabaja 💚', `${Hottie.apodo(ini.jugador.nombre)}, sos una máquina 🏆`]), 4);
+  } catch (e) { decir(bot, e.message || String(e), 5); }
+}
+
+// ---------- Orden y limpieza ----------
+const basuras = [];
+let enMano = 0;
+function soltarBasura(pos, tipo) {
+  const papel = tipo !== 'cartón tirado';
+  const mesh = papel
+    ? new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), new THREE.MeshStandardMaterial({ color: col(0xf1ede4), roughness: 0.95, flatShading: true }))
+    : new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.03, 0.45), mat('carton3', () => new THREE.MeshStandardMaterial({ map: texturasCaja[3], roughness: 0.9 })));
+  mesh.position.set(pos.x, papel ? 0.15 : 0.02, pos.z); mesh.castShadow = true; scene.add(mesh);
+  basuras.push({ mesh, tipo });
+}
+function lugarLibre() {
+  for (let i = 0; i < 30; i++) {
+    const x = (Math.random() - 0.5) * (ANCHO - 4), z = -2 + Math.random() * 10;
+    if (!chocaria(x, z)) return new THREE.Vector3(x, 0, z);
+  }
+  return new THREE.Vector3(0, 0, 4);
+}
+setInterval(() => { if (basuras.length < 4 && !document.hidden) soltarBasura(lugarLibre(), Math.random() < 0.6 ? 'papel tirado' : 'cartón tirado'); }, 40000);
+function juntarBasura(b) {
+  scene.remove(b.mesh); basuras.splice(basuras.indexOf(b), 1); enMano++;
+  decir(jugador, enMano === 1 ? 'Lo junto 🧹' : `Llevo ${enMano}`, 2);
+  if (enMano === 1) decir(bot, 'Eso, orden y limpieza 🧹 Llevalo al tacho de reciclaje ♻', 3);
+}
+async function reciclar() {
+  const n = enMano; enMano = 0;
+  decir(jugador, '♻ Reciclado', 2);
+  let total = 0;
+  for (let i = 0; i < n; i++) {
+    const r = await servidor('botSumarXP', 'limpieza', 'L' + Date.now().toString(36) + i).catch(() => null);
+    if (r && r.ganado) { total += r.ganado; ganarXp(r); }
+  }
+  decir(bot, total ? '¡Gracias! El depósito limpio rinde el doble 💚' : 'Gracias por reciclar 💚 (por hoy ya sumaste todo el XP de limpieza)', 3);
+}
+
+// ---------- Bolsa de boxeo ----------
+let golpes = 0;
+try { golpes = Number(localStorage.getItem('hottie-golpes')) || 0; } catch (e) { /* sin storage */ }
+function golpearBolsa() {
+  const desde = new THREE.Vector3().subVectors(BOLSA, jugador.grupo.position).setY(0).normalize();
+  bolsaFisica.eje.set(desde.z, 0, -desde.x).normalize();
+  bolsaFisica.vel += 2.2 + Math.random();
+  golpes++;
+  try { localStorage.setItem('hottie-golpes', String(golpes)); } catch (e) { /* sin storage */ }
+  decir(jugador, pick(['¡PUM! 🥊', '¡Tomá! 💥', '¡Uno-dos! 🥊']), 1.2);
+  if (golpes % 10 === 0) decir(bot, pick([`¡${golpes} golpes! Ya descargaste, ahora a armar pedidos 😅`, 'Tranqui campeón, el pedido no se arma solo 😏', 'Buena técnica 🥊 ¿Volvemos al laburo?']), 4);
+}
+
 function abrirDecir() { $('decir').hidden = false; setTimeout(() => $('decir-texto').focus(), 30); }
 $('btn-decir').onclick = abrirDecir;
 $('decir').addEventListener('submit', (ev) => {
@@ -982,7 +1334,7 @@ function pintarDesafio(d) {
   $('desafio').innerHTML = d.ganador
     ? `<h3>DESAFÍO TERMINADO</h3><p>🏆 <b>${esc(d.ganador)}</b> lo encontró en la zona ${esc(d.zona)}</p><small>En unos segundos sale otro…</small>`
     : `<h3>⚡ DESAFÍO · +20 XP AL PRIMERO</h3><p>¿Dónde está <b>${esc(d.producto.descripcion)}</b>${d.producto.marca ? ' (' + esc(d.producto.marca) + ')' : ''}?</p>
-       <small>${d.zona ? 'Hottie lo dice: zona ' + esc(d.zona) : d.pista ? '💡 Pista: ' + esc(d.pista) : 'Corré a la estantería y apretá E · pista en ' + Math.max(0, 30 - d.segundos) + ' s'}</small>`;
+       <small>${d.zona ? 'hottie lo dice: zona ' + esc(d.zona) : d.pista ? '💡 Pista: ' + esc(d.pista) : 'Corré a la estantería y apretá E · pista en ' + Math.max(0, 30 - d.segundos) + ' s'}</small>`;
 }
 
 async function latido() {
@@ -1066,6 +1418,10 @@ function tick() {
     flecha.position.y = 2.6 + Math.sin(t * 3) * 0.18; flecha.rotation.y = t * 1.5;
   }
   aroHottie.rotation.z = t * 0.8;
+  // Bolsa de boxeo: péndulo amortiguado.
+  bolsaFisica.vel += -bolsaFisica.angulo * 18 * dt; bolsaFisica.vel *= Math.pow(0.35, dt); bolsaFisica.angulo += bolsaFisica.vel * dt;
+  bolsaPivote.setRotationFromAxisAngle(bolsaFisica.eje, bolsaFisica.angulo);
+  basuras.forEach((b) => { b.mesh.rotation.y += dt * 0.4; });
   aroHottie.material.opacity = 1;
   if (!reduce && Math.floor(t * 4) !== tick.ultimoHolo) { tick.ultimoHolo = Math.floor(t * 4); dibujarHolo(t); }
   if (!reduce) {
@@ -1088,14 +1444,14 @@ $('retrato').src = BOT_AVATAR;
 servidor('botSalaInicio').then((datos) => {
   ini = datos;
   ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
-  bot = crearPersonaje('Hottie', '#8fa2ff', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
+  bot = crearPersonaje('hottie', '#8fa2ff', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
   jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 6));
   latido(); setInterval(latido, 2000);
-  pintarJugador(); pintarRanking(); ponerMision(null);
+  pintarJugador(); pintarRanking(); ponerMision(null); pintarPedido();
   setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);
   $('cargando').hidden = true;
   // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
-  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z) };
+  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z) => estanterias[normal(z)].frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position) };
   requestAnimationFrame(tick);
 }).catch((e) => { $('cargando').textContent = e.message || String(e); });
 })();
