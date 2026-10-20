@@ -80,8 +80,21 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   +3 XP). Si el producto no tiene ubicación y la persona tiene `ubicar`, lo deja en una estantería
   eligiendo el piso (+15 XP). Hay nivel, barra de XP y ranking semanal. Las estanterías son las 8
   zonas con más productos. Los compañeros con figura andan por la sala.
+- **Sala compartida:** cada pantalla le avisa al servidor dónde está cada 2 segundos
+  (`botSalaLatido`) y recibe dónde están los demás, que se ven caminar con su figura y su nombre.
+  Todo vive en `CacheService` (no toca la planilla). Si la pestaña queda en segundo plano, deja de
+  avisar. Con **T** (o el botón "💬 Decir") le escribís al equipo: sale como globito y en el feed.
+  Lo que le preguntás a Hottie también se ve como globito. El feed muestra quién entra, chats,
+  hallazgos y despachos.
+- **Desafío ⚡ (aprender jugando):** Hottie elige un repuesto real de las zonas de la sala y
+  pregunta a todos dónde está, sin decir la zona. El primero que llega a la estantería correcta y
+  aprieta E gana +20 XP; si errás, todos lo ven y esperás 10 s. A los 30 s hay pista (piso o
+  código), al minuto se revela la zona y a los 2 minutos se cierra. 15 s después sale otro. El
+  servidor decide quién ganó (con lock), así que no hay empates ni trampas.
+- **Estética hotic.:** grafito `#191B1F`, azul cobalto `#1538BE`, blanco y grotesca bold
+  (Helvetica/Arial). Azul claro `#8FA2FF` para texto azul sobre grafito.
 - **XP:** se guarda en la hoja `BotXP` (la crea el bot). El servidor no da XP dos veces por la misma
-  acción y producto en el día, tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
+  acción y producto en el día (el desafío da +20 una vez por desafío), tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
   acción real. Nivel n desde 50·(n-1)² XP (50, 200, 450…).
 - **Figuras:** `BotSprites.html` tiene a Hottie, Facundo, Gabriel y Sebastián. El nombre del
   jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una

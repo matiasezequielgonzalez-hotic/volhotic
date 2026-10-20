@@ -11,6 +11,8 @@
  *   botInicio()                        -> { nombre, avatar, lineas, puedeUbicar, verPrecios }
  *   botSalaInicio()                    -> datos del Modo Sala: jugador, XP, nivel, zonas, ranking
  *   botSumarXP(accion, ref)            -> { ganado, total, nivel } (solo 'encontrado' y 'despachado')
+ *   botSalaLatido(estado)              -> sala compartida: { jugadores, eventos, desafio } (cada ~2 s)
+ *   botSalaResponder(desafioId, zona)  -> { ok, correcta, mensaje, xp }
  *
  * Integración con tu app:
  *   1. Reemplazá botEmailActual_() por como tu app sabe quién está logueado.
@@ -80,7 +82,16 @@ function botEmailActual_() {
 function botUsuario_() {
   const email = String(botEmailActual_() || '').trim().toLowerCase();
   if (!email) throw new Error('No pudimos identificarte. Entrá con tu Gmail.');
+  // La sala pregunta cada 2 segundos: el usuario se guarda 5 minutos en caché.
+  const cache = CacheService.getScriptCache();
+  const guardado = cache.get('bot_u_' + email);
+  if (guardado) return JSON.parse(guardado);
+  const u = botLeerUsuario_(email);
+  cache.put('bot_u_' + email, JSON.stringify(u), 300);
+  return u;
+}
 
+function botLeerUsuario_(email) {
   const equipo = botTabla_(BOT.HOJAS.equipo);
   const fila = equipo.filas.find((f) => String(equipo.get(f, 'Email')).trim().toLowerCase() === email);
   if (!fila || String(equipo.get(fila, 'Activo')).trim().toUpperCase() === 'NO') {
@@ -515,7 +526,7 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
 // XP del Modo Sala
 // ---------------------------------------------------------------------------
 
-const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15 };
+const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15, desafio: 20 };
 // Lo que la pantalla puede pedir directamente. Reporte y ubicado los suma el servidor
 // al hacer la acción real, así nadie se los puede dar sin hacerla.
 const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado'];
@@ -616,6 +627,177 @@ function botSalaInicio() {
     lineas: botInicio().lineas, puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,
     xpPorAccion: BOT_XP,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Sala compartida: posiciones, chat, feed y desafíos
+// ---------------------------------------------------------------------------
+// Todo vive en CacheService (memoria compartida del script, sin tocar la planilla).
+
+const BOT_SALA = {
+  VIGENCIA_JUGADOR: 12,     // segundos sin latido para dejar de mostrar a alguien
+  MAX_EVENTOS: 25,
+  PAUSA_ENTRE_DESAFIOS: 15, // segundos entre que alguien gana y sale el próximo
+  PISTA_SEGUNDOS: 30,
+  REVELAR_SEGUNDOS: 60,
+  ESPERA_ERROR: 10,         // segundos de castigo por responder mal
+  MAX_TEXTO: 140,
+};
+
+function botSalaClave_(nombre) { return 'sala_j_' + botNormalizarCodigo_(nombre); }
+
+function botSalaLeer_(clave, porDefecto) {
+  const v = CacheService.getScriptCache().get(clave);
+  return v ? JSON.parse(v) : porDefecto;
+}
+function botSalaGuardar_(clave, valor, segundos) {
+  CacheService.getScriptCache().put(clave, JSON.stringify(valor), segundos || 21600);
+}
+
+/** Agrega un evento al feed de la sala (con lock: lo escriben varios a la vez). */
+function botSalaEvento_(tipo, texto, quien) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(5000);
+  try {
+    const eventos = botSalaLeer_('sala_eventos', []);
+    const ultimo = eventos.length ? eventos[eventos.length - 1].id : 0;
+    eventos.push({ id: ultimo + 1, ts: Date.now(), tipo, texto: String(texto).slice(0, 200), quien: quien || '' });
+    botSalaGuardar_('sala_eventos', eventos.slice(-BOT_SALA.MAX_EVENTOS));
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Producto al azar con zona entre las de la sala, para el desafío. */
+function botSalaNuevoDesafio_(u, zonas) {
+  const candidatos = botVisibles_(u).filter((f) => f.zona && zonas.includes(f.zona) && f.stock > 0 && f.linea === 'Autopartes');
+  if (!candidatos.length) return null;
+  const f = candidatos[Math.floor(Math.random() * candidatos.length)];
+  return {
+    id: 'D' + Date.now().toString(36), inicio: Date.now(), ganador: '', fin: 0,
+    producto: { id: f.id, descripcion: f.descripcion, marca: f.marca, piso: f.piso, oem: f.oem },
+    zona: f.zona, intentos: {},
+  };
+}
+
+/** Lo que ve cada jugador del desafío: la zona solo aparece como pista o al final. */
+function botSalaDesafioVisible_(d) {
+  if (!d) return null;
+  const seg = (Date.now() - d.inicio) / 1000;
+  const vista = { id: d.id, producto: { descripcion: d.producto.descripcion, marca: d.producto.marca }, segundos: Math.floor(seg), ganador: d.ganador };
+  if (d.ganador || seg >= BOT_SALA.REVELAR_SEGUNDOS) vista.zona = d.zona;
+  else if (seg >= BOT_SALA.PISTA_SEGUNDOS) {
+    vista.pista = d.producto.piso ? 'Está en el piso ' + d.producto.piso + ' de su estantería.' : 'Su código OEM empieza con ' + String(d.producto.oem || d.producto.descripcion).slice(0, 3) + '.';
+  }
+  return vista;
+}
+
+function botSalaLatido(estado) {
+  const u = botExigir_();
+  estado = estado || {};
+  const ahora = Date.now();
+  const yo = {
+    nombre: u.nombre,
+    x: Number(estado.x) || 0, z: Number(estado.z) || 0, mira: estado.mira < 0 ? -1 : 1,
+    carga: !!estado.carga, ts: ahora,
+  };
+  const anterior = botSalaLeer_(botSalaClave_(u.nombre), {});
+  if (estado.dice && String(estado.dice).trim()) {
+    yo.dice = String(estado.dice).trim().slice(0, BOT_SALA.MAX_TEXTO);
+    yo.diceId = (anterior.diceId || 0) + 1;
+    yo.diceTs = ahora;
+    if (estado.diceAlEquipo) botSalaEvento_('chat', yo.dice, u.nombre);
+  } else if (anterior.dice && ahora - anterior.diceTs < 5000) {
+    Object.assign(yo, { dice: anterior.dice, diceId: anterior.diceId, diceTs: anterior.diceTs });
+  }
+  botSalaGuardar_(botSalaClave_(u.nombre), yo, 60);
+
+  // Lista de nombres que alguna vez entraron (para leer a todos de una).
+  let lista = botSalaLeer_('sala_lista', []);
+  if (!lista.includes(u.nombre)) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(5000);
+    try {
+      lista = botSalaLeer_('sala_lista', []);
+      if (!lista.includes(u.nombre)) { lista.push(u.nombre); botSalaGuardar_('sala_lista', lista); }
+    } finally {
+      lock.releaseLock();
+    }
+    botSalaEvento_('entra', u.nombre + ' entró a la sala', u.nombre);
+  }
+  const todos = CacheService.getScriptCache().getAll(lista.map(botSalaClave_));
+  const jugadores = Object.values(todos).map((v) => JSON.parse(v))
+    .filter((j) => j.nombre !== u.nombre && ahora - j.ts < BOT_SALA.VIGENCIA_JUGADOR * 1000);
+
+  // Desafío: si no hay uno en curso (o el último terminó hace rato), sale otro.
+  let d = botSalaLeer_('sala_desafio', null);
+  const zonas = Array.isArray(estado.zonas) ? estado.zonas.map(String) : [];
+  if ((!d || (d.fin && ahora - d.fin > BOT_SALA.PAUSA_ENTRE_DESAFIOS * 1000)) && zonas.length) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(5000);
+    try {
+      d = botSalaLeer_('sala_desafio', null);
+      if (!d || (d.fin && ahora - d.fin > BOT_SALA.PAUSA_ENTRE_DESAFIOS * 1000)) {
+        d = botSalaNuevoDesafio_(u, zonas);
+        if (d) {
+          botSalaGuardar_('sala_desafio', d);
+          botSalaEvento_('desafio', '⚡ Nuevo desafío: ¿dónde está ' + d.producto.descripcion + (d.producto.marca ? ' (' + d.producto.marca + ')' : '') + '?', 'Hottie');
+        }
+      }
+    } finally {
+      lock.releaseLock();
+    }
+  }
+  // Nadie lo encontró en 2 minutos: se cierra y sale otro.
+  if (d && !d.fin && ahora - d.inicio > 120000) {
+    d.fin = ahora; botSalaGuardar_('sala_desafio', d);
+    botSalaEvento_('desafio', 'Nadie llegó 😅 ' + d.producto.descripcion + ' estaba en la zona ' + d.zona + '.', 'Hottie');
+  }
+
+  const desde = Number(estado.ultimoEvento) || 0;
+  const eventos = botSalaLeer_('sala_eventos', []).filter((e) => e.id > desde);
+  return { jugadores, eventos, desafio: botSalaDesafioVisible_(d), ahora };
+}
+
+function botSalaResponder(desafioId, zona) {
+  const u = botExigir_();
+  zona = String(zona || '').trim();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let resultado;
+  try {
+    const d = botSalaLeer_('sala_desafio', null);
+    if (!d || d.id !== desafioId) return { ok: false, mensaje: 'Ese desafío ya terminó.' };
+    if (d.ganador) return { ok: false, mensaje: d.ganador + ' llegó primero 😅 Era la zona ' + d.zona + '.' };
+    const ultimoError = d.intentos[u.nombre] || 0;
+    const espera = BOT_SALA.ESPERA_ERROR * 1000 - (Date.now() - ultimoError);
+    if (espera > 0) return { ok: false, mensaje: 'Esperá ' + Math.ceil(espera / 1000) + ' s para volver a intentar.' };
+    if (botNormalizarCodigo_(zona) === botNormalizarCodigo_(d.zona)) {
+      d.ganador = u.nombre; d.fin = Date.now();
+      botSalaGuardar_('sala_desafio', d);
+      resultado = { ok: true, correcta: true, mensaje: '¡Bien! Era la zona ' + d.zona + ' 🏆' };
+    } else {
+      d.intentos[u.nombre] = Date.now();
+      botSalaGuardar_('sala_desafio', d);
+      resultado = { ok: true, correcta: false, mensaje: 'No, no está en la zona ' + zona + ' ❌ Probá en otra en 10 s.' };
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  if (resultado.correcta) {
+    resultado.xp = botDarXp_(u, 'desafio', desafioId);
+    botSalaEvento_('gana', '🏆 ' + u.nombre + ' encontró ' + botSalaLeer_('sala_desafio', {}).producto.descripcion + ' en la zona ' + zona + ' (+' + BOT_XP.desafio + ' XP)', u.nombre);
+  } else {
+    botSalaEvento_('error', u.nombre + ' probó en la zona ' + zona + ' ❌', u.nombre);
+  }
+  return resultado;
+}
+
+/** Eventos que avisa la pantalla (encontró, despachó) para el feed de todos. */
+function botSalaAvisar(texto) {
+  const u = botExigir_();
+  botSalaEvento_('logro', u.nombre + ' ' + String(texto || '').slice(0, 120), u.nombre);
+  return true;
 }
 
 // ---------------------------------------------------------------------------

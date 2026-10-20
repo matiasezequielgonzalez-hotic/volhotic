@@ -4,12 +4,14 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   :root {
-    --bg: #070a0a; --panel: rgba(10, 15, 14, .88); --line: #22302c; --fg: #eef4f2; --muted: #8fa29c;
-    --mint: #5ef2c4; --gold: #f2c230;
-    --display: "Chakra Petch", "Arial Narrow", sans-serif; --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    /* Estética hotic.: grafito, azul cobalto y blanco. */
+    --bg: #191b1f; --panel: rgba(25, 27, 31, .9); --line: #34373f; --fg: #ffffff; --muted: #a4a8b1;
+    --mint: #8fa2ff;   /* azul claro: texto y bordes sobre grafito */
+    --azul: #1538be;   /* azul de marca: rellenos */
+    --gold: #f2c230;
+    --display: "Helvetica Neue", Helvetica, Arial, sans-serif; --body: "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -24,15 +26,15 @@
   #jugador { top: 12px; left: 12px; display: flex; gap: 10px; align-items: center; padding: 8px 14px 8px 8px; }
   #jugador .foto { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font: 700 18px var(--display); flex-shrink: 0; }
   #jugador .foto img { width: 100%; height: 100%; border-radius: 50%; }
-  #jugador b { font: 700 16px var(--display); letter-spacing: .03em; }
-  #jugador .nivel { font: 600 11px var(--display); color: var(--gold); letter-spacing: .08em; }
+  #jugador b { font: 700 17px var(--display); letter-spacing: -.02em; }
+  #jugador .nivel { font: 700 11px var(--display); color: var(--mint); letter-spacing: .06em; }
   .barra { width: 150px; height: 7px; border-radius: 99px; background: #1b2523; overflow: hidden; margin-top: 4px; }
-  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--mint), #b6ffe8); box-shadow: 0 0 10px var(--mint); transition: width .6s; }
+  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--azul), var(--mint)); transition: width .6s; }
   #jugador small { color: var(--muted); font-size: 11px; }
 
   /* Ranking */
   #ranking { top: 12px; right: 12px; padding: 10px 12px; min-width: 190px; }
-  #ranking h3, #mision h3 { margin: 0 0 6px; font: 700 11px var(--display); letter-spacing: .14em; color: var(--muted); }
+  #ranking h3, #mision h3 { margin: 0 0 6px; font: 700 11px var(--display); letter-spacing: .08em; color: var(--muted); }
   #ranking ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
   #ranking li { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
   #ranking li.yo { color: var(--mint); font-weight: 600; }
@@ -46,47 +48,65 @@
   /* Acción cercana */
   #accion { left: 50%; bottom: 92px; transform: translateX(-50%); }
   #accion button, .btn {
-    font: 700 14px var(--display); letter-spacing: .05em; color: #052b20; background: var(--mint); border: 0; border-radius: 8px;
-    padding: 10px 16px; cursor: pointer; box-shadow: 0 0 18px rgba(94, 242, 196, .45);
+    font: 700 14px var(--display); color: #fff; background: var(--azul); border: 0; border-radius: 6px;
+    padding: 10px 16px; cursor: pointer; box-shadow: 0 6px 18px rgba(21, 56, 190, .45);
   }
-  #accion kbd { background: #052b20; color: var(--mint); border-radius: 4px; padding: 1px 6px; margin-right: 6px; font-family: var(--display); }
+  #accion kbd { background: #fff; color: var(--azul); border-radius: 4px; padding: 1px 6px; margin-right: 6px; font-family: var(--display); }
   .btn.sec { background: transparent; color: var(--mint); border: 1px solid var(--line); box-shadow: none; }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 
   #ir-chat { right: 12px; bottom: 14px; text-decoration: none; background: var(--panel); }
+  #btn-decir { right: 12px; bottom: 64px; }
   #ayuda { left: 12px; bottom: 14px; padding: 8px 12px; color: var(--muted); font-size: 12px; max-width: 220px; }
-  @media (max-width: 720px) { #ayuda { display: none; } #ranking { display: none; } #mision { bottom: 10px; } }
+  /* Desafío para toda la sala */
+  #desafio { top: 12px; left: 50%; transform: translateX(-50%); padding: 10px 16px; max-width: min(460px, calc(100vw - 440px)); text-align: center; border: 2px solid var(--azul); }
+  #desafio h3 { margin: 0 0 4px; font: 700 11px var(--display); letter-spacing: .08em; color: var(--gold); }
+  #desafio p { margin: 0; font-size: 14px; }
+  #desafio small { display: block; color: var(--muted); margin-top: 4px; font-size: 12px; }
+  /* Feed de la sala */
+  #feed { left: 12px; bottom: 118px; width: 300px; max-height: 210px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; pointer-events: none; }
+  #feed div { background: var(--panel); border-left: 3px solid var(--line); border-radius: 4px; padding: 4px 8px; font-size: 12px; animation: entrar .25s ease-out; }
+  #feed div b { color: var(--mint); }
+  #feed .chat { border-left-color: var(--mint); } #feed .gana { border-left-color: var(--gold); } #feed .desafio { border-left-color: var(--azul); }
+  @keyframes entrar { from { opacity: 0; transform: translateY(6px); } }
+  #conectados { top: 104px; left: 12px; font-size: 12px; color: var(--muted); padding: 4px 10px; }
+  /* Chat con el equipo (tecla T) */
+  #decir { left: 50%; bottom: 150px; transform: translateX(-50%); display: flex; gap: 8px; padding: 8px; width: min(460px, calc(100vw - 24px)); }
+  #decir input { flex: 1; min-width: 0; background: #111316; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; font: inherit; }
+  @media (max-width: 720px) { #ayuda { display: none; } #ranking { display: none; } #mision { bottom: 10px; }
+    #desafio { top: 70px; max-width: calc(100vw - 24px); } #feed { width: calc(100vw - 24px); bottom: 84px; max-height: 120px; } #conectados { display: none; } }
 
   /* Diálogo con la bot */
   #dialogo { position: fixed; z-index: 10; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(720px, calc(100vw - 20px));
-    display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 14px; border-color: var(--mint);
-    box-shadow: 0 0 30px rgba(94, 242, 196, .25); }
+    display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 14px; border-color: var(--azul); border-width: 2px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .5); }
   #dialogo .retrato { width: 110px; height: 110px; }
-  #dialogo .nombre { font: 700 13px var(--display); color: var(--mint); letter-spacing: .14em; }
+  #dialogo .nombre { font: 700 18px var(--display); color: var(--fg); letter-spacing: -.02em; }
+  #dialogo .nombre span { color: var(--mint); }
   #dialogo .texto { min-height: 44px; font-size: 15px; margin: 4px 0 10px; white-space: pre-line; }
   #chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   #chips button { font: 500 12px var(--body); color: var(--mint); background: transparent; border: 1px solid var(--line); border-radius: 99px; padding: 5px 10px; cursor: pointer; }
   #chips button:hover { border-color: var(--mint); }
   #dialogo form { display: flex; gap: 8px; }
-  #dialogo input { flex: 1; min-width: 0; background: #050808; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+  #dialogo input { flex: 1; min-width: 0; background: #111316; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
   #opciones { display: grid; gap: 6px; margin-bottom: 10px; }
-  #opciones button { text-align: left; background: #0d1413; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
+  #opciones button { text-align: left; background: #202227; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
   #opciones button:hover { border-color: var(--mint); }
   #opciones button small { color: var(--muted); display: block; font-size: 12px; }
   #cerrar { position: absolute; top: 8px; right: 10px; background: none; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; }
   @media (max-width: 520px) { #dialogo { grid-template-columns: 1fr; } #dialogo .retrato { width: 64px; height: 64px; } }
 
   /* Globos y XP flotante */
-  .globo { position: fixed; z-index: 4; transform: translate(-50%, -100%); background: rgba(10, 15, 14, .92); border: 1.5px solid var(--c, var(--mint));
-    border-radius: 10px; padding: 6px 10px; font-size: 13px; max-width: 210px; pointer-events: none; box-shadow: 0 0 12px var(--c, var(--mint)); }
+  .globo { position: fixed; z-index: 4; transform: translate(-50%, -100%); background: #ffffff; color: #191b1f; border: 0; border-bottom: 3px solid var(--c, var(--azul));
+    border-radius: 10px; padding: 6px 10px; font-size: 13px; font-weight: 500; max-width: 210px; pointer-events: none; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); }
   .nombre-3d { position: fixed; z-index: 3; transform: translate(-50%, 0); font: 600 11px var(--display); padding: 1px 8px; border-radius: 99px;
-    background: rgba(7, 10, 10, .75); pointer-events: none; white-space: nowrap; }
+    background: rgba(25, 27, 31, .85); pointer-events: none; white-space: nowrap; }
   .xp { position: fixed; z-index: 6; font: 700 22px var(--display); color: var(--gold); text-shadow: 0 0 12px var(--gold);
     pointer-events: none; animation: subir 1.4s ease-out forwards; }
   @keyframes subir { to { transform: translate(-50%, -70px); opacity: 0; } }
   #toast { position: fixed; z-index: 11; top: 18%; left: 50%; transform: translateX(-50%); font: 700 34px var(--display); color: var(--gold);
     text-shadow: 0 0 24px var(--gold); pointer-events: none; opacity: 0; transition: opacity .3s; text-align: center; }
-  #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 600 16px var(--display); color: var(--mint); letter-spacing: .1em; }
+  #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 700 28px var(--display); color: var(--fg); letter-spacing: -.02em; }
   @media (prefers-reduced-motion: reduce) { .xp { animation-duration: .01s; } }
 </style>
 </head>
@@ -97,13 +117,18 @@
 <div id="ranking" class="hud caja"><h3>RANKING SEMANAL</h3><ol id="lista-ranking"></ol></div>
 <div id="mision" class="hud caja"><h3>MISIÓN</h3><p id="texto-mision">Andá a hablar con Hottie a la terminal.</p></div>
 <div id="accion" class="hud" hidden></div>
-<a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">💬 Chat</a>
-<div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> para interactuar</div>
+<button id="btn-decir" class="hud btn" type="button">💬 Decir</button>
+<a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">Chat con Hottie</a>
+<div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> interactuar · <b>T</b> hablarle al equipo</div>
+<div id="conectados" class="hud caja">Conectando…</div>
+<div id="desafio" class="hud caja" hidden></div>
+<div id="feed" class="hud"></div>
+<form id="decir" class="hud caja" hidden><input id="decir-texto" maxlength="140" autocomplete="off" placeholder="Decile algo al equipo…" aria-label="Mensaje para el equipo"><button class="btn" type="submit">Enviar</button></form>
 
 <div id="dialogo" class="caja" hidden role="dialog" aria-label="Hablar con Hottie">
   <img class="retrato" id="retrato" alt="">
   <div style="min-width:0">
-    <div class="nombre">HOTTIE</div>
+    <div class="nombre">Hottie<span>.</span></div>
     <div class="texto" id="texto-bot"></div>
     <div id="opciones"></div>
     <form id="form-bot">
@@ -115,7 +140,7 @@
   <button id="cerrar" type="button" aria-label="Cerrar">×</button>
 </div>
 <div id="toast"></div>
-<div id="cargando">CARGANDO LA SALA…</div>
+<div id="cargando">hotic.</div>
 
 <?!= botInclude('BotSprites') ?>
 <?!= botInclude('BotCharla') ?>
@@ -144,6 +169,30 @@ const demo = {
     return { fichas: r, total: r.length, sugerencias: r.length ? [] : ['Volante Bimasa Vento 1.9'], nota: '' };
   },
   botSumarXP: () => ({ ganado: 10, total: 130, nivel: 2, desde: 50, hasta: 200 }),
+  botSalaLatido: (estado) => {
+    const t = Date.now() / 1000;
+    demo.eventos = demo.eventos || [{ id: 1, tipo: 'entra', texto: 'Gabriel entró a la sala' }, { id: 2, tipo: 'entra', texto: 'Sebastián entró a la sala' }];
+    if (estado.dice && estado.diceAlEquipo) demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'chat', quien: 'Facundo', texto: estado.dice });
+    if (!demo.desafio) demo.desafio = { id: 'D1', inicio: Date.now(), producto: { descripcion: 'Amortiguador Delantero Audi A4', marca: 'Bilstein' }, zona: '1' };
+    const d = demo.desafio, seg = Math.floor((Date.now() - d.inicio) / 1000);
+    const charla = Math.floor(t / 7) % 3 === 0;
+    return {
+      jugadores: [
+        { nombre: 'Gabriel', x: 3 + Math.sin(t / 3) * 4, z: -3 + Math.cos(t / 4) * 2, mira: Math.cos(t / 3) > 0 ? 1 : -1, ts: Date.now(),
+          dice: charla ? '¿Alguien vio la zona 4A?' : '', diceId: Math.floor(t / 7) },
+        { nombre: 'Sebastián', x: -2 + Math.cos(t / 5) * 3, z: 2 + Math.sin(t / 5) * 2, mira: 1, ts: Date.now(), carga: true },
+      ],
+      eventos: demo.eventos.filter((e) => e.id > (estado.ultimoEvento || 0)),
+      desafio: Object.assign({ id: d.id, producto: d.producto, segundos: seg, ganador: d.ganador || '' }, d.ganador || seg > 60 ? { zona: d.zona } : seg > 30 ? { pista: 'Está en el piso 1 de su estantería.' } : {}),
+    };
+  },
+  botSalaResponder: (id, zona) => {
+    const d = demo.desafio;
+    if (String(zona) === d.zona) { d.ganador = 'Facundo'; demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'gana', texto: '🏆 Facundo encontró ' + d.producto.descripcion + ' (+20 XP)' }); return { ok: true, correcta: true, mensaje: '¡Bien! Era la zona ' + zona + ' 🏆', xp: { ganado: 20, total: 150, nivel: 2, desde: 50, hasta: 200 } }; }
+    demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'error', texto: 'Facundo probó en la zona ' + zona + ' ❌' });
+    return { ok: true, correcta: false, mensaje: 'No, no está en la zona ' + zona + ' ❌ Probá en otra en 10 s.' };
+  },
+  botSalaAvisar: () => true,
   botNoLoEncontre: () => ({ ok: true, mensaje: 'Listo, pedí un recuento.', xp: { ganado: 3, total: 133, nivel: 2, desde: 50, hasta: 200 } }),
   botOpcionesUbicacion: () => ({ pisos: ['-1', '0', '1', '2', '3'], zonas: ['1', '2', '3', '4A'] }),
   botCorregirUbicacion: () => ({ ok: true, mensaje: 'Ubicación actualizada.', xp: { ganado: 15, total: 148, nivel: 2, desde: 50, hasta: 200 } }),
@@ -158,8 +207,9 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const normal = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const COLORES = { facundo: '#3fa9ff', gabriel: '#ffb52e', sebastian: '#b46bff', agustin: '#ff6b6b', bot: '#5ef2c4' };
-const PALETA_ZONAS = ['#3fa9ff', '#ffb52e', '#b46bff', '#5ef2c4', '#ff6b6b', '#7fe08a', '#f28bd0', '#ffd166'];
+const COLORES = { facundo: '#3fa9ff', gabriel: '#ffb52e', sebastian: '#b46bff', agustin: '#ff6b6b', bot: '#8fa2ff' };
+// Zonas en la gama de la marca: azules y blanco.
+const PALETA_ZONAS = ['#8fa2ff', '#ffffff', '#5f7cff', '#c3cdff', '#3b5bea', '#e3e8ff', '#7b93ff', '#aab8ff'];
 
 // ---------------------------------------------------------------------------
 // Escena
@@ -171,8 +221,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('juego').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x070a0a);
-scene.fog = new THREE.Fog(0x070a0a, 22, 46);
+scene.background = new THREE.Color(0x191b1f);
+scene.fog = new THREE.Fog(0x191b1f, 24, 48);
 const camara = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
 function redimensionar() {
   renderer.setSize(innerWidth, innerHeight);
@@ -182,27 +232,27 @@ function redimensionar() {
 addEventListener('resize', redimensionar);
 redimensionar();
 
-scene.add(new THREE.HemisphereLight(0x9fd9ff, 0x0b1210, 0.55));
+scene.add(new THREE.HemisphereLight(0xdfe5ff, 0x15171b, 0.7));
 const sol = new THREE.DirectionalLight(0xffffff, 0.75);
 sol.position.set(8, 16, 10); sol.castShadow = true;
 sol.shadow.mapSize.set(1024, 1024);
 Object.assign(sol.shadow.camera, { left: -16, right: 16, top: 14, bottom: -14 });
 scene.add(sol);
 
-function texturaTexto(texto, color, { ancho = 256, alto = 64, fuente = '700 34px "Chakra Petch", sans-serif', fondo = 'rgba(7,10,10,.85)' } = {}) {
+function texturaTexto(texto, color, { ancho = 256, alto = 64, fuente = '700 32px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo = '#191b1f', brillo = 0 } = {}) {
   const c = document.createElement('canvas'); c.width = ancho; c.height = alto;
   const g = c.getContext('2d');
   if (fondo) { g.fillStyle = fondo; g.strokeStyle = color; g.lineWidth = 4; g.beginPath(); g.roundRect(4, 4, ancho - 8, alto - 8, 10); g.fill(); g.stroke(); }
   g.font = fuente; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.shadowColor = color; g.shadowBlur = 14; g.fillStyle = color; g.fillText(texto, ancho / 2, alto / 2 + 2);
+  g.shadowColor = color; g.shadowBlur = brillo; g.fillStyle = color; g.fillText(texto, ancho / 2, alto / 2 + 2);
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
 }
 
 function piso() {
   const c = document.createElement('canvas'); c.width = c.height = 512;
   const g = c.getContext('2d');
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { g.fillStyle = (i + j) % 2 ? '#101615' : '#0c1211'; g.fillRect(i * 64, j * 64, 64, 64); }
-  g.strokeStyle = 'rgba(94,242,196,.10)'; g.lineWidth = 2;
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { g.fillStyle = (i + j) % 2 ? '#24262c' : '#202227'; g.fillRect(i * 64, j * 64, 64, 64); }
+  g.strokeStyle = 'rgba(143,162,255,.10)'; g.lineWidth = 2;
   for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(i * 64, 0); g.lineTo(i * 64, 512); g.stroke(); g.beginPath(); g.moveTo(0, i * 64); g.lineTo(512, i * 64); g.stroke(); }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ANCHO / 4, FONDO / 4);
   const m = new THREE.Mesh(new THREE.PlaneGeometry(ANCHO, FONDO), new THREE.MeshStandardMaterial({ map: t, roughness: 0.85 }));
@@ -222,12 +272,12 @@ function caja(w, h, d, color, x, y, z, { emisivo, sombra = true, solido = false 
 }
 
 // Paredes con tira de neón
-caja(ANCHO, 5, 0.3, 0x111918, 0, 0, -FONDO / 2, { sombra: false });
-caja(0.3, 5, FONDO, 0x0e1514, -ANCHO / 2, 0, 0, { sombra: false });
-caja(ANCHO, 0.08, 0.1, 0x5ef2c4, 0, 4.6, -FONDO / 2 + 0.2, { emisivo: 0x5ef2c4, sombra: false });
-caja(0.1, 0.08, FONDO, 0x5ef2c4, -ANCHO / 2 + 0.2, 4.6, 0, { emisivo: 0x5ef2c4, sombra: false });
+caja(ANCHO, 5, 0.3, 0x1d1f24, 0, 0, -FONDO / 2, { sombra: false });
+caja(0.3, 5, FONDO, 0x1538be, -ANCHO / 2, 0, 0, { sombra: false }); // pared lateral azul de marca
+caja(ANCHO, 0.1, 0.1, 0xffffff, 0, 4.6, -FONDO / 2 + 0.2, { emisivo: 0xffffff, sombra: false });
+caja(0.1, 0.1, FONDO, 0xffffff, -ANCHO / 2 + 0.2, 4.6, 0, { emisivo: 0xffffff, sombra: false });
 const cartel = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), new THREE.MeshBasicMaterial({
-  map: texturaTexto('VOLHOTIC', '#5ef2c4', { ancho: 512, alto: 128, fuente: '700 84px "Chakra Petch", sans-serif', fondo: null }), transparent: true }));
+  map: texturaTexto('hotic.', '#ffffff', { ancho: 512, alto: 160, fuente: '700 120px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo: null, brillo: 0 }), transparent: true }));
 cartel.position.set(-ANCHO / 2 + 0.2, 3.3, -2); cartel.rotation.y = Math.PI / 2; scene.add(cartel);
 
 // Estanterías: una por zona, contra la pared del fondo.
@@ -246,9 +296,9 @@ function estanteria(zona, i, total) {
     }
   }
   solidos.push({ minX: x - w / 2 - 0.1, maxX: x + w / 2 + 0.1, minZ: z - d / 2 - 0.1, maxZ: z + d / 2 + 0.1 });
-  const cartelZona = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('ZONA ' + zona, color), depthWrite: false }));
+  const cartelZona = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('zona ' + zona.toLowerCase(), color), depthWrite: false }));
   cartelZona.scale.set(2.2, 0.55, 1); cartelZona.position.set(x, h + 0.6, z + 0.3); scene.add(cartelZona);
-  const luz = new THREE.PointLight(color, 0.8, 6); luz.position.set(x, 2.6, z + 1.6); scene.add(luz);
+  const luz = new THREE.PointLight(0xdfe5ff, 0.6, 6); luz.position.set(x, 2.6, z + 1.6); scene.add(luz);
   const frente = new THREE.Vector3(x, 0, z + d / 2 + 1.0);
   estanterias[normal(zona)] = { zona, color, x, z, frente };
 }
@@ -256,15 +306,15 @@ function estanteria(zona, i, total) {
 // Terminal de la bot y mesa de despacho
 const TERMINAL = new THREE.Vector3(-9.5, 0, 3);
 caja(2.6, 1.0, 1.1, 0x1d2725, TERMINAL.x, 0, TERMINAL.z - 0.4, { solido: true });
-const pantalla = caja(1.4, 0.9, 0.06, 0x071311, TERMINAL.x, 1.15, TERMINAL.z - 0.75, { emisivo: 0x5ef2c4 });
+const pantalla = caja(1.4, 0.9, 0.06, 0x0b1a5c, TERMINAL.x, 1.15, TERMINAL.z - 0.75, { emisivo: 0x1538be });
 pantalla.material.emissiveIntensity = 0.6;
-const luzBot = new THREE.PointLight(0x5ef2c4, 1.3, 7); luzBot.position.set(TERMINAL.x, 2.2, TERMINAL.z + 0.8); scene.add(luzBot);
+const luzBot = new THREE.PointLight(0x5f7cff, 1.3, 7); luzBot.position.set(TERMINAL.x, 2.2, TERMINAL.z + 0.8); scene.add(luzBot);
 const DESPACHO = new THREE.Vector3(9, 0, 6.5);
-caja(3.2, 0.9, 1.4, 0x3b3226, DESPACHO.x, 0, DESPACHO.z, { solido: true });
-const cartelDesp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('DESPACHO', '#f2c230'), depthWrite: false }));
+caja(3.2, 0.9, 1.4, 0xf2f3f5, DESPACHO.x, 0, DESPACHO.z, { solido: true });
+const cartelDesp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('despacho.', '#ffffff', { fondo: '#1538be' }), depthWrite: false }));
 cartelDesp.scale.set(2.2, 0.55, 1); cartelDesp.position.set(DESPACHO.x, 2.0, DESPACHO.z); scene.add(cartelDesp);
 const pilaDespacho = [];
-function sumarCajaDespacho() {
+function sumarCajaDespacho() { // cajas de cartón sobre la mesa blanca
   const n = pilaDespacho.length, col = n % 4, fila = Math.floor(n / 4) % 4;
   pilaDespacho.push(caja(0.6, 0.45, 0.6, 0xb98a55, DESPACHO.x - 1.1 + col * 0.72, 0.9 + fila * 0.46, DESPACHO.z));
 }
@@ -272,8 +322,8 @@ for (let i = 0; i < 5; i++) sumarCajaDespacho();
 
 // Rayo de luz que marca el objetivo de la misión
 const rayo = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 12, 24, 1, true),
-  new THREE.MeshBasicMaterial({ color: 0x5ef2c4, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
-const aroObjetivo = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 40), new THREE.MeshBasicMaterial({ color: 0x5ef2c4, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+  new THREE.MeshBasicMaterial({ color: 0x5f7cff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+const aroObjetivo = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 40), new THREE.MeshBasicMaterial({ color: 0x5f7cff, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
 aroObjetivo.rotation.x = -Math.PI / 2;
 rayo.visible = aroObjetivo.visible = false; scene.add(rayo, aroObjetivo);
 function marcar(pos, color) {
@@ -293,7 +343,7 @@ function texturaFigura(clave, nombre, color, alCargar) {
   const g = c.getContext('2d'); g.fillStyle = color;
   g.beginPath(); g.arc(55, 50, 36, 0, Math.PI * 2); g.fill();
   g.beginPath(); g.roundRect(15, 92, 80, 150, 30); g.fill(); g.fillRect(25, 220, 24, 80); g.fillRect(61, 220, 24, 80);
-  g.fillStyle = '#052b20'; g.font = '700 40px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText(nombre[0] || '?', 55, 64);
+  g.fillStyle = '#191b1f'; g.font = '700 40px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(nombre[0] || '?', 55, 64);
   const t = new THREE.CanvasTexture(c);
   if (alCargar) setTimeout(() => alCargar(t));
   return t;
@@ -392,9 +442,9 @@ let destinoClick = null, yaw = 0.35, zoom = 1;
 function pintarJugador() {
   const j = ini.jugador, a = j.avatar || {};
   const foto = a.tipo === 'foto' ? `<img src="${esc(a.src)}" alt="">` : esc(a.texto || j.nombre[0]);
-  const fondo = a.tipo === 'foto' ? 'transparent' : (a.tipo === 'icono' ? '#0d1413' : a.color);
+  const fondo = a.tipo === 'foto' ? 'transparent' : (a.tipo === 'icono' ? '#202227' : a.color);
   const pct = Math.round(100 * (j.xp - j.desde) / Math.max(1, j.hasta - j.desde));
-  $('jugador').innerHTML = `<div class="foto" style="background:${fondo};border:2px solid ${esc(a.color || '#5ef2c4')};color:#052b20">${foto}</div>
+  $('jugador').innerHTML = `<div class="foto" style="background:${fondo};border:2px solid ${esc(a.color || '#8fa2ff')};color:#191b1f">${foto}</div>
     <div><div class="nivel">NIVEL ${j.nivel}</div><b>${esc(j.nombre)}</b>
     <div class="barra"><i style="width:${pct}%"></i></div><small>${j.xp} XP · faltan ${j.hasta - j.xp} para nivel ${j.nivel + 1}</small></div>`;
 }
@@ -433,8 +483,8 @@ function ponerMision(m) {
     marcar(m.est.frente, m.est.color);
     textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">Zona ${esc(m.ficha.zona)}</b>${m.ficha.piso ? ' · piso ' + esc(m.ficha.piso) : ''}`);
   } else if (m.tipo === 'despachar') {
-    marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#f2c230');
-    textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a <b style="color:#f2c230">Despacho</b>`);
+    marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#ffffff');
+    textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a <b>Despacho</b>`);
   } else if (m.tipo === 'ubicar') {
     marcar(null);
     textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a la estantería donde lo vas a dejar`);
@@ -522,7 +572,7 @@ async function preguntar(texto) {
 $('form-bot').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const t = $('pregunta').value.trim(); if (!t) return;
-  $('pregunta').value = ''; decir(jugador, t, 3); preguntar(t);
+  $('pregunta').value = ''; decirAlEquipo('🔎 ' + t, false); preguntar(t);
 });
 $('cerrar').onclick = cerrarDialogo;
 
@@ -534,6 +584,12 @@ let menu = null; // menú abierto junto a una estantería o despacho: { pos }
 function accionCercana() {
   const pos = jugador.grupo.position;
   if (pos.distanceTo(bot.grupo.position) < 3.0) return { texto: 'Hablar con Hottie', fn: abrirDialogo };
+  if (desafio && !desafio.ganador) {
+    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
+    if (est && !(mision && mision.tipo === 'buscar' && mision.est === est) && !(mision && mision.tipo === 'ubicar')) {
+      return { texto: `⚡ Desafío: está en la zona ${est.zona}`, fn: () => responderDesafio(est) };
+    }
+  }
   if (mision && mision.tipo === 'buscar' && pos.distanceTo(mision.est.frente) < 1.8) return { texto: 'Buscar en la estantería', fn: buscarEnEstanteria };
   if (mision && mision.tipo === 'despachar' && pos.distanceTo(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6)) < 2.2) return { texto: 'Despachar', fn: despachar };
   if (mision && mision.tipo === 'ubicar') {
@@ -559,7 +615,7 @@ function pintarAccion() {
 function buscarEnEstanteria() {
   const f = mision.ficha;
   opcionesFlotantes(`¿Está ${f.descripcion}?`, [
-    { texto: '¡Lo encontré!', fn: async () => { ponerCarga(jugador, true); decir(jugador, pick(['¡Acá está!', 'Lo tengo 💪', 'Encontrado'])); ponerMision({ tipo: 'despachar', ficha: f }); ganarXp(await servidor('botSumarXP', 'encontrado', f.id).catch(() => null)); } },
+    { texto: '¡Lo encontré!', fn: async () => { ponerCarga(jugador, true); decir(jugador, pick(['¡Acá está!', 'Lo tengo 💪', 'Encontrado'])); ponerMision({ tipo: 'despachar', ficha: f }); ganarXp(await servidor('botSumarXP', 'encontrado', f.id).catch(() => null)); servidor('botSalaAvisar', 'encontró ' + f.descripcion + ' 📦').catch(() => {}); } },
     { texto: 'No estaba', sec: true, fn: async () => { decir(jugador, 'No está…'); ponerMision(null); const r = await servidor('botNoLoEncontre', f.id).catch(() => null); decir(bot, 'Gracias por avisar, pedí un recuento 🙏', 3); if (r) ganarXp(r.xp); } },
   ]);
 }
@@ -569,6 +625,7 @@ async function despachar() {
   ponerCarga(jugador, false); sumarCajaDespacho(); ponerMision(null);
   decir(bot, pick([`¡Crack ${ini.jugador.nombre}! Otro despachado`, 'Así me gusta 💚', '¡Vamos que llegamos a la meta!']), 3);
   ganarXp(await servidor('botSumarXP', 'despachado', f.id).catch(() => null));
+  servidor('botSalaAvisar', 'despachó ' + f.descripcion + ' 🚚').catch(() => {});
 }
 
 async function ubicarEn(est) {
@@ -601,12 +658,24 @@ function opcionesFlotantes(titulo, botones) {
 // ---------------------------------------------------------------------------
 // Controles
 // ---------------------------------------------------------------------------
+function abrirDecir() { $('decir').hidden = false; setTimeout(() => $('decir-texto').focus(), 30); }
+$('btn-decir').onclick = abrirDecir;
+$('decir').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const t = $('decir-texto').value.trim();
+  $('decir-texto').value = ''; $('decir').hidden = true;
+  if (t) { decirAlEquipo(t, true); latido(); }
+});
+$('decir-texto').addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('decir').hidden = true; e.stopPropagation(); } });
 addEventListener('keydown', (e) => {
+  if (!$('decir').hidden) return;
   if (dialogoAbierto) { if (e.key === 'Escape') cerrarDialogo(); return; }
+  if (e.key.toLowerCase() === 't') { e.preventDefault(); abrirDecir(); return; }
   teclas[e.key.toLowerCase()] = true;
   if (e.key.toLowerCase() === 'e' && accionActual && accionActual.fn) { e.preventDefault(); accionActual.fn(); }
 });
 addEventListener('keyup', (e) => { teclas[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { Object.keys(teclas).forEach((k) => { teclas[k] = false; }); });
 
 const raycaster = new THREE.Raycaster(), puntero = new THREE.Vector2();
 let arrastre = null;
@@ -629,23 +698,100 @@ addEventListener('pointerup', (e) => {
 renderer.domElement.addEventListener('wheel', (e) => { zoom = Math.min(1.6, Math.max(0.6, zoom + e.deltaY * 0.001)); }, { passive: true });
 
 // ---------------------------------------------------------------------------
-// Compañeros que andan por la sala (decorativos)
+// Sala compartida: los demás jugadores, el feed, el chat y el desafío
 // ---------------------------------------------------------------------------
-const FRASES_EQUIPO = ['¿Alguien vio la zona 4A?', 'Uno más y llego a la meta', 'Le pregunto a Hottie', '¡Vamos equipo!', 'Esto va a despacho'];
-function pasearCompanero(p, dt) {
-  if (!p.destino || p.grupo.position.distanceTo(p.destino) < 0.3) {
-    p.espera = (p.espera || 0) - dt;
-    p.caminando = false;
-    if (p.espera > 0) return;
-    const ests = Object.values(estanterias);
-    p.destino = Math.random() < 0.3 ? new THREE.Vector3(TERMINAL.x + 2.4 + Math.random(), 0, TERMINAL.z + 1.5)
-      : Math.random() < 0.5 ? new THREE.Vector3(DESPACHO.x - 1 + Math.random() * 2, 0, DESPACHO.z + 1.8)
-      : pick(ests).frente.clone();
-    p.espera = 1.5 + Math.random() * 3;
-    if (Math.random() < 0.35) decir(p, pick(FRASES_EQUIPO), 2.5);
-    return;
+const remotos = {}; // nombre -> personaje
+let ultimoEvento = 0, desafio = null, latidoEnCurso = false, diceParaEnviar = null, esperaDesafio = 0;
+
+function decirAlEquipo(texto, alEquipo) { diceParaEnviar = { texto, alEquipo }; decir(jugador, texto, 4); }
+
+function actualizarRemotos(lista) {
+  const vistos = new Set();
+  lista.forEach((j) => {
+    vistos.add(j.nombre);
+    let p = remotos[j.nombre];
+    if (!p) { p = remotos[j.nombre] = crearPersonaje(j.nombre, null, new THREE.Vector3(j.x, 0, j.z)); p.remoto = true; }
+    p.destinoRemoto = new THREE.Vector3(j.x, 0, j.z);
+    p.mira = j.mira || p.mira;
+    ponerCarga(p, !!j.carga);
+    if (j.dice && j.diceId !== p.ultimoDice) { p.ultimoDice = j.diceId; decir(p, j.dice, 4); }
+  });
+  Object.keys(remotos).forEach((n) => {
+    if (vistos.has(n)) return;
+    const p = remotos[n];
+    scene.remove(p.grupo); p.etiqueta.remove(); if (p.globo) p.globo.remove();
+    personajes.splice(personajes.indexOf(p), 1); delete remotos[n];
+  });
+  const n = Object.keys(remotos).length;
+  $('conectados').textContent = n ? `En la sala: vos + ${Object.keys(remotos).join(', ')}` : 'Estás solo en la sala por ahora';
+}
+
+function pintarFeed(eventos) {
+  eventos.forEach((e) => {
+    const div = document.createElement('div');
+    div.className = e.tipo;
+    div.innerHTML = e.tipo === 'chat' ? `<b>${esc(e.quien)}:</b> ${esc(e.texto)}` : esc(e.texto);
+    $('feed').appendChild(div);
+    if (e.tipo === 'gana' || e.tipo === 'desafio') toast(e.tipo === 'gana' ? '🏆' : '⚡ DESAFÍO');
+  });
+  while ($('feed').children.length > 6) $('feed').firstChild.remove();
+}
+
+function pintarDesafio(d) {
+  const cambio = !desafio || !d || d.id !== desafio.id;
+  desafio = d;
+  $('desafio').hidden = !d;
+  if (!d) return;
+  if (cambio && !d.ganador) decir(bot, '⚡ ¿Quién me encuentra ' + d.producto.descripcion + '? ¡El primero gana +20 XP!', 5);
+  const restante = Math.max(0, 60 - d.segundos);
+  $('desafio').innerHTML = d.ganador
+    ? `<h3>DESAFÍO TERMINADO</h3><p>🏆 <b>${esc(d.ganador)}</b> lo encontró en la zona ${esc(d.zona)}</p><small>En unos segundos sale otro…</small>`
+    : `<h3>⚡ DESAFÍO · +20 XP AL PRIMERO</h3><p>¿Dónde está <b>${esc(d.producto.descripcion)}</b>${d.producto.marca ? ' (' + esc(d.producto.marca) + ')' : ''}?</p>
+       <small>${d.zona ? 'Hottie lo dice: zona ' + esc(d.zona) : d.pista ? '💡 Pista: ' + esc(d.pista) : 'Corré a la estantería y apretá E · pista en ' + Math.max(0, 30 - d.segundos) + ' s'}</small>`;
+}
+
+async function latido() {
+  if (latidoEnCurso || document.hidden || !jugador) return;
+  latidoEnCurso = true;
+  const p = jugador.grupo.position;
+  const estado = { x: +p.x.toFixed(2), z: +p.z.toFixed(2), mira: jugador.mira, carga: !!jugador.carga, ultimoEvento, zonas: ini.zonas };
+  if (diceParaEnviar) { estado.dice = diceParaEnviar.texto; estado.diceAlEquipo = diceParaEnviar.alEquipo; diceParaEnviar = null; }
+  try {
+    const r = await servidor('botSalaLatido', estado);
+    actualizarRemotos(r.jugadores || []);
+    if (r.eventos && r.eventos.length) { ultimoEvento = r.eventos[r.eventos.length - 1].id; pintarFeed(r.eventos); }
+    pintarDesafio(r.desafio);
+  } catch (e) {
+    $('conectados').textContent = 'Sin conexión con la sala, reintentando…';
+  } finally {
+    latidoEnCurso = false;
   }
-  mover(p, p.destino.x - p.grupo.position.x, p.destino.z - p.grupo.position.z, dt, 2.6);
+}
+
+function moverRemotos(dt) {
+  Object.values(remotos).forEach((p) => {
+    if (!p.destinoRemoto) return;
+    const dx = p.destinoRemoto.x - p.grupo.position.x, dz = p.destinoRemoto.z - p.grupo.position.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist > 6) { p.grupo.position.copy(p.destinoRemoto); p.caminando = false; return; } // se teletransportó o recién entra
+    if (dist > 0.08) {
+      const v = Math.min(dist, Math.max(4.4, dist * 2) * dt);
+      p.grupo.position.x += dx / dist * v; p.grupo.position.z += dz / dist * v; p.caminando = true;
+    } else p.caminando = false;
+  });
+}
+
+async function responderDesafio(est) {
+  if (!desafio || desafio.ganador) return;
+  if (Date.now() < esperaDesafio) { decir(bot, 'Esperá un toque para volver a intentar ⏳', 2.5); return; }
+  decir(jugador, '¡Está acá, en la zona ' + est.zona + '!', 3);
+  try {
+    const r = await servidor('botSalaResponder', desafio.id, est.zona);
+    decir(bot, r.mensaje, 4);
+    if (r.correcta) { ganarXp(r.xp); toast('🏆 +20 XP'); }
+    else if (r.ok) esperaDesafio = Date.now() + 10000;
+    latido();
+  } catch (e) { decir(bot, e.message || String(e), 4); }
 }
 
 // ---------------------------------------------------------------------------
@@ -668,7 +814,7 @@ function tick() {
     } else jugador.caminando = false;
   } else jugador.caminando = false;
 
-  personajes.filter((p) => p.companero).forEach((p) => pasearCompanero(p, dt));
+  moverRemotos(dt);
   // La bot mira a quien tiene cerca.
   bot.mira = jugador.grupo.position.x > bot.grupo.position.x ? 1 : -1;
   personajes.forEach((p) => animarPersonaje(p, dt, t));
@@ -693,11 +839,9 @@ $('retrato').src = BOT_AVATAR;
 servidor('botSalaInicio').then((datos) => {
   ini = datos;
   ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
-  bot = crearPersonaje('Hottie', '#5ef2c4', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
+  bot = crearPersonaje('Hottie', '#8fa2ff', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
   jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 6));
-  ini.companeros.filter((n) => BOT_SPRITES[normal(n).split(' ')[0]]).slice(0, 4).forEach((n, i) => {
-    const p = crearPersonaje(n, null, new THREE.Vector3(-3 + i * 3, 0, 3 + (i % 2) * 2)); p.companero = true;
-  });
+  latido(); setInterval(latido, 2000);
   pintarJugador(); pintarRanking(); ponerMision(null);
   setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);
   $('cargando').hidden = true;
