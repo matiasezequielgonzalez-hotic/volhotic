@@ -1,0 +1,77 @@
+# Kit del bot de stock para Apps Script
+
+Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la planilla
+**vol_ml_listings(No_tocar)** en el momento. Diseño completo: ver el documento de diseño del bot.
+
+| Archivo | Qué es | Dónde va |
+|---|---|---|
+| `Bot.gs` | Servidor: búsqueda, permisos, precios, acciones | Archivo de script en tu proyecto |
+| `BotUI.html` | Pantalla del chat | Archivo HTML `BotUI` |
+| `BotAvatar.html` | Avatar en base64 (una sola línea) | Archivo HTML `BotAvatar` |
+| `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
+| `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
+
+## Instalación
+
+1. En tu proyecto de Apps Script, creá `Bot.gs`, `BotUI.html` y `BotAvatar.html` y pegá el contenido.
+   Todo empieza con `bot`/`BOT` para no chocar con tu código.
+2. **Quién está logueado:** cambiá `botEmailActual_()` en `Bot.gs` para que devuelva el Gmail del
+   usuario como lo hace tu app. Por defecto usa `Session.getActiveUser().getEmail()`, que solo
+   funciona si la web app se ejecuta como "el usuario que accede".
+3. **Mostrar la pantalla:** en tu `doGet`, `if (e.parameter.v === 'bot') return botPagina();`.
+   O, si tu app arma las secciones en una sola página, incluí `botInclude('BotUI')`.
+4. En la planilla:
+   - Hoja `Sinonimos` con columnas `Palabra | Equivale_a` (importá `Sinonimos.csv`; las columnas
+     Tipo y Nota son solo ayuda). Solo palabras sueltas.
+   - Hoja `Precios` con `ID | SKU | Precio | Moneda | Actualizado | Quien`.
+   - En `Permisos`, sumá a cada persona las secciones `consultas`, `precios` y/o `ubicar`.
+     Los de rol Admin tienen todo.
+5. Si la planilla tiene un ID distinto o el proyecto está vinculado a ella, ajustá `BOT.PLANILLA_ID`.
+
+## Reglas que ya trae
+
+- **Línea:** SEX = Marca Sexhotic (solo para los Gmail de `SEX_ADMIN` en Config); Pet = SKU que
+  empieza con `BIO`; Tecnología = SKU que empieza con `TEC`; el resto, Autopartes. Se cambia en
+  `BOT_LINEAS`.
+- **Búsqueda por código** si todas las partes de lo escrito tienen números (`1J0411336H`,
+  `415 0491 09`, `P00002`). Ignora espacios, guiones, puntos y barras, y acepta códigos parciales.
+  Si no encuentra, busca por palabras.
+- **Búsqueda por palabras:** sin acentos, plural a singular, sinónimos, todas las palabras tienen que
+  aparecer. Orden: palabra exacta ("gol" antes que "golf"), con stock, empieza con la primera palabra.
+- **Fichas:** hasta 5, con el total. Avisos: "Dice SIN STOCK pero figura con N", "Sin ubicación",
+  "No encontrado en el relevamiento", "Precio viejo" (más de 30 días).
+- **Bilstein:** si la búsqueda dice Bilstein, agrega la nota de que lo que no figura en planta baja
+  es de Fabián.
+- **No lo encontré:** fila en `Recuentos` con Estado `Pendiente`; no duplica si ya hay uno pendiente.
+  El tope `RECUENTOS_POR_DEPOSITO` lo sigue aplicando tu app cuando pide recuentos.
+- **Corregir ubicación:** solo con `ubicar`, eligiendo pisos y zonas que ya existen. Busca la fila
+  por ID, verifica que no la hayan cambiado en el medio, escribe y registra en `Decisiones`
+  (Tipo `UBICACION`).
+- **Precios:** solo con `precios`; sin el permiso el precio no llega al navegador.
+- **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
+
+## Revisar contra tu app
+
+- Los valores de `Estado` que usa tu app en `Recuentos` (el kit escribe `Pendiente`).
+- Qué columnas de `Decisiones` son `Quien` y `Persona` (el kit pone nombre y Gmail).
+- Si `Equipo` tiene una columna `Activo` con "NO" para la gente que ya no está (el kit la respeta).
+
+## Pruebas
+
+Se probó con una copia simulada de la planilla armada con el Excel de stock (6.310 artículos).
+Consultas para probar en la app, con lo que tiene que pasar:
+
+| Escribís | Tiene que mostrar primero |
+|---|---|
+| `disco de freno gol` | Disco De Freno Delantero Gol Trend 256mm (no un Golf) |
+| `amortiguadores` | Amortiguador (Nakata) |
+| `1j0-411 336/h` | Abrasadera Golf Bora (por código) |
+| `G052145` | Aceite De Caja Velocidad Automatica, OEM G052145/A1/A2 |
+| `P00002` | Abrasadera Golf Bora |
+| `22-183705` | Amortiguador Delantero Audi A1 (SKU 22.183705) |
+| `abrazadera golf` | Abrasadera Golf Bora (sinónimo) |
+| `parachoques vento` | Algún Paragolpe de Vento (sinónimo) |
+| `paasat` | Más de 600 resultados de Passat (error de tipeo) |
+| `amortiguador bilstein` | Amortiguadores Bilstein + nota de Fabián |
+| `alma paragolpe audi a3` | Aviso "Dice SIN STOCK pero figura con 7" |
+| `xyzxyz freno` | Sin resultados + 3 sugerencias de freno |

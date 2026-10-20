@@ -1,0 +1,26 @@
+Palabra,Equivale_a,Tipo,Nota
+paasat,passat,Error de tipeo,Aparece 2 veces en General
+pasatt,passat,Error de tipeo,Aparece 2 veces en General
+saharan,sharan,Error de tipeo,
+direcion,direccion,Error de tipeo,
+derechoo,derecho,Error de tipeo,
+eelectroventilador,electroventilador,Error de tipeo,
+cazoletta,cazoleta,Error de tipeo,
+abrasadera,abrazadera,Error de tipeo,
+valiza,baliza,Error de tipeo,
+courrier,courier,Error de tipeo,Hay 24 "Courrier" y 20 "Courier": unifica las dos
+kombi,combi,Variante,
+parachoque,paragolpe,Sinónimo,
+parachoques,paragolpe,Sinónimo,
+paragolpes,paragolpe,Sinónimo,
+capo,capot,Sinónimo,"Capó" se normaliza a "capo"
+retrovisor,espejo,Sinónimo,
+vidrio,cristal,Sinónimo,
+luna,cristal,Sinónimo,Revisar: puede confundir
+terminal,extremo,Sinónimo,Terminal de dirección = extremo de dirección
+patin,pastilla,Sinónimo,Patines de freno
+balata,pastilla,Sinónimo,
+clutch,embrague,Sinónimo,
+volkswagen,vw,Marca,
+optica,faro,Sinónimo,Revisar: en General hay 113 "Óptica" y 323 "Faro"; con esto se buscan juntos
+baul,porton,Sinónimo,Revisar: portón trasero / baúl

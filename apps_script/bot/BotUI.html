@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0a0d0c; --panel: #121716; --panel-2: #18201e; --line: #24302d;
+    --fg: #f4f7f6; --muted: #93a39e; --neon: #5ef2c4; --neon-dim: #1f9e77;
+    --warn: #f2b84b; --no: #ff8a80;
+    --font: "Segoe UI", Roboto, system-ui, sans-serif; --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--font); display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  /* Sin border-radius ni overflow: la imagen ya es redonda y las orejas sobresalen. */
+  .avatar { display: block; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(94, 242, 196, .35)); }
+  header .avatar { width: 52px; height: 52px; }
+  header h1 { font-size: 17px; margin: 0; }
+  header small { color: var(--muted); }
+  .buscando header .avatar { animation: latido 1.2s ease-in-out infinite; }
+  @keyframes latido { 50% { filter: drop-shadow(0 0 12px rgba(94, 242, 196, .8)); } }
+  @media (prefers-reduced-motion: reduce) { .buscando header .avatar { animation: none; } }
+
+  #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .yo { align-self: flex-end; background: var(--neon-dim); color: #fff; padding: 8px 12px; border-radius: 12px 12px 3px 12px; max-width: 85%; }
+  .bot { display: flex; gap: 8px; align-items: flex-end; max-width: 100%; }
+  .bot .avatar { width: 34px; height: 34px; }
+  .burbuja { background: var(--panel); border: 1px solid var(--line); border-radius: 12px 12px 12px 3px; padding: 10px 12px; display: grid; gap: 10px; min-width: 0; flex: 1; }
+  .texto { color: var(--muted); }
+  .nota { color: var(--warn); font-size: 13px; }
+
+  .ficha { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .ficha .top { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; }
+  .ficha .desc { font-weight: 600; }
+  .ficha .sub { color: var(--muted); font-size: 13px; }
+  .ficha .stock { text-align: right; flex-shrink: 0; }
+  .ficha .stock b { display: block; font-size: 22px; color: var(--neon); font-variant-numeric: tabular-nums; }
+  .ficha .stock.cero b { color: var(--no); }
+  .ficha .stock small { color: var(--muted); font-size: 11px; }
+  .codigos { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px; }
+  .codigos span { font: 12px var(--mono); background: var(--bg); border: 1px solid var(--line); padding: 2px 6px; border-radius: 4px; }
+  .lugar { display: flex; flex-wrap: wrap; border-top: 1px dashed var(--line); font: 12px var(--mono); }
+  .lugar span { padding: 6px 12px; border-right: 1px dashed var(--line); }
+  .lugar span:first-child { background: var(--neon); color: #052b20; font-weight: 700; }
+  .info { padding: 8px 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; color: var(--muted); align-items: center; }
+  .pill { font-size: 11px; padding: 3px 7px; border-radius: 99px; border: 1px solid currentColor; }
+  .pill.warn { color: var(--warn); } .pill.no { color: var(--no); } .pill.ok { color: var(--neon); }
+  .precio b { color: var(--fg); }
+  .acciones { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .acciones a, .acciones button, .chips button, form button, .sug button {
+    font: inherit; font-size: 13px; color: var(--neon); background: transparent; border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 9px; cursor: pointer; text-decoration: none;
+  }
+  .acciones a:hover, .acciones button:hover, .sug button:hover { border-color: var(--neon); }
+  :focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
+  .corregir { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 13px; }
+  select { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
+  .sug { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 16px 14px; display: grid; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { color: var(--muted); }
+  .chips button[aria-pressed="true"] { color: #052b20; background: var(--neon); border-color: var(--neon); }
+  form { display: flex; gap: 8px; }
+  #texto { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+  #texto:focus { border-color: var(--neon); outline: none; }
+  form button { background: var(--neon); color: #052b20; border-color: var(--neon); font-weight: 600; padding: 0 16px; }
+</style>
+</head>
+<body>
+<header>
+  <img class="avatar" src="<?!= botInclude('BotAvatar') ?>" alt="Asistente de stock">
+  <div><h1>Asistente de stock</h1><small id="saludo">Conectando…</small></div>
+</header>
+
+<main id="chat" aria-live="polite"></main>
+
+<footer>
+  <div class="chips" id="lineas" role="group" aria-label="Línea de productos"></div>
+  <form id="form">
+    <input id="texto" autocomplete="off" placeholder="Ej: disco freno gol trend · 1J0411336H · P00002" aria-label="Qué buscás">
+    <button type="submit">Buscar</button>
+  </form>
+</footer>
+
+<script>
+  const AVATAR = document.querySelector('header .avatar').src;
+  const estado = { linea: 'Todo', inicio: null };
+  const $chat = document.getElementById('chat');
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function servidor(funcion, ...args) {
+    return new Promise((ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)[funcion](...args));
+  }
+
+  function mensajeYo(texto) {
+    $chat.insertAdjacentHTML('beforeend', `<div class="yo">${esc(texto)}</div>`);
+  }
+
+  function mensajeBot(html) {
+    const div = document.createElement('div');
+    div.className = 'bot';
+    div.innerHTML = `<img class="avatar" src="${AVATAR}" alt=""><div class="burbuja">${html}</div>`;
+    $chat.appendChild(div);
+    $chat.scrollTop = $chat.scrollHeight;
+    return div.querySelector('.burbuja');
+  }
+
+  function fichaHtml(f) {
+    const pills = f.avisos.map((a) => `<span class="pill ${/no encontrado/i.test(a) ? 'no' : 'warn'}">${esc(a)}</span>`).join('');
+    const estadoPill = f.estado ? `<span class="pill ok">${esc(f.estado)}</span>` : '';
+    let precio = '';
+    if ('precio' in f) {
+      precio = f.precio
+        ? `<span class="precio">Precio: <b>${esc(f.moneda)} ${esc(f.precio)}</b>${f.precioActualizado ? ' · ' + esc(f.precioActualizado) : ''}</span>`
+        : '<span class="precio">Sin precio cargado</span>';
+    }
+    const codigos = [f.id && 'ID ' + f.id, f.sku && 'SKU ' + f.sku, f.oem && 'OEM ' + f.oem].filter(Boolean)
+      .map((c) => `<span>${esc(c)}</span>`).join('');
+    const acciones = [
+      f.carpetaFotos ? `<a href="${esc(f.carpetaFotos)}" target="_blank" rel="noopener">Ver fotos</a>` : '',
+      f.linkMl ? `<a href="${esc(f.linkMl)}" target="_blank" rel="noopener">Ver publicación</a>` : '',
+      `<button type="button" data-accion="noencontre">No lo encontré</button>`,
+      f.puedeUbicar ? `<button type="button" data-accion="corregir">Corregir ubicación</button>` : '',
+    ].join('');
+    return `
+      <div class="ficha" data-id="${esc(f.id)}" data-piso="${esc(f.piso)}" data-zona="${esc(f.zona)}">
+        <div class="top">
+          <div><div class="desc">${esc(f.descripcion)}</div>
+            <div class="sub">${esc([f.marca, f.condicion, f.linea !== 'Autopartes' ? f.linea : ''].filter(Boolean).join(' · '))}</div></div>
+          <div class="stock ${f.stock > 0 ? '' : 'cero'}"><b>${esc(f.stock)}</b><small>unidades</small></div>
+        </div>
+        <div class="codigos">${codigos}</div>
+        <div class="lugar"><span>${esc(f.deposito || 'Sin depósito')}</span><span>Piso ${esc(f.piso || '—')}</span><span>Zona ${esc(f.zona || '—')}</span></div>
+        <div class="info">${estadoPill}${pills}${f.observacion ? `<span>Obs: “${esc(f.observacion)}”</span>` : ''}${precio}</div>
+        <div class="acciones">${acciones}</div>
+      </div>`;
+  }
+
+  async function buscar(texto) {
+    mensajeYo(texto);
+    document.body.classList.add('buscando');
+    try {
+      const r = await servidor('botBuscar', texto, estado.linea);
+      let html = '';
+      if (!r.total) {
+        html = `<div class="texto">No encontré nada con “${esc(texto)}”. Probá con menos palabras o con el código.</div>`;
+        if (r.sugerencias.length) {
+          html += `<div class="texto">¿Quisiste decir…?</div><div class="sug">${r.sugerencias
+            .map((s) => `<button type="button" data-sugerencia="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
+        }
+      } else {
+        html = r.fichas.map(fichaHtml).join('');
+        if (r.total > r.fichas.length) {
+          html += `<div class="texto">Hay ${r.total} resultados; te muestro ${r.fichas.length}. Sumá el modelo, el año o la marca para acotar.</div>`;
+        }
+      }
+      if (r.nota) html += `<div class="nota">${esc(r.nota)}</div>`;
+      mensajeBot(html);
+    } catch (e) {
+      mensajeBot(`<div class="nota">${esc(e.message || e)}</div>`);
+    } finally {
+      document.body.classList.remove('buscando');
+    }
+  }
+
+  async function noLoEncontre(ficha) {
+    const boton = ficha.querySelector('[data-accion="noencontre"]');
+    boton.disabled = true;
+    try {
+      const r = await servidor('botNoLoEncontre', ficha.dataset.id);
+      boton.textContent = r.mensaje.startsWith('Ya') ? 'Recuento ya pedido' : 'Recuento pedido ✓';
+    } catch (e) {
+      boton.disabled = false;
+      mensajeBot(`<div class="nota">${esc(e.message || e)}</div>`);
+    }
+  }
+
+  let opciones = null;
+  async function corregir(ficha) {
+    if (ficha.querySelector('.corregir')) return;
+    opciones = opciones || await servidor('botOpcionesUbicacion');
+    const sel = (nombre, lista, actual) => `<select name="${nombre}" aria-label="${nombre}">
+      <option value="">—</option>${lista.map((v) => `<option ${v === actual ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select>`;
+    ficha.insertAdjacentHTML('beforeend', `<div class="corregir">Piso ${sel('piso', opciones.pisos, ficha.dataset.piso)}
+      Zona ${sel('zona', opciones.zonas, ficha.dataset.zona)}
+      <button type="button" data-accion="guardar">Guardar</button><button type="button" data-accion="cancelar">Cancelar</button></div>`);
+  }
+
+  async function guardarUbicacion(ficha) {
+    const caja = ficha.querySelector('.corregir');
+    const piso = caja.querySelector('[name=piso]').value;
+    const zona = caja.querySelector('[name=zona]').value;
+    caja.querySelector('[data-accion="guardar"]').disabled = true;
+    try {
+      const r = await servidor('botCorregirUbicacion', ficha.dataset.id, ficha.dataset.piso, ficha.dataset.zona, piso, zona);
+      if (r.ok) {
+        ficha.outerHTML = fichaHtml(r.ficha);
+      } else {
+        caja.insertAdjacentHTML('beforeend', `<span class="nota">${esc(r.mensaje)}</span>`);
+      }
+    } catch (e) {
+      caja.insertAdjacentHTML('beforeend', `<span class="nota">${esc(e.message || e)}</span>`);
+    }
+  }
+
+  $chat.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    if (b.dataset.sugerencia) return buscar(b.dataset.sugerencia);
+    const ficha = b.closest('.ficha');
+    if (b.dataset.accion === 'noencontre') noLoEncontre(ficha);
+    if (b.dataset.accion === 'corregir') corregir(ficha);
+    if (b.dataset.accion === 'guardar') guardarUbicacion(ficha);
+    if (b.dataset.accion === 'cancelar') b.closest('.corregir').remove();
+  });
+
+  document.getElementById('form').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const input = document.getElementById('texto');
+    const texto = input.value.trim();
+    if (!texto) return;
+    input.value = '';
+    buscar(texto);
+  });
+
+  function pintarLineas(lineas) {
+    const cont = document.getElementById('lineas');
+    cont.innerHTML = lineas.map((l) => `<button type="button" aria-pressed="${l === estado.linea}">${esc(l)}</button>`).join('');
+    cont.onclick = (ev) => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      estado.linea = b.textContent;
+      pintarLineas(lineas);
+    };
+  }
+
+  servidor('botInicio').then((ini) => {
+    estado.inicio = ini;
+    document.getElementById('saludo').textContent = `Hola ${ini.nombre}`;
+    pintarLineas(ini.lineas);
+    mensajeBot(`<div class="texto">¡Hola ${esc(ini.nombre)}! Decime qué buscás: una descripción
+      (“amortiguador delantero bora”), un código OEM o SKU (1J0411336H) o un ID (P00002).</div>`);
+  }).catch((e) => {
+    document.getElementById('saludo').textContent = 'Sin acceso';
+    mensajeBot(`<div class="nota">${esc(e.message || e)}</div>`);
+  });
+</script>
+</body>
+</html>
