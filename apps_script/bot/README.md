@@ -108,9 +108,9 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 - **XP:** se guarda en la hoja `BotXP` (la crea el bot). El servidor no da XP dos veces por la misma
   acción y producto en el día (el desafío da +20 una vez por desafío), tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
   acción real. Nivel n desde 50·(n-1)² XP (50, 200, 450…).
-- **Figuras:** `BotSprites.html` tiene a hottie, Facundo, Gabriel y Sebastián. El nombre del
+- **Figuras:** `BotSprites.html` tiene a hottie, Facundo, Gabriel, Sebastián y Agustín. El nombre del
   jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una
-  silueta de su color con la inicial. Para sumar a Agustín: agregá `"agustin": "data:image/webp;base64,..."`.
+  silueta de su color con la inicial. Para sumar a alguien: agregá `"nombre": "data:image/webp;base64,..."`.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app
