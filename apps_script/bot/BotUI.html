@@ -25,7 +25,11 @@
   @media (prefers-reduced-motion: reduce) { .buscando header .avatar { animation: none; } }
 
   #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  .yo { align-self: flex-end; background: var(--neon-dim); color: #fff; padding: 8px 12px; border-radius: 12px 12px 3px 12px; max-width: 85%; }
+  .yo { align-self: flex-end; display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+  .yo .texto-yo { background: var(--neon-dim); color: #fff; padding: 8px 12px; border-radius: 12px 12px 3px 12px; min-width: 0; overflow-wrap: anywhere; }
+  .persona { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
+    font-weight: 700; font-size: 13px; color: #052b20; background: var(--c, var(--neon)); object-fit: cover; }
+  .persona.icono { background: var(--panel-2); border: 2px solid var(--c, var(--neon)); font-size: 18px; }
   .bot { display: flex; gap: 8px; align-items: flex-end; max-width: 100%; }
   .bot .avatar { width: 34px; height: 34px; }
   .burbuja { background: var(--panel); border: 1px solid var(--line); border-radius: 12px 12px 12px 3px; padding: 10px 12px; display: grid; gap: 10px; min-width: 0; flex: 1; }
@@ -98,8 +102,16 @@
     return new Promise((ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)[funcion](...args));
   }
 
+  /** Foto, emoji o iniciales de quien escribe (viene de la hoja Equipo). */
+  function avatarPersonaHtml() {
+    const a = estado.inicio && estado.inicio.avatar;
+    if (!a) return '';
+    if (a.tipo === 'foto') return `<img class="persona" src="${esc(a.src)}" alt="">`;
+    return `<span class="persona ${a.tipo}" style="--c:${esc(a.color)}" aria-hidden="true">${esc(a.texto)}</span>`;
+  }
+
   function mensajeYo(texto) {
-    $chat.insertAdjacentHTML('beforeend', `<div class="yo">${esc(texto)}</div>`);
+    $chat.insertAdjacentHTML('beforeend', `<div class="yo"><div class="texto-yo">${esc(texto)}</div>${avatarPersonaHtml()}</div>`);
   }
 
   function mensajeBot(html) {
@@ -120,6 +132,7 @@
         ? `<span class="precio">Precio: <b>${esc(f.moneda)} ${esc(f.precio)}</b>${f.precioActualizado ? ' · ' + esc(f.precioActualizado) : ''}</span>`
         : '<span class="precio">Sin precio cargado</span>';
     }
+    const info = estadoPill + pills + (f.observacion ? `<span>Obs: “${esc(f.observacion)}”</span>` : '') + precio;
     const codigos = [f.id && 'ID ' + f.id, f.sku && 'SKU ' + f.sku, f.oem && 'OEM ' + f.oem].filter(Boolean)
       .map((c) => `<span>${esc(c)}</span>`).join('');
     const acciones = [
@@ -137,7 +150,7 @@
         </div>
         <div class="codigos">${codigos}</div>
         <div class="lugar"><span>${esc(f.deposito || 'Sin depósito')}</span><span>Piso ${esc(f.piso || '—')}</span><span>Zona ${esc(f.zona || '—')}</span></div>
-        <div class="info">${estadoPill}${pills}${f.observacion ? `<span>Obs: “${esc(f.observacion)}”</span>` : ''}${precio}</div>
+        ${info ? `<div class="info">${info}</div>` : ''}
         <div class="acciones">${acciones}</div>
       </div>`;
   }

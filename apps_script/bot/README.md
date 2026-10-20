@@ -48,6 +48,11 @@ Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la 
   por ID, verifica que no la hayan cambiado en el medio, escribe y registra en `Decisiones`
   (Tipo `UBICACION`).
 - **Precios:** solo con `precios`; sin el permiso el precio no llega al navegador.
+- **Avatar de cada persona** (hoja `Equipo`): si la columna `Foto` tiene un link o ID de un archivo
+  de Drive (o un `data:image/...`), muestra esa foto redonda al lado de sus mensajes. Si no, el emoji
+  de `Icono` en un círculo; si tampoco hay, las iniciales con un color fijo por persona. La foto
+  tiene que pesar menos de 300 KB (256 px alcanza) y el dueño del script tiene que poder abrirla.
+  La primera vez Apps Script pide permiso de Drive.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app

@@ -8,7 +8,7 @@
  *   botNoLoEncontre(id)                -> { ok, mensaje }
  *   botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) -> { ok, mensaje, ficha }
  *   botOpcionesUbicacion()             -> { pisos, zonas }
- *   botInicio()                        -> { nombre, lineas, puedeUbicar, verPrecios }
+ *   botInicio()                        -> { nombre, avatar, lineas, puedeUbicar, verPrecios }
  *
  * Integración con tu app:
  *   1. Reemplazá botEmailActual_() por como tu app sabe quién está logueado.
@@ -81,6 +81,8 @@ function botUsuario_() {
     throw new Error('Tu Gmail no está en el equipo. Pedile acceso a un admin.');
   }
   const nombre = String(equipo.get(fila, 'Nombre')).trim();
+  const foto = String(equipo.get(fila, 'Foto')).trim();
+  const icono = String(equipo.get(fila, 'Icono')).trim();
   const esAdmin = String(equipo.get(fila, 'Rol')).trim().toLowerCase() === 'admin';
 
   const permisos = botTabla_(BOT.HOJAS.permisos);
@@ -93,7 +95,7 @@ function botUsuario_() {
   const sexAdmins = String(botConfig_('SEX_ADMIN') || '').split(',').map((s) => s.trim().toLowerCase());
   const puede = (seccion) => esAdmin || secciones.has(seccion);
   return {
-    email, nombre, esAdmin,
+    email, nombre, esAdmin, foto, icono,
     consultas: puede(BOT.SECCION_CONSULTAS),
     verPrecios: puede(BOT.SECCION_PRECIOS),
     puedeUbicar: puede(BOT.SECCION_UBICAR),
@@ -499,6 +501,53 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
 }
 
 // ---------------------------------------------------------------------------
+// Avatar de cada persona (hoja Equipo: Foto, Icono)
+// ---------------------------------------------------------------------------
+
+const BOT_COLORES_AVATAR = ['#5ef2c4', '#7fb0ea', '#f2b84b', '#ff8a80', '#c39bf2', '#7fe08a'];
+const BOT_MAX_FOTO_BYTES = 300 * 1024;
+
+/**
+ * Foto si hay (link o ID de Drive, o data:image...), si no el emoji de Icono,
+ * si no las iniciales con un color fijo por persona.
+ */
+function botAvatarPersona_(u) {
+  const src = botFotoEquipo_(u.foto);
+  if (src) return { tipo: 'foto', src };
+  const icono = u.icono && !/^(no|si|sí)$/i.test(u.icono) ? u.icono : '';
+  const color = BOT_COLORES_AVATAR[[...u.nombre].reduce((a, c) => a + c.charCodeAt(0), 0) % BOT_COLORES_AVATAR.length];
+  if (icono) return { tipo: 'icono', texto: icono, color };
+  const iniciales = u.nombre.split(/\s+/).map((p) => p[0] || '').join('').slice(0, 2).toUpperCase();
+  return { tipo: 'iniciales', texto: iniciales, color };
+}
+
+/** Convierte la celda Foto en una imagen que el navegador pueda mostrar sin pedir permisos de Drive. */
+function botFotoEquipo_(valor) {
+  valor = String(valor || '').trim();
+  if (!valor) return '';
+  if (/^data:image\//.test(valor)) return valor;
+  const m = valor.match(/\/d\/([\w-]{20,})/) || valor.match(/[?&]id=([\w-]{20,})/) || valor.match(/^([\w-]{20,})$/);
+  if (!m) return '';
+  const cache = CacheService.getScriptCache();
+  const clave = 'bot_foto_' + m[1];
+  const guardada = cache.get(clave);
+  if (guardada) return guardada;
+  try {
+    const blob = DriveApp.getFileById(m[1]).getBlob();
+    if (blob.getBytes().length > BOT_MAX_FOTO_BYTES) {
+      console.warn('La foto ' + m[1] + ' pesa más de 300 KB; subí una más chica (256 px alcanza).');
+      return '';
+    }
+    const src = 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes());
+    if (src.length < 100000) cache.put(clave, src, 21600);
+    return src;
+  } catch (e) {
+    console.warn('No se pudo leer la foto ' + m[1] + ': ' + e);
+    return '';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Pantalla
 // ---------------------------------------------------------------------------
 
@@ -506,7 +555,10 @@ function botInicio() {
   const u = botExigir_();
   const lineas = ['Todo', BOT_LINEA_DEFECTO].concat(
     BOT_LINEAS.filter((r) => !r.soloSexAdmin || u.sexAdmin).map((r) => r.linea));
-  return { nombre: u.nombre, lineas, puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios };
+  return {
+    nombre: u.nombre, avatar: botAvatarPersona_(u), lineas,
+    puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,
+  };
 }
 
 function botPagina() {
