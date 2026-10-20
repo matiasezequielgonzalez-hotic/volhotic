@@ -1,5 +1,5 @@
 /**
- * Bot de stock Volhotic: servidor.
+ * Hottie, la bot de stock de Volhotic: servidor.
  *
  * Buscador (sin IA) sobre la hoja General de vol_ml_listings(No_tocar).
  * Funciones públicas que llama la pantalla (BotUI.html) con google.script.run:
@@ -9,6 +9,8 @@
  *   botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) -> { ok, mensaje, ficha }
  *   botOpcionesUbicacion()             -> { pisos, zonas }
  *   botInicio()                        -> { nombre, avatar, lineas, puedeUbicar, verPrecios }
+ *   botSalaInicio()                    -> datos del Modo Sala: jugador, XP, nivel, zonas, ranking
+ *   botSumarXP(accion, ref)            -> { ganado, total, nivel } (solo 'encontrado' y 'despachado')
  *
  * Integración con tu app:
  *   1. Reemplazá botEmailActual_() por como tu app sabe quién está logueado.
@@ -29,6 +31,7 @@ const BOT = {
     equipo: 'Equipo',
     permisos: 'Permisos',
     config: 'Config',
+    xp: 'BotXP', // Fecha | Nombre | Accion | Ref | XP  (la crea el bot si no existe)
   },
   SECCION_CONSULTAS: 'consultas',
   SECCION_PRECIOS: 'precios',
@@ -445,7 +448,8 @@ function botNoLoEncontre(id) {
   } finally {
     lock.releaseLock();
   }
-  return { ok: true, mensaje: 'Listo, pedí un recuento de ' + f.descripcion + '.' };
+  const xp = botDarXp_(u, 'reporte', id);
+  return { ok: true, mensaje: 'Listo, pedí un recuento de ' + f.descripcion + '.', xp };
 }
 
 function botOpcionesUbicacion() {
@@ -497,7 +501,115 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
     lock.releaseLock();
   }
   botInvalidarIndice_();
-  return { ok: true, mensaje: 'Ubicación actualizada.', ficha: botDetalle(id) };
+  const xp = botDarXp_(u, 'ubicado', id);
+  return { ok: true, mensaje: 'Ubicación actualizada.', ficha: botDetalle(id), xp };
+}
+
+// ---------------------------------------------------------------------------
+// XP del Modo Sala
+// ---------------------------------------------------------------------------
+
+const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15 };
+// Lo que la pantalla puede pedir directamente. Reporte y ubicado los suma el servidor
+// al hacer la acción real, así nadie se los puede dar sin hacerla.
+const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado'];
+const BOT_XP_TOPE_DIARIO = 300;
+
+function botHojaXp_() {
+  const planilla = botPlanilla_();
+  let hoja = planilla.getSheetByName(BOT.HOJAS.xp);
+  if (!hoja) {
+    hoja = planilla.insertSheet(BOT.HOJAS.xp);
+    hoja.appendRow(['Fecha', 'Nombre', 'Accion', 'Ref', 'XP']);
+  }
+  return hoja;
+}
+
+function botNivel_(xp) {
+  // Nivel n necesita 50·(n-1)² XP: 0, 50, 200, 450, 800…
+  const nivel = Math.floor(Math.sqrt(xp / 50)) + 1;
+  return { nivel, desde: 50 * (nivel - 1) ** 2, hasta: 50 * nivel ** 2 };
+}
+
+/** Totales de XP: { total: {nombre: xp}, semana: {nombre: xp}, hoy: {nombre: {xp, claves:Set}} } */
+function botTotalesXp_() {
+  botHojaXp_();
+  const t = botTabla_(BOT.HOJAS.xp);
+  const hoy = Utilities.formatDate(new Date(), BOT.ZONA_HORARIA, 'dd/MM/yyyy');
+  const ahora = new Date();
+  const lunes = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - ((ahora.getDay() + 6) % 7));
+  const total = {}, semana = {}, delDia = {};
+  t.filas.forEach((f) => {
+    const nombre = String(t.get(f, 'Nombre')).trim();
+    const xp = Number(t.get(f, 'XP')) || 0;
+    const fechaTxt = String(t.get(f, 'Fecha'));
+    total[nombre] = (total[nombre] || 0) + xp;
+    const fecha = botParsearFecha_(fechaTxt);
+    if (fecha && fecha >= lunes) semana[nombre] = (semana[nombre] || 0) + xp;
+    if (fechaTxt.startsWith(hoy)) {
+      const d = delDia[nombre] || (delDia[nombre] = { xp: 0, claves: new Set() });
+      d.xp += xp;
+      d.claves.add(t.get(f, 'Accion') + '|' + t.get(f, 'Ref'));
+    }
+  });
+  return { total, semana, delDia };
+}
+
+/** Suma XP si no la ganó ya hoy por lo mismo y no pasó el tope diario. */
+function botDarXp_(u, accion, ref) {
+  const puntos = BOT_XP[accion];
+  if (!puntos) throw new Error('Acción de XP desconocida: ' + accion);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const { total, delDia } = botTotalesXp_();
+    const hoy = delDia[u.nombre] || { xp: 0, claves: new Set() };
+    let ganado = 0;
+    if (!hoy.claves.has(accion + '|' + ref) && hoy.xp + puntos <= BOT_XP_TOPE_DIARIO) {
+      botAgregarFila_(BOT.HOJAS.xp, { Fecha: botAhora_(), Nombre: u.nombre, Accion: accion, Ref: ref, XP: puntos });
+      ganado = puntos;
+    }
+    const nuevoTotal = (total[u.nombre] || 0) + ganado;
+    return Object.assign({ ganado, total: nuevoTotal }, botNivel_(nuevoTotal));
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function botSumarXP(accion, ref) {
+  const u = botExigir_();
+  if (!BOT_XP_DESDE_CLIENTE.includes(accion)) throw new Error('Esa XP se gana haciendo la acción.');
+  ref = String(ref || '').trim();
+  if (!botVisibles_(u).some((f) => f.id === ref)) throw new Error('No encontré el producto ' + ref + '.');
+  return botDarXp_(u, accion, ref);
+}
+
+function botRanking_() {
+  const { semana } = botTotalesXp_();
+  return Object.keys(semana).map((nombre) => ({ nombre, xp: semana[nombre] }))
+    .sort((a, b) => b.xp - a.xp).slice(0, 8);
+}
+
+function botSalaInicio() {
+  const u = botExigir_();
+  const { total } = botTotalesXp_();
+  const xp = total[u.nombre] || 0;
+  // Las zonas con más productos (las estanterías de la sala).
+  const cuenta = {};
+  botVisibles_(u).forEach((f) => { if (f.zona) cuenta[f.zona] = (cuenta[f.zona] || 0) + 1; });
+  const zonas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 8)
+    .sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+  const equipo = botTabla_(BOT.HOJAS.equipo);
+  const companeros = equipo.filas
+    .filter((f) => String(equipo.get(f, 'Activo')).trim().toUpperCase() !== 'NO')
+    .map((f) => String(equipo.get(f, 'Nombre')).trim())
+    .filter((n) => n && n !== u.nombre);
+  return {
+    jugador: Object.assign({ nombre: u.nombre, avatar: botAvatarPersona_(u), xp }, botNivel_(xp)),
+    zonas, companeros, ranking: botRanking_(),
+    lineas: botInicio().lineas, puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,
+    xpPorAccion: BOT_XP,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -563,8 +675,27 @@ function botInicio() {
 
 function botPagina() {
   return HtmlService.createTemplateFromFile('BotUI').evaluate()
-    .setTitle('Consultas de stock')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    .setTitle('Hottie · Consultas de stock')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    // Para poder abrirse dentro de la ventana emergente (iframe) de tu app.
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** Ventana emergente: en cualquier página de tu app, al final del <body>:  <?!= botWidget() ?> */
+function botWidget() {
+  return HtmlService.createTemplateFromFile('BotWidget').evaluate().getContent();
+}
+
+/** URL de esta web app con ?v=... (para el chat y el Modo Sala). */
+function botUrl(vista) {
+  return ScriptApp.getService().getUrl() + '?v=' + encodeURIComponent(vista);
+}
+
+/** Modo Sala (3D). En tu doGet: if (e.parameter.v === 'sala') return botPaginaSala(); */
+function botPaginaSala() {
+  return HtmlService.createTemplateFromFile('BotSala').evaluate()
+    .setTitle('Sala Volhotic')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1');
 }
 
 function botInclude(nombre) {

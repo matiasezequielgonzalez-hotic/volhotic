@@ -12,6 +12,7 @@
     --font: "Segoe UI", Roboto, system-ui, sans-serif; --mono: ui-monospace, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--font); display: flex; flex-direction: column; }
   header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -19,6 +20,8 @@
   .avatar { display: block; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(94, 242, 196, .35)); }
   header .avatar { width: 52px; height: 52px; }
   header h1 { font-size: 17px; margin: 0; }
+  header .sala { font-size: 13px; font-weight: 600; color: #052b20; background: var(--neon); text-decoration: none;
+    padding: 7px 11px; border-radius: 8px; white-space: nowrap; box-shadow: 0 0 14px rgba(94, 242, 196, .4); }
   header small { color: var(--muted); }
   .buscando header .avatar { animation: latido 1.2s ease-in-out infinite; }
   @keyframes latido { 50% { filter: drop-shadow(0 0 12px rgba(94, 242, 196, .8)); } }
@@ -76,8 +79,9 @@
 </head>
 <body>
 <header>
-  <img class="avatar" src="<?!= botInclude('BotAvatar') ?>" alt="Asistente de stock">
-  <div><h1>Asistente de stock</h1><small id="saludo">Conectando…</small></div>
+  <img class="avatar" src="<?!= botInclude('BotAvatar') ?>" alt="Hottie">
+  <div style="flex:1;min-width:0"><h1>Hottie</h1><small id="saludo">Conectando…</small></div>
+  <a class="sala" href="<?!= botUrl('sala') ?>" target="_top">🎮 Modo Sala</a>
 </header>
 
 <main id="chat" aria-live="polite"></main>
@@ -257,7 +261,7 @@
     estado.inicio = ini;
     document.getElementById('saludo').textContent = `Hola ${ini.nombre}`;
     pintarLineas(ini.lineas);
-    mensajeBot(`<div class="texto">¡Hola ${esc(ini.nombre)}! Decime qué buscás: una descripción
+    mensajeBot(`<div class="texto">¡Hola ${esc(ini.nombre)}! Soy Hottie. Decime qué buscás: una descripción
       (“amortiguador delantero bora”), un código OEM o SKU (1J0411336H) o un ID (P00002).</div>`);
   }).catch((e) => {
     document.getElementById('saludo').textContent = 'Sin acceso';

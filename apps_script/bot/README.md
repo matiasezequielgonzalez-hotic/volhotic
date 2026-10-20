@@ -1,6 +1,8 @@
-# Kit del bot de stock para Apps Script
+# Hottie: kit del bot de stock para Apps Script
 
-Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la planilla
+Hottie es la compañera del equipo que sabe dónde está cada repuesto. Buscador de stock (sin IA)
+para sumar a la app del equipo, en tres formas: página de chat, **ventana emergente** y
+**Modo Sala** (sala 3D tipo videojuego con XP y ranking). Lee la planilla
 **vol_ml_listings(No_tocar)** en el momento. Diseño completo: ver el documento de diseño del bot.
 
 | Archivo | Qué es | Dónde va |
@@ -8,6 +10,9 @@ Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la 
 | `Bot.gs` | Servidor: búsqueda, permisos, precios, acciones | Archivo de script en tu proyecto |
 | `BotUI.html` | Pantalla del chat | Archivo HTML `BotUI` |
 | `BotAvatar.html` | Avatar en base64 (una sola línea) | Archivo HTML `BotAvatar` |
+| `BotWidget.html` | Ventana emergente (botón flotante + chat) | Archivo HTML `BotWidget` |
+| `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
+| `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
 | `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
 
@@ -18,8 +23,15 @@ Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la 
 2. **Quién está logueado:** cambiá `botEmailActual_()` en `Bot.gs` para que devuelva el Gmail del
    usuario como lo hace tu app. Por defecto usa `Session.getActiveUser().getEmail()`, que solo
    funciona si la web app se ejecuta como "el usuario que accede".
-3. **Mostrar la pantalla:** en tu `doGet`, `if (e.parameter.v === 'bot') return botPagina();`.
-   O, si tu app arma las secciones en una sola página, incluí `botInclude('BotUI')`.
+3. **Mostrar las pantallas:** al principio de tu `doGet`:
+   ```js
+   if (e.parameter.v === 'bot') return botPagina();       // chat
+   if (e.parameter.v === 'sala') return botPaginaSala();  // Modo Sala 3D
+   ```
+   **Ventana emergente:** en cada página de tu app donde quieras el botón flotante, antes de
+   `</body>` agregá `<?!= botWidget() ?>` (la página tiene que armarse con
+   `HtmlService.createTemplateFromFile(...)`). Abre el chat en un panel; desde el chat hay un
+   botón "🎮 Modo Sala".
 4. En la planilla:
    - Hoja `Sinonimos` con columnas `Palabra | Equivale_a` (importá `Sinonimos.csv`; las columnas
      Tipo y Nota son solo ayuda). Solo palabras sueltas.
@@ -53,6 +65,19 @@ Buscador de stock (sin IA) para sumar como sección a la app del equipo. Lee la 
   de `Icono` en un círculo; si tampoco hay, las iniciales con un color fijo por persona. La foto
   tiene que pesar menos de 300 KB (256 px alcanza) y el dueño del script tiene que poder abrirla.
   La primera vez Apps Script pide permiso de Drive.
+- **Modo Sala (3D, three.js r128 desde cdnjs):** cada uno maneja su figura con WASD/flechas, tocando
+  el piso o arrastrando para girar la cámara. Con **E** habla con Hottie en su terminal; le pregunta
+  por un repuesto (búsqueda real) y ella marca con un rayo de luz la estantería de esa zona. Ahí
+  elige "¡Lo encontré!" (+10 XP, lleva la caja a Despacho: +5 XP) o "No estaba" (crea el recuento:
+  +3 XP). Si el producto no tiene ubicación y la persona tiene `ubicar`, lo deja en una estantería
+  eligiendo el piso (+15 XP). Hay nivel, barra de XP y ranking semanal. Las estanterías son las 8
+  zonas con más productos. Los compañeros con figura andan por la sala.
+- **XP:** se guarda en la hoja `BotXP` (la crea el bot). El servidor no da XP dos veces por la misma
+  acción y producto en el día, tope 300 XP por día, y "reporte"/"ubicado" solo se ganan haciendo la
+  acción real. Nivel n desde 50·(n-1)² XP (50, 200, 450…).
+- **Figuras:** `BotSprites.html` tiene a Hottie, Facundo, Gabriel y Sebastián. El nombre del
+  jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una
+  silueta de su color con la inicial. Para sumar a Agustín: agregá `"agustin": "data:image/webp;base64,..."`.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app

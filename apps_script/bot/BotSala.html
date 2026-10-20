@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #070a0a; --panel: rgba(10, 15, 14, .88); --line: #22302c; --fg: #eef4f2; --muted: #8fa29c;
+    --mint: #5ef2c4; --gold: #f2c230;
+    --display: "Chakra Petch", "Arial Narrow", sans-serif; --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/1.4 var(--body); }
+  #juego { position: fixed; inset: 0; touch-action: none; }
+  #juego canvas { display: block; }
+  .hud { position: fixed; z-index: 5; pointer-events: none; }
+  .hud > * { pointer-events: auto; }
+  .caja { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(6px); }
+
+  /* Jugador */
+  #jugador { top: 12px; left: 12px; display: flex; gap: 10px; align-items: center; padding: 8px 14px 8px 8px; }
+  #jugador .foto { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font: 700 18px var(--display); flex-shrink: 0; }
+  #jugador .foto img { width: 100%; height: 100%; border-radius: 50%; }
+  #jugador b { font: 700 16px var(--display); letter-spacing: .03em; }
+  #jugador .nivel { font: 600 11px var(--display); color: var(--gold); letter-spacing: .08em; }
+  .barra { width: 150px; height: 7px; border-radius: 99px; background: #1b2523; overflow: hidden; margin-top: 4px; }
+  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--mint), #b6ffe8); box-shadow: 0 0 10px var(--mint); transition: width .6s; }
+  #jugador small { color: var(--muted); font-size: 11px; }
+
+  /* Ranking */
+  #ranking { top: 12px; right: 12px; padding: 10px 12px; min-width: 190px; }
+  #ranking h3, #mision h3 { margin: 0 0 6px; font: 700 11px var(--display); letter-spacing: .14em; color: var(--muted); }
+  #ranking ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+  #ranking li { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  #ranking li.yo { color: var(--mint); font-weight: 600; }
+  #ranking li span:first-child::before { content: attr(data-pos) "  "; color: var(--muted); font-family: var(--display); }
+
+  /* Misión */
+  #mision { left: 50%; bottom: 14px; transform: translateX(-50%); padding: 10px 16px; max-width: min(560px, calc(100vw - 24px)); text-align: center; }
+  #mision p { margin: 0; font-size: 14px; }
+  #mision b { color: var(--mint); }
+
+  /* Acción cercana */
+  #accion { left: 50%; bottom: 92px; transform: translateX(-50%); }
+  #accion button, .btn {
+    font: 700 14px var(--display); letter-spacing: .05em; color: #052b20; background: var(--mint); border: 0; border-radius: 8px;
+    padding: 10px 16px; cursor: pointer; box-shadow: 0 0 18px rgba(94, 242, 196, .45);
+  }
+  #accion kbd { background: #052b20; color: var(--mint); border-radius: 4px; padding: 1px 6px; margin-right: 6px; font-family: var(--display); }
+  .btn.sec { background: transparent; color: var(--mint); border: 1px solid var(--line); box-shadow: none; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+  #ir-chat { right: 12px; bottom: 14px; text-decoration: none; background: var(--panel); }
+  #ayuda { left: 12px; bottom: 14px; padding: 8px 12px; color: var(--muted); font-size: 12px; max-width: 220px; }
+  @media (max-width: 720px) { #ayuda { display: none; } #ranking { display: none; } #mision { bottom: 10px; } }
+
+  /* Diálogo con la bot */
+  #dialogo { position: fixed; z-index: 10; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(720px, calc(100vw - 20px));
+    display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 14px; border-color: var(--mint);
+    box-shadow: 0 0 30px rgba(94, 242, 196, .25); }
+  #dialogo .retrato { width: 110px; height: 110px; }
+  #dialogo .nombre { font: 700 13px var(--display); color: var(--mint); letter-spacing: .14em; }
+  #dialogo .texto { min-height: 44px; font-size: 15px; margin: 4px 0 10px; }
+  #dialogo form { display: flex; gap: 8px; }
+  #dialogo input { flex: 1; min-width: 0; background: #050808; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+  #opciones { display: grid; gap: 6px; margin-bottom: 10px; }
+  #opciones button { text-align: left; background: #0d1413; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; font: inherit; }
+  #opciones button:hover { border-color: var(--mint); }
+  #opciones button small { color: var(--muted); display: block; font-size: 12px; }
+  #cerrar { position: absolute; top: 8px; right: 10px; background: none; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; }
+  @media (max-width: 520px) { #dialogo { grid-template-columns: 1fr; } #dialogo .retrato { width: 64px; height: 64px; } }
+
+  /* Globos y XP flotante */
+  .globo { position: fixed; z-index: 4; transform: translate(-50%, -100%); background: rgba(10, 15, 14, .92); border: 1.5px solid var(--c, var(--mint));
+    border-radius: 10px; padding: 6px 10px; font-size: 13px; max-width: 210px; pointer-events: none; box-shadow: 0 0 12px var(--c, var(--mint)); }
+  .nombre-3d { position: fixed; z-index: 3; transform: translate(-50%, 0); font: 600 11px var(--display); padding: 1px 8px; border-radius: 99px;
+    background: rgba(7, 10, 10, .75); pointer-events: none; white-space: nowrap; }
+  .xp { position: fixed; z-index: 6; font: 700 22px var(--display); color: var(--gold); text-shadow: 0 0 12px var(--gold);
+    pointer-events: none; animation: subir 1.4s ease-out forwards; }
+  @keyframes subir { to { transform: translate(-50%, -70px); opacity: 0; } }
+  #toast { position: fixed; z-index: 11; top: 18%; left: 50%; transform: translateX(-50%); font: 700 34px var(--display); color: var(--gold);
+    text-shadow: 0 0 24px var(--gold); pointer-events: none; opacity: 0; transition: opacity .3s; text-align: center; }
+  #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 600 16px var(--display); color: var(--mint); letter-spacing: .1em; }
+  @media (prefers-reduced-motion: reduce) { .xp { animation-duration: .01s; } }
+</style>
+</head>
+<body>
+<div id="juego" aria-label="Sala 3D del depósito"></div>
+
+<div id="jugador" class="hud caja"></div>
+<div id="ranking" class="hud caja"><h3>RANKING SEMANAL</h3><ol id="lista-ranking"></ol></div>
+<div id="mision" class="hud caja"><h3>MISIÓN</h3><p id="texto-mision">Andá a hablar con Hottie a la terminal.</p></div>
+<div id="accion" class="hud" hidden></div>
+<a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">💬 Chat</a>
+<div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> para interactuar</div>
+
+<div id="dialogo" class="caja" hidden role="dialog" aria-label="Hablar con Hottie">
+  <img class="retrato" id="retrato" alt="">
+  <div style="min-width:0">
+    <div class="nombre">HOTTIE</div>
+    <div class="texto" id="texto-bot"></div>
+    <div id="opciones"></div>
+    <form id="form-bot">
+      <input id="pregunta" autocomplete="off" placeholder="Ej: volante bimasa vento · 1J0411336H · P00002" aria-label="Qué buscás">
+      <button class="btn" type="submit">Preguntar</button>
+    </form>
+  </div>
+  <button id="cerrar" type="button" aria-label="Cerrar">×</button>
+</div>
+<div id="toast"></div>
+<div id="cargando">CARGANDO LA SALA…</div>
+
+<?!= botInclude('BotSprites') ?>
+<?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+// ---------------------------------------------------------------------------
+// Servidor (fuera de Apps Script corre en modo demo, para probar la sala)
+// ---------------------------------------------------------------------------
+const DEMO = typeof google === 'undefined' || !google.script;
+const demo = {
+  botSalaInicio: () => ({
+    jugador: { nombre: 'Facundo', avatar: { tipo: 'iniciales', texto: 'F', color: '#3fa9ff' }, xp: 120, nivel: 2, desde: 50, hasta: 200 },
+    zonas: ['1', '2', '3', '4A'], companeros: ['Gabriel', 'Sebastián', 'Agustín'],
+    ranking: [{ nombre: 'Gabriel', xp: 85 }, { nombre: 'Facundo', xp: 60 }, { nombre: 'Sebastián', xp: 40 }],
+    puedeUbicar: true, verPrecios: false, xpPorAccion: { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15 },
+  }),
+  botBuscar: (t) => {
+    const todos = [
+      { id: 'P06306', descripcion: 'Volante Bimasa Vento 1.9', marca: 'Luk', stock: 9, deposito: 'Batalla', piso: '1', zona: '3', avisos: [] },
+      { id: 'P06308', descripcion: 'Volante Bimasa Vento 2.0 TDI', marca: 'Luk', stock: 7, deposito: 'Batalla', piso: '1', zona: '4A', avisos: [] },
+      { id: 'P00002', descripcion: 'Abrasadera Golf Bora', marca: 'Febi', stock: 8, deposito: 'Batalla', piso: '', zona: '', avisos: ['Sin ubicación'] },
+    ];
+    const r = todos.filter((f) => (f.descripcion + f.id).toLowerCase().includes(String(t).toLowerCase().split(' ')[0]));
+    return { fichas: r, total: r.length, sugerencias: r.length ? [] : ['Volante Bimasa Vento 1.9'], nota: '' };
+  },
+  botSumarXP: () => ({ ganado: 10, total: 130, nivel: 2, desde: 50, hasta: 200 }),
+  botNoLoEncontre: () => ({ ok: true, mensaje: 'Listo, pedí un recuento.', xp: { ganado: 3, total: 133, nivel: 2, desde: 50, hasta: 200 } }),
+  botOpcionesUbicacion: () => ({ pisos: ['-1', '0', '1', '2', '3'], zonas: ['1', '2', '3', '4A'] }),
+  botCorregirUbicacion: () => ({ ok: true, mensaje: 'Ubicación actualizada.', xp: { ganado: 15, total: 148, nivel: 2, desde: 50, hasta: 200 } }),
+};
+function servidor(fn, ...args) {
+  if (DEMO) return new Promise((ok) => setTimeout(() => ok(demo[fn](...args)), 250));
+  return new Promise((ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)[fn](...args));
+}
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const normal = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COLORES = { facundo: '#3fa9ff', gabriel: '#ffb52e', sebastian: '#b46bff', agustin: '#ff6b6b', bot: '#5ef2c4' };
+const PALETA_ZONAS = ['#3fa9ff', '#ffb52e', '#b46bff', '#5ef2c4', '#ff6b6b', '#7fe08a', '#f28bd0', '#ffd166'];
+
+// ---------------------------------------------------------------------------
+// Escena
+// ---------------------------------------------------------------------------
+const ANCHO = 26, FONDO = 20; // tamaño de la sala (x, z)
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('juego').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x070a0a);
+scene.fog = new THREE.Fog(0x070a0a, 22, 46);
+const camara = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
+function redimensionar() {
+  renderer.setSize(innerWidth, innerHeight);
+  camara.aspect = innerWidth / innerHeight;
+  camara.updateProjectionMatrix();
+}
+addEventListener('resize', redimensionar);
+redimensionar();
+
+scene.add(new THREE.HemisphereLight(0x9fd9ff, 0x0b1210, 0.55));
+const sol = new THREE.DirectionalLight(0xffffff, 0.75);
+sol.position.set(8, 16, 10); sol.castShadow = true;
+sol.shadow.mapSize.set(1024, 1024);
+Object.assign(sol.shadow.camera, { left: -16, right: 16, top: 14, bottom: -14 });
+scene.add(sol);
+
+function texturaTexto(texto, color, { ancho = 256, alto = 64, fuente = '700 34px "Chakra Petch", sans-serif', fondo = 'rgba(7,10,10,.85)' } = {}) {
+  const c = document.createElement('canvas'); c.width = ancho; c.height = alto;
+  const g = c.getContext('2d');
+  if (fondo) { g.fillStyle = fondo; g.strokeStyle = color; g.lineWidth = 4; g.beginPath(); g.roundRect(4, 4, ancho - 8, alto - 8, 10); g.fill(); g.stroke(); }
+  g.font = fuente; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.shadowColor = color; g.shadowBlur = 14; g.fillStyle = color; g.fillText(texto, ancho / 2, alto / 2 + 2);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+
+function piso() {
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d');
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { g.fillStyle = (i + j) % 2 ? '#101615' : '#0c1211'; g.fillRect(i * 64, j * 64, 64, 64); }
+  g.strokeStyle = 'rgba(94,242,196,.10)'; g.lineWidth = 2;
+  for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(i * 64, 0); g.lineTo(i * 64, 512); g.stroke(); g.beginPath(); g.moveTo(0, i * 64); g.lineTo(512, i * 64); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ANCHO / 4, FONDO / 4);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(ANCHO, FONDO), new THREE.MeshStandardMaterial({ map: t, roughness: 0.85 }));
+  m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
+  return m;
+}
+const suelo = piso();
+
+const solidos = []; // cajas de colisión {minX, maxX, minZ, maxZ}
+function caja(w, h, d, color, x, y, z, { emisivo, sombra = true, solido = false } = {}) {
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.1 });
+  if (emisivo) { mat.emissive = new THREE.Color(emisivo); mat.emissiveIntensity = 1.4; }
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y + h / 2, z); m.castShadow = sombra; m.receiveShadow = true; scene.add(m);
+  if (solido) solidos.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
+  return m;
+}
+
+// Paredes con tira de neón
+caja(ANCHO, 5, 0.3, 0x111918, 0, 0, -FONDO / 2, { sombra: false });
+caja(0.3, 5, FONDO, 0x0e1514, -ANCHO / 2, 0, 0, { sombra: false });
+caja(ANCHO, 0.08, 0.1, 0x5ef2c4, 0, 4.6, -FONDO / 2 + 0.2, { emisivo: 0x5ef2c4, sombra: false });
+caja(0.1, 0.08, FONDO, 0x5ef2c4, -ANCHO / 2 + 0.2, 4.6, 0, { emisivo: 0x5ef2c4, sombra: false });
+const cartel = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), new THREE.MeshBasicMaterial({
+  map: texturaTexto('VOLHOTIC', '#5ef2c4', { ancho: 512, alto: 128, fuente: '700 84px "Chakra Petch", sans-serif', fondo: null }), transparent: true }));
+cartel.position.set(-ANCHO / 2 + 0.2, 3.3, -2); cartel.rotation.y = Math.PI / 2; scene.add(cartel);
+
+// Estanterías: una por zona, contra la pared del fondo.
+const estanterias = {};
+function estanteria(zona, i, total) {
+  const color = PALETA_ZONAS[i % PALETA_ZONAS.length];
+  const x = -ANCHO / 2 + 3 + i * ((ANCHO - 6) / Math.max(total - 1, 1));
+  const z = -FONDO / 2 + 1.2, w = 2.4, d = 1.1, h = 3.2;
+  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) caja(0.08, h, 0.08, 0x2b3533, x + dx * w / 2, 0, z + dz * d / 2);
+  for (let n = 0; n < 4; n++) {
+    caja(w, 0.06, d, 0x3a4644, x, n * (h / 3.2), z);
+    if (n < 3) for (let k = 0; k < 3; k++) {
+      if (Math.random() < 0.2) continue;
+      const cw = 0.45 + Math.random() * 0.25, ch = 0.35 + Math.random() * 0.3;
+      caja(cw, ch, d * 0.7, new THREE.Color().setHSL(0.08, 0.45, 0.35 + Math.random() * 0.15), x - w / 2 + 0.45 + k * 0.75, n * (h / 3.2) + 0.06, z);
+    }
+  }
+  solidos.push({ minX: x - w / 2 - 0.1, maxX: x + w / 2 + 0.1, minZ: z - d / 2 - 0.1, maxZ: z + d / 2 + 0.1 });
+  const cartelZona = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('ZONA ' + zona, color), depthWrite: false }));
+  cartelZona.scale.set(2.2, 0.55, 1); cartelZona.position.set(x, h + 0.6, z + 0.3); scene.add(cartelZona);
+  const luz = new THREE.PointLight(color, 0.8, 6); luz.position.set(x, 2.6, z + 1.6); scene.add(luz);
+  const frente = new THREE.Vector3(x, 0, z + d / 2 + 1.0);
+  estanterias[normal(zona)] = { zona, color, x, z, frente };
+}
+
+// Terminal de la bot y mesa de despacho
+const TERMINAL = new THREE.Vector3(-9.5, 0, 3);
+caja(2.6, 1.0, 1.1, 0x1d2725, TERMINAL.x, 0, TERMINAL.z - 0.4, { solido: true });
+const pantalla = caja(1.4, 0.9, 0.06, 0x071311, TERMINAL.x, 1.15, TERMINAL.z - 0.75, { emisivo: 0x5ef2c4 });
+pantalla.material.emissiveIntensity = 0.6;
+const luzBot = new THREE.PointLight(0x5ef2c4, 1.3, 7); luzBot.position.set(TERMINAL.x, 2.2, TERMINAL.z + 0.8); scene.add(luzBot);
+const DESPACHO = new THREE.Vector3(9, 0, 6.5);
+caja(3.2, 0.9, 1.4, 0x3b3226, DESPACHO.x, 0, DESPACHO.z, { solido: true });
+const cartelDesp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaTexto('DESPACHO', '#f2c230'), depthWrite: false }));
+cartelDesp.scale.set(2.2, 0.55, 1); cartelDesp.position.set(DESPACHO.x, 2.0, DESPACHO.z); scene.add(cartelDesp);
+const pilaDespacho = [];
+function sumarCajaDespacho() {
+  const n = pilaDespacho.length, col = n % 4, fila = Math.floor(n / 4) % 4;
+  pilaDespacho.push(caja(0.6, 0.45, 0.6, 0xb98a55, DESPACHO.x - 1.1 + col * 0.72, 0.9 + fila * 0.46, DESPACHO.z));
+}
+for (let i = 0; i < 5; i++) sumarCajaDespacho();
+
+// Rayo de luz que marca el objetivo de la misión
+const rayo = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 12, 24, 1, true),
+  new THREE.MeshBasicMaterial({ color: 0x5ef2c4, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+const aroObjetivo = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 40), new THREE.MeshBasicMaterial({ color: 0x5ef2c4, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+aroObjetivo.rotation.x = -Math.PI / 2;
+rayo.visible = aroObjetivo.visible = false; scene.add(rayo, aroObjetivo);
+function marcar(pos, color) {
+  rayo.visible = aroObjetivo.visible = !!pos;
+  if (!pos) return;
+  rayo.position.set(pos.x, 6, pos.z); aroObjetivo.position.set(pos.x, 0.03, pos.z);
+  rayo.material.color.set(color); aroObjetivo.material.color.set(color);
+}
+
+// ---------------------------------------------------------------------------
+// Personajes (figuras como sprites que siempre miran a la cámara)
+// ---------------------------------------------------------------------------
+function texturaFigura(clave, nombre, color, alCargar) {
+  if (BOT_SPRITES[clave]) return new THREE.TextureLoader().load(BOT_SPRITES[clave], alCargar);
+  // Sin figura: silueta simple con la inicial.
+  const c = document.createElement('canvas'); c.width = 110; c.height = 300;
+  const g = c.getContext('2d'); g.fillStyle = color;
+  g.beginPath(); g.arc(55, 50, 36, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.roundRect(15, 92, 80, 150, 30); g.fill(); g.fillRect(25, 220, 24, 80); g.fillRect(61, 220, 24, 80);
+  g.fillStyle = '#052b20'; g.font = '700 40px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText(nombre[0] || '?', 55, 64);
+  const t = new THREE.CanvasTexture(c);
+  if (alCargar) setTimeout(() => alCargar(t));
+  return t;
+}
+
+const personajes = [];
+function crearPersonaje(nombre, color, pos, clave) {
+  clave = clave || normal(nombre).split(' ')[0];
+  color = color || COLORES[clave] || '#9fd9ff';
+  const alto = 2.1;
+  let figura = null;
+  // El ancho sale de la proporción de la imagen, cuando termina de cargar.
+  const tex = texturaFigura(clave, nombre, color, (t) => { figura.scale.x = alto * t.image.width / t.image.height; });
+  figura = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+  figura.center.set(0.5, 0);
+  figura.scale.set(alto * 110 / 300, alto, 1);
+  const grupo = new THREE.Group(); grupo.add(figura);
+  const sombra = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.5 }));
+  sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.02; grupo.add(sombra);
+  const aro = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+  aro.rotation.x = -Math.PI / 2; aro.position.y = 0.03; grupo.add(aro);
+  grupo.position.copy(pos); scene.add(grupo);
+  const etiqueta = document.createElement('div');
+  etiqueta.className = 'nombre-3d'; etiqueta.style.color = color; etiqueta.textContent = nombre; document.body.appendChild(etiqueta);
+  const p = { nombre, color, grupo, figura, alto, fase: Math.random() * 6, mira: 1, caminando: false, destino: null, carga: null, globo: null, etiqueta };
+  personajes.push(p); return p;
+}
+
+function decir(p, texto, segundos = 3) {
+  if (!p.globo) { p.globo = document.createElement('div'); p.globo.className = 'globo'; p.globo.style.setProperty('--c', p.color); document.body.appendChild(p.globo); }
+  p.globo.textContent = texto; p.globo.hidden = false; p.globoHasta = performance.now() + segundos * 1000;
+}
+
+function ponerCarga(p, si) {
+  if (si && !p.carga) {
+    p.carga = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), new THREE.MeshStandardMaterial({ color: 0xb98a55 }));
+    p.carga.castShadow = true; p.carga.position.set(0, p.alto * 0.55, 0.35); p.grupo.add(p.carga);
+  } else if (!si && p.carga) { p.grupo.remove(p.carga); p.carga = null; }
+}
+
+const vec = new THREE.Vector3();
+function aPantalla(pos, alto) {
+  vec.set(pos.x, alto, pos.z).project(camara);
+  return { x: (vec.x + 1) / 2 * innerWidth, y: (1 - vec.y) / 2 * innerHeight, visible: vec.z < 1 };
+}
+
+function chocaria(x, z) {
+  const r = 0.35;
+  if (x < -ANCHO / 2 + 0.6 || x > ANCHO / 2 - 0.6 || z < -FONDO / 2 + 0.6 || z > FONDO / 2 - 0.6) return true;
+  return solidos.some((s) => x + r > s.minX && x - r < s.maxX && z + r > s.minZ && z - r < s.maxZ);
+}
+
+function mover(p, dx, dz, dt, velocidad) {
+  const largo = Math.hypot(dx, dz);
+  if (largo < 1e-3) { p.caminando = false; return; }
+  const paso = velocidad * dt / largo;
+  const nx = p.grupo.position.x + dx * paso, nz = p.grupo.position.z + dz * paso;
+  // Se desliza contra las paredes: prueba cada eje por separado.
+  if (!chocaria(nx, p.grupo.position.z)) p.grupo.position.x = nx;
+  if (!chocaria(p.grupo.position.x, nz)) p.grupo.position.z = nz;
+  p.caminando = true;
+  // Mira a la izquierda o derecha de la pantalla según hacia dónde camina.
+  const derecha = new THREE.Vector3().setFromMatrixColumn(camara.matrixWorld, 0);
+  const lado = derecha.x * dx + derecha.z * dz;
+  if (Math.abs(lado) > 0.05) p.mira = lado > 0 ? 1 : -1;
+}
+
+function animarPersonaje(p, dt, t) {
+  p.fase += dt * (p.caminando ? 11 : 2);
+  const salto = p.caminando && !reduce ? Math.abs(Math.sin(p.fase)) * 0.12 : 0;
+  const respira = p.caminando ? 0 : Math.sin(p.fase) * 0.012;
+  p.figura.position.y = salto;
+  // Los sprites no se espejan con escala negativa: se invierte la textura.
+  const map = p.figura.material.map;
+  if (map && map.repeat.x !== p.mira) { map.repeat.x = p.mira; map.offset.x = p.mira < 0 ? 1 : 0; }
+  p.figura.material.rotation = p.caminando && !reduce ? Math.sin(p.fase) * 0.04 : 0;
+  p.figura.scale.y = p.alto * (1 + respira);
+  const base = aPantalla(p.grupo.position, -0.05);
+  p.etiqueta.style.left = base.x + 'px'; p.etiqueta.style.top = (base.y + 4) + 'px'; p.etiqueta.hidden = !base.visible;
+  if (p.globo && !p.globo.hidden) {
+    if (performance.now() > p.globoHasta) p.globo.hidden = true;
+    const cabeza = aPantalla(p.grupo.position, p.alto + 0.35);
+    p.globo.style.left = cabeza.x + 'px'; p.globo.style.top = cabeza.y + 'px';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Estado del juego
+// ---------------------------------------------------------------------------
+let ini, jugador, bot, opcionesUbic = null;
+let mision = null; // { tipo: 'buscar'|'despachar'|'ubicar', ficha, est }
+let dialogoAbierto = false;
+const teclas = {};
+let destinoClick = null, yaw = 0.35, zoom = 1;
+
+function pintarJugador() {
+  const j = ini.jugador, a = j.avatar || {};
+  const foto = a.tipo === 'foto' ? `<img src="${esc(a.src)}" alt="">` : esc(a.texto || j.nombre[0]);
+  const fondo = a.tipo === 'foto' ? 'transparent' : (a.tipo === 'icono' ? '#0d1413' : a.color);
+  const pct = Math.round(100 * (j.xp - j.desde) / Math.max(1, j.hasta - j.desde));
+  $('jugador').innerHTML = `<div class="foto" style="background:${fondo};border:2px solid ${esc(a.color || '#5ef2c4')};color:#052b20">${foto}</div>
+    <div><div class="nivel">NIVEL ${j.nivel}</div><b>${esc(j.nombre)}</b>
+    <div class="barra"><i style="width:${pct}%"></i></div><small>${j.xp} XP · faltan ${j.hasta - j.xp} para nivel ${j.nivel + 1}</small></div>`;
+}
+
+function pintarRanking() {
+  $('lista-ranking').innerHTML = (ini.ranking.length ? ini.ranking : [{ nombre: ini.jugador.nombre, xp: 0 }])
+    .map((r, i) => `<li class="${r.nombre === ini.jugador.nombre ? 'yo' : ''}"><span data-pos="${i + 1}.">${esc(r.nombre)}</span><span>${r.xp} XP</span></li>`).join('');
+}
+
+function ganarXp(res) {
+  if (!res || !res.ganado) return;
+  const nivelAntes = ini.jugador.nivel;
+  Object.assign(ini.jugador, { xp: res.total, nivel: res.nivel, desde: res.desde, hasta: res.hasta });
+  const fila = ini.ranking.find((r) => r.nombre === ini.jugador.nombre);
+  if (fila) fila.xp += res.ganado; else ini.ranking.push({ nombre: ini.jugador.nombre, xp: res.ganado });
+  ini.ranking.sort((a, b) => b.xp - a.xp);
+  pintarJugador(); pintarRanking();
+  const pos = aPantalla(jugador.grupo.position, jugador.alto + 0.2);
+  const el = document.createElement('div'); el.className = 'xp'; el.textContent = `+${res.ganado} XP`;
+  el.style.left = pos.x + 'px'; el.style.top = pos.y + 'px'; el.style.transform = 'translate(-50%,0)';
+  document.body.appendChild(el); setTimeout(() => el.remove(), 1500);
+  if (res.nivel > nivelAntes) toast(`¡NIVEL ${res.nivel}!`);
+}
+
+function toast(texto) {
+  $('toast').textContent = texto; $('toast').style.opacity = 1;
+  setTimeout(() => { $('toast').style.opacity = 0; }, 1800);
+}
+
+function textoMision(html) { $('texto-mision').innerHTML = html; }
+
+function ponerMision(m) {
+  mision = m;
+  if (!m) { marcar(null); textoMision('Andá a hablar con Hottie a la terminal.'); return; }
+  if (m.tipo === 'buscar') {
+    marcar(m.est.frente, m.est.color);
+    textoMision(`Buscá <b>${esc(m.ficha.descripcion)}</b> en <b style="color:${m.est.color}">Zona ${esc(m.ficha.zona)}</b>${m.ficha.piso ? ' · piso ' + esc(m.ficha.piso) : ''}`);
+  } else if (m.tipo === 'despachar') {
+    marcar(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6), '#f2c230');
+    textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a <b style="color:#f2c230">Despacho</b>`);
+  } else if (m.tipo === 'ubicar') {
+    marcar(null);
+    textoMision(`Llevá <b>${esc(m.ficha.descripcion)}</b> a la estantería donde lo vas a dejar`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diálogo con la bot
+// ---------------------------------------------------------------------------
+let escribiendo = null;
+function botDice(texto) {
+  const el = $('texto-bot');
+  clearInterval(escribiendo);
+  if (reduce) { el.textContent = texto; return; }
+  let i = 0; el.textContent = '';
+  escribiendo = setInterval(() => { el.textContent = texto.slice(0, ++i); if (i >= texto.length) clearInterval(escribiendo); }, 16);
+  decir(bot, texto.length > 70 ? texto.slice(0, 68) + '…' : texto, 4);
+}
+function opciones(lista) {
+  $('opciones').innerHTML = '';
+  lista.forEach(({ html, accion }) => {
+    const b = document.createElement('button'); b.type = 'button'; b.innerHTML = html; b.onclick = accion; $('opciones').appendChild(b);
+  });
+}
+
+function abrirDialogo() {
+  dialogoAbierto = true; $('dialogo').hidden = false; $('accion').hidden = true;
+  opciones([]);
+  botDice(mision ? `¿Cómo vas con ${mision.ficha.descripcion}? Si querés, buscamos otra cosa.`
+    : pick([`¡Hola ${ini.jugador.nombre}! ¿Qué salimos a buscar?`, `${ini.jugador.nombre}, decime qué necesitás y te digo dónde está.`, '¿Qué te traigo hoy? Pasame la descripción o el código.']));
+  setTimeout(() => $('pregunta').focus(), 50);
+}
+function cerrarDialogo() { dialogoAbierto = false; $('dialogo').hidden = true; clearInterval(escribiendo); }
+
+function lineaFicha(f) {
+  const lugar = f.zona ? `Zona ${esc(f.zona)}${f.piso ? ' · piso ' + esc(f.piso) : ''}` : 'Sin ubicación';
+  return `${esc(f.descripcion)}<small>${esc(f.marca || 's/marca')} · ${f.stock} u · ${esc(f.deposito || '')} · ${lugar}</small>`;
+}
+
+function elegirFicha(f) {
+  opciones([]);
+  if (!f.zona) {
+    if (ini.puedeUbicar) {
+      botDice(`Uh, ${f.descripcion} no tiene ubicación 😬. ¿Me ayudás? Agarralo y llevalo a la estantería donde lo vas a dejar.`);
+      ponerMision({ tipo: 'ubicar', ficha: f });
+    } else botDice(`${f.descripcion} no tiene ubicación cargada. Avisale a Gabriel o a Franco para que lo ubiquen.`);
+    return;
+  }
+  const est = estanterias[normal(f.zona)];
+  if (!est) { botDice(`${f.descripcion}: está en zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''} de ${f.deposito || 'el depósito'}. Esa zona no está en esta sala.`); return; }
+  botDice(pick([`¡Lo tengo! ${f.descripcion}, ${f.stock} unidades. Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Te marco el camino 😉`,
+    `Está en la zona ${f.zona}. Seguí la luz, ${ini.jugador.nombre}.`, `Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Andá que te espero 💚`]));
+  ponerMision({ tipo: 'buscar', ficha: f, est });
+  setTimeout(cerrarDialogo, reduce ? 600 : 2200);
+}
+
+async function preguntar(texto) {
+  opciones([]); botDice('Buscando…');
+  try {
+    const r = await servidor('botBuscar', texto, 'Todo');
+    if (!r.total) {
+      botDice(`No encontré nada con "${texto}" 🤔. ${r.sugerencias.length ? '¿Quisiste decir…?' : 'Probá con menos palabras o con el código.'}`);
+      opciones(r.sugerencias.map((s) => ({ html: esc(s), accion: () => preguntar(s) })));
+      return;
+    }
+    if (r.fichas.length === 1) return elegirFicha(r.fichas[0]);
+    botDice(r.total > r.fichas.length ? `Encontré ${r.total}. Te muestro los primeros, ¿cuál es?` : `Encontré ${r.total}. ¿Cuál buscás?`);
+    opciones(r.fichas.map((f) => ({ html: lineaFicha(f), accion: () => elegirFicha(f) })));
+  } catch (e) { botDice('Se me cortó la conexión con la planilla. Probá de nuevo. (' + (e.message || e) + ')'); }
+}
+
+$('form-bot').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const t = $('pregunta').value.trim(); if (!t) return;
+  $('pregunta').value = ''; decir(jugador, t, 3); preguntar(t);
+});
+$('cerrar').onclick = cerrarDialogo;
+
+// ---------------------------------------------------------------------------
+// Interacciones cercanas (tecla E o botón)
+// ---------------------------------------------------------------------------
+let accionActual = null;
+let menu = null; // menú abierto junto a una estantería o despacho: { pos }
+function accionCercana() {
+  const pos = jugador.grupo.position;
+  if (pos.distanceTo(bot.grupo.position) < 3.0) return { texto: 'Hablar con Hottie', fn: abrirDialogo };
+  if (mision && mision.tipo === 'buscar' && pos.distanceTo(mision.est.frente) < 1.8) return { texto: 'Buscar en la estantería', fn: buscarEnEstanteria };
+  if (mision && mision.tipo === 'despachar' && pos.distanceTo(new THREE.Vector3(DESPACHO.x, 0, DESPACHO.z + 1.6)) < 2.2) return { texto: 'Despachar', fn: despachar };
+  if (mision && mision.tipo === 'ubicar') {
+    const est = Object.values(estanterias).find((e) => pos.distanceTo(e.frente) < 1.8);
+    if (est) return { texto: `Dejarlo en Zona ${est.zona}`, fn: () => ubicarEn(est) };
+  }
+  return null;
+}
+function pintarAccion() {
+  if (menu) {
+    // El menú queda abierto hasta elegir algo o alejarse.
+    if (jugador.grupo.position.distanceTo(menu.pos) < 2.5 && !dialogoAbierto) return;
+    menu = null; accionActual = null; $('accion').hidden = true;
+  }
+  const a = dialogoAbierto ? null : accionCercana();
+  if ((a && a.texto) === (accionActual && accionActual.texto)) return;
+  accionActual = a;
+  $('accion').hidden = !a;
+  if (a) $('accion').innerHTML = `<button type="button"><kbd>E</kbd>${esc(a.texto)}</button>`;
+  if (a) $('accion').firstChild.onclick = () => a.fn();
+}
+
+function buscarEnEstanteria() {
+  const f = mision.ficha;
+  opcionesFlotantes(`¿Está ${f.descripcion}?`, [
+    { texto: '¡Lo encontré!', fn: async () => { ponerCarga(jugador, true); decir(jugador, pick(['¡Acá está!', 'Lo tengo 💪', 'Encontrado'])); ponerMision({ tipo: 'despachar', ficha: f }); ganarXp(await servidor('botSumarXP', 'encontrado', f.id).catch(() => null)); } },
+    { texto: 'No estaba', sec: true, fn: async () => { decir(jugador, 'No está…'); ponerMision(null); const r = await servidor('botNoLoEncontre', f.id).catch(() => null); decir(bot, 'Gracias por avisar, pedí un recuento 🙏', 3); if (r) ganarXp(r.xp); } },
+  ]);
+}
+
+async function despachar() {
+  const f = mision.ficha;
+  ponerCarga(jugador, false); sumarCajaDespacho(); ponerMision(null);
+  decir(bot, pick([`¡Crack ${ini.jugador.nombre}! Otro despachado`, 'Así me gusta 💚', '¡Vamos que llegamos a la meta!']), 3);
+  ganarXp(await servidor('botSumarXP', 'despachado', f.id).catch(() => null));
+}
+
+async function ubicarEn(est) {
+  const f = mision.ficha;
+  opcionesUbic = opcionesUbic || await servidor('botOpcionesUbicacion').catch(() => ({ pisos: [] }));
+  opcionesFlotantes(`¿En qué piso de Zona ${est.zona} dejás ${f.descripcion}?`, opcionesUbic.pisos.map((piso) => ({
+    texto: 'Piso ' + piso,
+    fn: async () => {
+      try {
+        const r = await servidor('botCorregirUbicacion', f.id, f.piso || '', f.zona || '', piso, est.zona);
+        if (r.ok) { decir(bot, `¡Listo! Quedó en Zona ${est.zona}, piso ${piso}. Gracias 💚`, 3); ponerMision(null); ganarXp(r.xp); }
+        else decir(bot, r.mensaje, 4);
+      } catch (e) { decir(bot, e.message || String(e), 4); }
+    },
+  })));
+}
+
+function opcionesFlotantes(titulo, botones) {
+  $('accion').hidden = false; accionActual = null; menu = { pos: jugador.grupo.position.clone() };
+  $('accion').innerHTML = `<div class="caja" style="padding:10px;display:grid;gap:8px;max-width:min(420px,calc(100vw - 24px))">
+    <div style="font-size:13px">${esc(titulo)}</div><div style="display:flex;flex-wrap:wrap;gap:8px"></div></div>`;
+  const fila = $('accion').querySelector('div div:last-child');
+  botones.forEach((b) => {
+    const el = document.createElement('button'); el.type = 'button'; el.className = 'btn' + (b.sec ? ' sec' : ''); el.textContent = b.texto;
+    el.onclick = () => { menu = null; accionActual = null; $('accion').hidden = true; b.fn(); };
+    fila.appendChild(el);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Controles
+// ---------------------------------------------------------------------------
+addEventListener('keydown', (e) => {
+  if (dialogoAbierto) { if (e.key === 'Escape') cerrarDialogo(); return; }
+  teclas[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 'e' && accionActual && accionActual.fn) { e.preventDefault(); accionActual.fn(); }
+});
+addEventListener('keyup', (e) => { teclas[e.key.toLowerCase()] = false; });
+
+const raycaster = new THREE.Raycaster(), puntero = new THREE.Vector2();
+let arrastre = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { arrastre = { x: e.clientX, y: e.clientY, yaw, movio: false }; });
+addEventListener('pointermove', (e) => {
+  if (!arrastre) return;
+  const dx = e.clientX - arrastre.x;
+  if (Math.abs(dx) > 6) arrastre.movio = true;
+  if (arrastre.movio) yaw = arrastre.yaw - dx * 0.008;
+});
+addEventListener('pointerup', (e) => {
+  if (arrastre && !arrastre.movio && e.target === renderer.domElement) {
+    puntero.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    raycaster.setFromCamera(puntero, camara);
+    const hit = raycaster.intersectObject(suelo)[0];
+    if (hit) destinoClick = hit.point.clone();
+  }
+  arrastre = null;
+});
+renderer.domElement.addEventListener('wheel', (e) => { zoom = Math.min(1.6, Math.max(0.6, zoom + e.deltaY * 0.001)); }, { passive: true });
+
+// ---------------------------------------------------------------------------
+// Compañeros que andan por la sala (decorativos)
+// ---------------------------------------------------------------------------
+const FRASES_EQUIPO = ['¿Alguien vio la zona 4A?', 'Uno más y llego a la meta', 'Le pregunto a Hottie', '¡Vamos equipo!', 'Esto va a despacho'];
+function pasearCompanero(p, dt) {
+  if (!p.destino || p.grupo.position.distanceTo(p.destino) < 0.3) {
+    p.espera = (p.espera || 0) - dt;
+    p.caminando = false;
+    if (p.espera > 0) return;
+    const ests = Object.values(estanterias);
+    p.destino = Math.random() < 0.3 ? new THREE.Vector3(TERMINAL.x + 2.4 + Math.random(), 0, TERMINAL.z + 1.5)
+      : Math.random() < 0.5 ? new THREE.Vector3(DESPACHO.x - 1 + Math.random() * 2, 0, DESPACHO.z + 1.8)
+      : pick(ests).frente.clone();
+    p.espera = 1.5 + Math.random() * 3;
+    if (Math.random() < 0.35) decir(p, pick(FRASES_EQUIPO), 2.5);
+    return;
+  }
+  mover(p, p.destino.x - p.grupo.position.x, p.destino.z - p.grupo.position.z, dt, 2.6);
+}
+
+// ---------------------------------------------------------------------------
+// Bucle
+// ---------------------------------------------------------------------------
+const reloj = new THREE.Clock();
+function tick() {
+  const dt = Math.min(reloj.getDelta(), 0.05), t = reloj.elapsedTime;
+  if (!dialogoAbierto) {
+    let dx = 0, dz = 0;
+    if (teclas.w || teclas.arrowup) dz -= 1; if (teclas.s || teclas.arrowdown) dz += 1;
+    if (teclas.a || teclas.arrowleft) dx -= 1; if (teclas.d || teclas.arrowright) dx += 1;
+    if (dx || dz) {
+      destinoClick = null;
+      const c = Math.cos(yaw), s = Math.sin(yaw);
+      mover(jugador, dx * c + dz * s, -dx * s + dz * c, dt, 4.4);
+    } else if (destinoClick) {
+      const ddx = destinoClick.x - jugador.grupo.position.x, ddz = destinoClick.z - jugador.grupo.position.z;
+      if (Math.hypot(ddx, ddz) < 0.15) { destinoClick = null; jugador.caminando = false; } else mover(jugador, ddx, ddz, dt, 4.4);
+    } else jugador.caminando = false;
+  } else jugador.caminando = false;
+
+  personajes.filter((p) => p.companero).forEach((p) => pasearCompanero(p, dt));
+  // La bot mira a quien tiene cerca.
+  bot.mira = jugador.grupo.position.x > bot.grupo.position.x ? 1 : -1;
+  personajes.forEach((p) => animarPersonaje(p, dt, t));
+
+  // Cámara en tercera persona que sigue al jugador.
+  const dist = 11 * zoom, altura = 8.5 * zoom;
+  const objetivo = jugador.grupo.position;
+  camara.position.lerp(new THREE.Vector3(objetivo.x + Math.sin(yaw) * dist, altura, objetivo.z + Math.cos(yaw) * dist), 0.12);
+  camara.lookAt(objetivo.x, 1.1, objetivo.z);
+
+  if (rayo.visible) { rayo.material.opacity = 0.16 + Math.sin(t * 3) * 0.07; aroObjetivo.scale.setScalar(1 + Math.sin(t * 4) * 0.08); }
+  pantalla.material.emissiveIntensity = 0.55 + Math.sin(t * 2) * 0.1;
+  pintarAccion();
+  renderer.render(scene, camara);
+  requestAnimationFrame(tick);
+}
+
+// ---------------------------------------------------------------------------
+// Arranque
+// ---------------------------------------------------------------------------
+$('retrato').src = BOT_AVATAR;
+servidor('botSalaInicio').then((datos) => {
+  ini = datos;
+  ini.zonas.forEach((z, i) => estanteria(z, i, ini.zonas.length));
+  bot = crearPersonaje('Hottie', '#5ef2c4', new THREE.Vector3(TERMINAL.x + 0.2, 0, TERMINAL.z + 0.9), 'bot');
+  jugador = crearPersonaje(ini.jugador.nombre, ini.jugador.avatar && ini.jugador.avatar.color, new THREE.Vector3(0, 0, 6));
+  ini.companeros.filter((n) => BOT_SPRITES[normal(n).split(' ')[0]]).slice(0, 4).forEach((n, i) => {
+    const p = crearPersonaje(n, null, new THREE.Vector3(-3 + i * 3, 0, 3 + (i % 2) * 2)); p.companero = true;
+  });
+  pintarJugador(); pintarRanking(); ponerMision(null);
+  setTimeout(() => decir(bot, `¡Hola ${ini.jugador.nombre}! Vení a la terminal 👋`, 4), 600);
+  $('cargando').hidden = true;
+  // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
+  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z) };
+  requestAnimationFrame(tick);
+}).catch((e) => { $('cargando').textContent = e.message || String(e); });
+})();
+</script>
+</body>
+</html>
