@@ -110,6 +110,16 @@
   @keyframes subir { to { transform: translate(-50%, -70px); opacity: 0; } }
   #toast { position: fixed; z-index: 11; top: 18%; left: 50%; transform: translateX(-50%); font: 700 34px var(--display); color: var(--gold);
     text-shadow: 0 0 24px var(--gold); pointer-events: none; opacity: 0; transition: opacity .3s; text-align: center; }
+  /* Sonido, música y gráficos */
+  #ajustes { right: 12px; bottom: 114px; display: flex; gap: 6px; }
+  #ajustes button { width: 40px; height: 40px; padding: 0; font-size: 17px; border-radius: 8px; background: var(--panel); }
+  #ajustes button[aria-pressed="false"] { opacity: .45; }
+  #emotes { display: flex; gap: 4px; }
+  #emotes button { background: #202227; border: 1px solid var(--line); border-radius: 6px; font-size: 18px; width: 38px; cursor: pointer; }
+  #emotes button:hover { border-color: var(--mint); }
+  .globo.emoji { font-size: 30px; line-height: 1; padding: 0; background: transparent; box-shadow: none; border: 0; }
+  #confeti { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+  @media (max-width: 720px) { #ajustes { top: 12px; bottom: auto; } }
   #cargando { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--bg); font: 700 28px var(--display); color: var(--fg); letter-spacing: -.02em; }
   @media (prefers-reduced-motion: reduce) { .xp { animation-duration: .01s; } }
 </style>
@@ -122,12 +132,17 @@
 <div id="mision" class="hud caja"><h3>MISIÓN</h3><p id="texto-mision">Andá a hablar con hottie a la terminal.</p></div>
 <div id="accion" class="hud" hidden></div>
 <button id="btn-decir" class="hud btn" type="button">💬 Decir</button>
+<div id="ajustes" class="hud">
+  <button id="btn-sonido" class="btn sec" type="button" aria-pressed="true" title="Sonido" aria-label="Sonido">🔊</button>
+  <button id="btn-musica" class="btn sec" type="button" aria-pressed="false" title="Música de fondo" aria-label="Música de fondo">🎵</button>
+  <button id="btn-calidad" class="btn sec" type="button" aria-pressed="true" title="Gráficos altos (brillo neón)" aria-label="Gráficos altos">✨</button>
+</div>
 <a id="ir-chat" class="hud btn sec" href="<?!= botUrl('bot') ?>" target="_top">Chat con hottie</a>
-<div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> interactuar · <b>T</b> hablarle al equipo</div>
+<div id="ayuda" class="hud caja">WASD o flechas para moverte · tocá el piso para caminar · arrastrá para girar · <b>E</b> interactuar · <b>Espacio</b> saltar · <b>1–4</b> emotes · <b>T</b> hablarle al equipo</div>
 <div id="conectados" class="hud caja">Conectando…</div>
 <div id="desafio" class="hud caja" hidden></div>
 <div id="feed" class="hud"></div>
-<form id="decir" class="hud caja" hidden><input id="decir-texto" maxlength="140" autocomplete="off" placeholder="Decile algo al equipo…" aria-label="Mensaje para el equipo"><button class="btn" type="submit">Enviar</button></form>
+<form id="decir" class="hud caja" hidden><div id="emotes"></div><input id="decir-texto" maxlength="140" autocomplete="off" placeholder="Decile algo al equipo…" aria-label="Mensaje para el equipo"><button class="btn" type="submit">Enviar</button></form>
 
 <div id="dialogo" class="caja" hidden role="dialog" aria-label="Hablar con hottie">
   <img class="retrato" id="retrato" alt="">
@@ -150,6 +165,14 @@
 <?!= botInclude('BotCharla') ?>
 <?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Brillo neón (postproceso de three.js r128). Si no cargan, la sala anda igual, sin brillo. -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/GammaCorrectionShader.js"></script>
 <script>
 (() => {
 // ---------------------------------------------------------------------------
@@ -177,7 +200,10 @@ const demo = {
     const t = Date.now() / 1000;
     demo.eventos = demo.eventos || [{ id: 1, tipo: 'entra', texto: 'Gabriel entró a la sala' }, { id: 2, tipo: 'entra', texto: 'Sebastián entró a la sala' }, { id: 3, tipo: 'entra', texto: 'Agustín entró a la sala' }];
     if (estado.dice && estado.diceAlEquipo) demo.eventos.push({ id: demo.eventos.length + 1, tipo: 'chat', quien: 'Facundo', texto: estado.dice });
-    if (!demo.desafio) demo.desafio = { id: 'D1', inicio: Date.now(), producto: { descripcion: 'Amortiguador Delantero Audi A4', marca: 'Bilstein' }, zona: '1' };
+    if (!demo.desafio) {
+      const real = window.SALA_DEMO_SERVIDOR && window.SALA_DEMO_SERVIDOR.desafioDemo && window.SALA_DEMO_SERVIDOR.desafioDemo(estado.zonas);
+      demo.desafio = Object.assign({ id: 'D1', inicio: Date.now() }, real || { producto: { descripcion: 'Amortiguador Delantero Audi A4', marca: 'Bilstein' }, zona: '1' });
+    }
     const d = demo.desafio, seg = Math.floor((Date.now() - d.inicio) / 1000);
     const charla = Math.floor(t / 7) % 3 === 0;
     return {
@@ -210,7 +236,11 @@ const demo = {
   botCorregirUbicacion: () => ({ ok: true, mensaje: 'Ubicación actualizada.', xp: { ganado: 15, total: 148, nivel: 2, desde: 50, hasta: 200 } }),
 };
 function servidor(fn, ...args) {
-  if (DEMO) return new Promise((ok) => setTimeout(() => ok(demo[fn](...args)), 250));
+  if (DEMO) {
+    // La demo publicada puede traer el buscador real (Bot.gs con el inventario) en window.SALA_DEMO_SERVIDOR.
+    const real = window.SALA_DEMO_SERVIDOR && window.SALA_DEMO_SERVIDOR[fn];
+    return new Promise((ok, mal) => setTimeout(() => { try { ok((real || demo[fn])(...args)); } catch (e) { mal(e); } }, 250));
+  }
   return new Promise((ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)[fn](...args));
 }
 
@@ -243,10 +273,34 @@ const col = (hex) => new THREE.Color(hex).convertSRGBToLinear(); // colores de m
 scene.background = col(0x15171b);
 scene.fog = new THREE.Fog(col(0x15171b), 26, 52);
 const camara = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
+
+// Brillo neón (bloom) con gráficos altos. Si la PC no llega a 30 fps, la sala pasa sola a gráficos livianos.
+let calidadAlta = !MOVIL, calidadElegida = false, composer = null;
+try { const g = localStorage.getItem('hottie-calidad'); if (g) { calidadAlta = g === 'alta'; calidadElegida = true; } } catch (e) { /* sin storage */ }
+function armarComposer() {
+  if (composer || !THREE.EffectComposer || !THREE.UnrealBloomPass || !THREE.GammaCorrectionShader) return composer;
+  const tam = renderer.getDrawingBufferSize(new THREE.Vector2());
+  // Con WebGL2 el render intermedio conserva el antialiasing.
+  const destino = renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget
+    ? new THREE.WebGLMultisampleRenderTarget(tam.x, tam.y, { format: THREE.RGBAFormat }) : undefined;
+  composer = new THREE.EffectComposer(renderer, destino);
+  composer.addPass(new THREE.RenderPass(scene, camara));
+  composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.9, 0.45, 0.92));
+  composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader)); // el composer trabaja en lineal: pasa a sRGB al final
+  composer.setSize(innerWidth, innerHeight);
+  return composer;
+}
+// Solo brilla lo que pasa de 1 (luz "HDR"): aros, holograma, marcadores y carteles neón. La escena normal no se quema.
+function neon(material, intensidad = 1.8) { material.color.multiplyScalar(intensidad); return material; }
+function dibujar() {
+  if (calidadAlta && armarComposer()) composer.render(); else renderer.render(scene, camara);
+}
+
 function redimensionar() {
   renderer.setSize(innerWidth, innerHeight);
   camara.aspect = innerWidth / innerHeight;
   camara.updateProjectionMatrix();
+  if (composer) composer.setSize(innerWidth, innerHeight);
 }
 addEventListener('resize', redimensionar);
 redimensionar();
@@ -387,6 +441,7 @@ caja(0.3, ALTO_PARED, FONDO, 0x1538be, -ANCHO / 2, 0, 0, { sombra: false, rough:
 caja(ANCHO, 0.5, 0.32, 0x191b1f, 0, 0, -FONDO / 2 + 0.02, { sombra: false }); // zócalo
 const cartel = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 2), new THREE.MeshBasicMaterial({
   map: texturaTexto('hotic.', '#ffffff', { ancho: 1024, alto: 272, fuente: '700 220px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo: null }), transparent: true, toneMapped: false }));
+neon(cartel.material, 1.5);
 cartel.position.set(-ANCHO / 2 + 0.17, 3.6, -1.5); cartel.rotation.y = Math.PI / 2; scene.add(cartel);
 // Portón enrollable en la pared del fondo, a la derecha.
 const porton = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 4.4), new THREE.MeshStandardMaterial({ map: texPorton, roughness: 0.5, metalness: 0.5 }));
@@ -508,11 +563,11 @@ function dibujarHolo(t) {
 }
 dibujarHolo(0);
 const holo = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1.0, 32, 1, true, -0.35, 0.7),
-  new THREE.MeshBasicMaterial({ map: texHolo, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }));
+  neon(new THREE.MeshBasicMaterial({ map: texHolo, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }), 1.4));
 holo.position.set(TERMINAL.x, 1.65, TERMINAL.z + 1.3); holo.rotation.y = Math.PI; scene.add(holo);
 const pantalla = holo; // compatibilidad con el bucle
 const luzBot = new THREE.PointLight(col(0x4d6bff), 1.6, 8); luzBot.position.set(TERMINAL.x, 2.4, TERMINAL.z + 1.2); scene.add(luzBot);
-const aroHottie = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 8, 48), new THREE.MeshBasicMaterial({ color: col(COLORES.bot), toneMapped: false }));
+const aroHottie = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.035, 8, 48), neon(new THREE.MeshBasicMaterial({ color: col(COLORES.bot), toneMapped: false }), 2.2));
 aroHottie.rotation.x = -Math.PI / 2; aroHottie.position.set(TERMINAL.x + 0.2, 0.05, TERMINAL.z + 0.9); scene.add(aroHottie);
 
 // ---------- Mesa de armado de pedidos ----------
@@ -549,10 +604,70 @@ for (const dx of [0.05, 0.35]) {
 }
 const rolloPapel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.1, 20), new THREE.MeshStandardMaterial({ color: col(0xf1ede4), roughness: 0.95 }));
 rolloPapel.rotation.z = Math.PI / 2; rolloPapel.position.set(DESPACHO.x + 0.9, ALTO_MESA + 0.16, DESPACHO.z - 0.3); rolloPapel.castShadow = true; scene.add(rolloPapel);
-const pilaArmada = [];
-function sumarCajaArmada() { // cajas ya embaladas sobre la mesa
-  const n = pilaArmada.length % 3;
-  pilaArmada.push(cajaCarton(0.5, 0.36, 0.5, DESPACHO.x + 1.0 + (n % 3) * 0.0, ALTO_MESA + n * 0.37, DESPACHO.z - 0.1, (Math.random() - 0.5) * 0.2));
+
+// ---------- Embalaje animado: la caja se arma sobre la mesa, paso a paso ----------
+const MESA_ARMADO = new THREE.Vector3(DESPACHO.x - 0.1, ALTO_MESA, DESPACHO.z + 0.05);
+const matInterior = new THREE.MeshStandardMaterial({ color: col(0x4a3420), roughness: 1 });
+const matPapel = new THREE.MeshStandardMaterial({ color: col(0xf1ede4), roughness: 0.95, flatShading: true });
+const texEtiqueta = lienzo(256, 160, (g, W, H) => {
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#191b1f'; g.font = '700 34px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.fillText('hotic.', 14, 40);
+  for (let x = 14, i = 0; x < W - 14; i++) { const w = 1 + (i * 7) % 4; g.fillRect(x, 58, w, 62); x += w + 2 + (i * 5) % 3; }
+  g.fillStyle = '#1538be'; g.fillRect(0, H - 22, W, 22);
+});
+let armadoVisual = null;
+function limpiarArmado() { if (armadoVisual) { scene.remove(armadoVisual.grupo); armadoVisual = null; } }
+function aplastar(objeto) { // pequeño rebote al cambiar algo de la caja
+  const y0 = objeto.scale.y;
+  animar(0.3, (k) => { objeto.scale.y = y0 * (1 - Math.sin(k * Math.PI) * 0.12); });
+}
+function animarArmado(clave) {
+  const carton = mat('carton0', () => new THREE.MeshStandardMaterial({ map: texturasCaja[0], roughness: 0.9 }));
+  if (clave === 'caja') {
+    limpiarArmado();
+    const lado = { S: 0.38, M: 0.52, L: 0.68 }[tamanoCaja(pedido.items)], alto = lado * 0.7;
+    const grupo = new THREE.Group(); grupo.position.copy(MESA_ARMADO); scene.add(grupo);
+    // Abierta: la cara de arriba muestra el interior oscuro.
+    const cuerpo = new THREE.Mesh(GEO_CAJA, [carton, carton, matInterior, carton, carton, carton]);
+    cuerpo.scale.set(lado, alto, lado); cuerpo.position.y = alto / 2; cuerpo.castShadow = true; grupo.add(cuerpo);
+    armadoVisual = { grupo, cuerpo, lado, alto, papeles: [] };
+    grupo.scale.setScalar(0.01);
+    animar(0.45, (k) => grupo.scale.setScalar(Math.max(0.01, rebote(k))));
+    Sonido.play('carton');
+    return;
+  }
+  const a = armadoVisual;
+  if (!a) return;
+  if (clave === 'proteger') {
+    for (let i = 0; i < 5; i++) {
+      const bollo = new THREE.Mesh(new THREE.IcosahedronGeometry(a.lado * 0.17, 0), matPapel);
+      bollo.position.set((Math.random() - 0.5) * a.lado * 0.55, a.alto + 0.02, (Math.random() - 0.5) * a.lado * 0.55);
+      bollo.rotation.set(Math.random() * 3, Math.random() * 3, 0); bollo.scale.setScalar(0.01); a.grupo.add(bollo); a.papeles.push(bollo);
+      setTimeout(() => animar(0.3, (k) => bollo.scale.setScalar(Math.max(0.01, rebote(k)))), i * 70);
+    }
+    Sonido.play('papel');
+  } else if (clave === 'cinta') {
+    // Se cierran las solapas (la cara de arriba pasa a cartón) y la cinta corre de punta a punta.
+    a.papeles.forEach((b) => animar(0.2, (k) => b.scale.setScalar(Math.max(0.01, 1 - k)), () => a.grupo.remove(b)));
+    setTimeout(() => { a.cuerpo.material = [carton, carton, carton, carton, carton, carton]; aplastar(a.cuerpo); }, 200);
+    const cinta = new THREE.Mesh(GEO_CAJA, matCinta);
+    cinta.scale.set(0.01, 0.006, a.lado * 0.22); cinta.position.set(-a.lado / 2, a.alto + 0.004, 0); a.grupo.add(cinta);
+    setTimeout(() => animar(0.45, (k) => { const largo = a.lado * 1.04 * suave(k); cinta.scale.x = Math.max(0.01, largo); cinta.position.x = -a.lado / 2 + largo / 2; }), 220);
+    Sonido.play('cinta');
+  } else if (clave === 'etiqueta') {
+    const etiqueta = new THREE.Mesh(new THREE.PlaneGeometry(a.lado * 0.55, a.lado * 0.34), new THREE.MeshStandardMaterial({ map: texEtiqueta, roughness: 0.6 }));
+    etiqueta.rotation.x = -Math.PI / 2; etiqueta.position.set(a.lado * 0.12, a.alto + 0.4, a.lado * 0.18); a.grupo.add(etiqueta);
+    animar(0.25, (k) => { etiqueta.position.y = a.alto + 0.009 + 0.4 * (1 - k); etiqueta.scale.setScalar(1.6 - 0.6 * k); }, () => aplastar(a.cuerpo));
+    Sonido.play('etiqueta');
+  }
+}
+// Caja terminada: vuela de la mesa a las manos del jugador.
+function llevarCajaArmada() {
+  const a = armadoVisual;
+  if (!a) return;
+  armadoVisual = null;
+  const destino = jugador.grupo.position.clone().setY(1.0);
+  volar(a.grupo, a.grupo.position.clone(), destino, { segundos: 0.5, altura: 0.9, escalaFinal: 0.4 }, () => { scene.remove(a.grupo); Sonido.play('pop'); });
 }
 
 // PC de pedidos: ahí aparecen los pedidos para armar.
@@ -592,8 +707,53 @@ const CANASTOS = {};
 });
 function sumarCajaCanasto(c) {
   const n = c.cajas++ % 4;
-  cajaCarton(0.36, 0.26, 0.36, c.x - 0.18 + (n % 2) * 0.36, 0.08 + Math.floor(n / 2) * 0.27, c.z - 0.2 + (n % 2) * 0.3, Math.random());
+  c.paquetes = c.paquetes || [];
+  c.paquetes.push(cajaCarton(0.36, 0.26, 0.36, c.x - 0.18 + (n % 2) * 0.36, 0.08 + Math.floor(n / 2) * 0.27, c.z - 0.2 + (n % 2) * 0.3, Math.random()));
 }
+function paquetesEnCanastos() { return Object.values(CANASTOS).reduce((n, c) => n + (c.paquetes || []).length, 0); }
+
+// ---------- Retiro: con 3 paquetes en los canastos pasa la colecta por el portón ----------
+// Detrás del portón, la calle (se ve cuando sube).
+const abertura = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 4.4), new THREE.MeshBasicMaterial({ toneMapped: false, map: lienzo(128, 256, (g, W, H) => {
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, '#dfe8ff'); gr.addColorStop(0.58, '#9fb4dc'); gr.addColorStop(0.6, '#3b3f47'); gr.addColorStop(1, '#202329');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+}) }));
+abertura.position.set(porton.position.x, 2.2, -FONDO / 2 + 0.16); scene.add(abertura);
+function abrirPorton(a) { // a: 0 cerrado, 1 abierto. Sube como una cortina enrollable.
+  const s = 1 - 0.93 * a;
+  porton.scale.y = s; porton.position.y = 4.4 - 2.2 * s;
+  porton.material.map.repeat.y = s;
+}
+// Baliza naranja que gira mientras el portón está abierto.
+const baliza = caja(0.22, 0.22, 0.22, 0xff8a1a, porton.position.x - 2.6, 4.55, -FONDO / 2 + 0.3, { emisivo: 0xff7a00, sombra: false });
+const luzBaliza = new THREE.PointLight(col(0xff8a1a), 0, 9); luzBaliza.position.set(baliza.position.x, 4.3, baliza.position.z + 0.6); scene.add(luzBaliza);
+baliza.encendida = false;
+let retirando = false;
+function retiroColecta() {
+  if (retirando || !paquetesEnCanastos()) return;
+  retirando = true; baliza.encendida = true;
+  Sonido.play('bocina'); Sonido.play('porton');
+  decir(bot, pick(['¡Llegó la colecta! 🚚 Se llevan los paquetes.', '🚚 ¡Pasó el retiro! Todo lo de los canastos sale hoy.', 'Bocinazo 🚚 ¡Paquetes en camino!']), 4);
+  animar(1.4, (k) => abrirPorton(suave(k)));
+  setTimeout(() => {
+    let n = 0;
+    Object.values(CANASTOS).forEach((c) => {
+      (c.paquetes || []).forEach((m) => {
+        const hasta = new THREE.Vector3(porton.position.x + (Math.random() - 0.5) * 2.6, 1.0, -FONDO / 2 + 0.4);
+        setTimeout(() => { Sonido.play('vuela'); volar(m, m.position.clone(), hasta, { segundos: 0.9, altura: 3.4, escalaFinal: 0.6 }, () => scene.remove(m)); }, n++ * 170);
+      });
+      c.paquetes = []; c.cajas = 0;
+    });
+    toast(`🚚 Salieron ${n} paquete${n === 1 ? '' : 's'}`);
+    setTimeout(() => {
+      Sonido.play('porton');
+      animar(1.4, (k) => abrirPorton(1 - suave(k)), () => { baliza.encendida = false; luzBaliza.intensity = 0; retirando = false; });
+    }, n * 170 + 1500);
+  }, 1500);
+}
+// Si quedan paquetes sueltos, la colecta pasa igual cada tanto.
+setInterval(() => { if (!document.hidden && paquetesEnCanastos()) retiroColecta(); }, 150000);
 
 // Tacho de reciclaje de papel y cartón.
 const RECICLAJE = new THREE.Vector3(1.7, 0, 3.6); // al lado de la mesa: el papel sobrante va directo
@@ -682,6 +842,7 @@ const texRayo = lienzo(8, 256, (g, W, H) => { const gr = g.createLinearGradient(
 const rayo = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 9, 32, 1, true),
   new THREE.MeshBasicMaterial({ map: texRayo, color: col(0x5f7cff), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }));
 const aroObjetivo = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 48), new THREE.MeshBasicMaterial({ color: col(0x5f7cff), transparent: true, opacity: 0.9, side: THREE.DoubleSide, toneMapped: false }));
+const BRILLO_MARCA = 2.0; // el marcador de misión brilla fuerte
 aroObjetivo.rotation.x = -Math.PI / 2;
 const flecha = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.55, 4), new THREE.MeshBasicMaterial({ color: col(0xffffff), toneMapped: false }));
 flecha.rotation.x = Math.PI;
@@ -690,7 +851,161 @@ function marcar(pos, color) {
   rayo.visible = aroObjetivo.visible = flecha.visible = !!pos;
   if (!pos) return;
   rayo.position.set(pos.x, 4.5, pos.z); aroObjetivo.position.set(pos.x, 0.03, pos.z); flecha.position.set(pos.x, 2.6, pos.z);
-  rayo.material.color.copy(col(color)); aroObjetivo.material.color.copy(col(color));
+  rayo.material.color.copy(col(color)).multiplyScalar(BRILLO_MARCA); aroObjetivo.material.color.copy(col(color)).multiplyScalar(BRILLO_MARCA);
+}
+
+// ---------------------------------------------------------------------------
+// Sonido: todo sintetizado con Web Audio, no hay archivos de audio
+// ---------------------------------------------------------------------------
+const Sonido = (() => {
+  let ctx = null, salida = null, musicaGain = null, ruidoBuf = null, timerMusica = null, proximo = 0, compas = 0;
+  let activo = true, musicaOn = false;
+  try { activo = localStorage.getItem('hottie-sonido') !== '0'; musicaOn = localStorage.getItem('hottie-musica') === '1'; } catch (e) { /* sin storage */ }
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sin storage */ } };
+  // El navegador solo deja arrancar el audio después de un clic o una tecla.
+  function iniciar() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctx = new AC();
+      salida = ctx.createGain(); salida.gain.value = activo ? 0.6 : 0; salida.connect(ctx.destination);
+      ruidoBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = ruidoBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      if (musicaOn && activo) arrancarMusica();
+    }
+    if (ctx.state === 'suspended' && !document.hidden) ctx.resume();
+  }
+  function tono(f, dur, { tipo = 'sine', vol = 0.2, desde = 0, hasta = 0, en, destino } = {}) {
+    if (!ctx || !activo) return;
+    const t = en != null ? en : ctx.currentTime + desde, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = tipo; o.frequency.setValueAtTime(f, t); if (hasta) o.frequency.exponentialRampToValueAtTime(hasta, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(destino || salida); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function ruido(dur, { vol = 0.15, filtro = 'bandpass', f = 1200, q = 1, hasta = 0, desde = 0, en, destino } = {}) {
+    if (!ctx || !activo) return;
+    const t = en != null ? en : ctx.currentTime + desde, src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = ruidoBuf; src.loop = true; fl.type = filtro; fl.frequency.setValueAtTime(f, t); fl.Q.value = q;
+    if (hasta) fl.frequency.exponentialRampToValueAtTime(hasta, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(fl); fl.connect(g); g.connect(destino || salida); src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
+  }
+  const EFECTOS = {
+    paso: () => ruido(0.06, { vol: 0.05, filtro: 'lowpass', f: 380 + Math.random() * 140 }),
+    salto: () => tono(300, 0.16, { tipo: 'triangle', vol: 0.09, hasta: 640 }),
+    xp: () => { tono(988, 0.12, { tipo: 'triangle', vol: 0.13 }); tono(1480, 0.2, { tipo: 'triangle', vol: 0.11, desde: 0.07 }); },
+    nivel: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tono(f, 0.32, { tipo: 'square', vol: 0.06, desde: i * 0.08 })),
+    ok: () => { tono(660, 0.1, { tipo: 'triangle', vol: 0.13 }); tono(990, 0.16, { tipo: 'triangle', vol: 0.11, desde: 0.06 }); },
+    error: () => { tono(196, 0.18, { tipo: 'sawtooth', vol: 0.06 }); tono(147, 0.26, { tipo: 'sawtooth', vol: 0.06, desde: 0.12 }); },
+    clic: () => tono(1400, 0.03, { tipo: 'square', vol: 0.035 }),
+    pop: () => tono(520, 0.08, { vol: 0.11, hasta: 980 }),
+    carton: () => { tono(110, 0.14, { vol: 0.28, hasta: 55 }); ruido(0.09, { vol: 0.1, filtro: 'lowpass', f: 900 }); },
+    papel: () => { for (let i = 0; i < 6; i++) ruido(0.04, { vol: 0.07, filtro: 'highpass', f: 2500 + Math.random() * 2500, desde: i * 0.05 + Math.random() * 0.03 }); },
+    cinta: () => { ruido(0.5, { vol: 0.14, f: 1800, hasta: 4200, q: 3 }); tono(90, 0.08, { vol: 0.09, desde: 0.48 }); },
+    etiqueta: () => { ruido(0.05, { vol: 0.1, filtro: 'highpass', f: 3000 }); tono(240, 0.06, { vol: 0.09, desde: 0.03 }); },
+    golpe: () => { tono(85, 0.28, { vol: 0.45, hasta: 42 }); ruido(0.12, { vol: 0.2, filtro: 'lowpass', f: 600 }); },
+    desafio: () => [784, 1047, 784, 1047].forEach((f, i) => tono(f, 0.12, { tipo: 'square', vol: 0.05, desde: i * 0.13 })),
+    bocina: () => [0, 0.55].forEach((d) => { tono(311, 0.45, { tipo: 'sawtooth', vol: 0.07, desde: d }); tono(392, 0.45, { tipo: 'sawtooth', vol: 0.05, desde: d }); }),
+    porton: () => ruido(1.4, { vol: 0.08, f: 300, hasta: 700, q: 2 }),
+    vuela: () => ruido(0.35, { vol: 0.08, f: 600, hasta: 2400, q: 1.5 }),
+    mensaje: () => { tono(880, 0.07, { vol: 0.07 }); tono(1175, 0.1, { vol: 0.06, desde: 0.06 }); },
+  };
+  // Música de fondo tranqui (lo-fi generativo): Am F C G, bajo, bombo suave y hi-hat.
+  const ACORDES = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];
+  const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  function compasMusica(t0) {
+    const negra = 60 / 84, ac = ACORDES[compas++ % 4], destino = musicaGain;
+    ac.forEach((n) => tono(hz(n), negra * 3.8, { tipo: 'triangle', vol: 0.045, en: t0, destino }));
+    [0, 2].forEach((b) => tono(hz(ac[0] - 12), negra * 0.9, { vol: 0.12, en: t0 + b * negra, destino }));
+    [0, 2.5].forEach((b) => tono(120, 0.18, { vol: 0.2, hasta: 45, en: t0 + b * negra, destino }));
+    for (let i = 0; i < 8; i++) ruido(0.03, { vol: i % 2 ? 0.03 : 0.018, filtro: 'highpass', f: 7000, en: t0 + i * negra / 2, destino });
+    return negra * 4;
+  }
+  function arrancarMusica() {
+    if (!ctx || timerMusica) return;
+    musicaGain = ctx.createGain(); musicaGain.gain.value = 0.25; musicaGain.connect(salida);
+    proximo = ctx.currentTime + 0.1;
+    timerMusica = setInterval(() => { while (proximo < ctx.currentTime + 0.6) proximo += compasMusica(proximo); }, 200);
+  }
+  function pararMusica() {
+    clearInterval(timerMusica); timerMusica = null;
+    if (musicaGain) { musicaGain.gain.setTargetAtTime(0, ctx.currentTime, 0.2); musicaGain = null; }
+  }
+  document.addEventListener('visibilitychange', () => { if (ctx) document.hidden ? ctx.suspend() : ctx.resume(); });
+  return {
+    iniciar,
+    play: (nombre) => { if (EFECTOS[nombre]) EFECTOS[nombre](); },
+    activo: () => activo,
+    musica: () => musicaOn,
+    alternar() {
+      activo = !activo; guardar('hottie-sonido', activo ? '1' : '0');
+      if (salida) salida.gain.setTargetAtTime(activo ? 0.6 : 0, ctx.currentTime, 0.05);
+      if (!activo) pararMusica(); else if (musicaOn) arrancarMusica();
+    },
+    alternarMusica() {
+      musicaOn = !musicaOn; guardar('hottie-musica', musicaOn ? '1' : '0');
+      if (musicaOn && !activo) this.alternar();
+      musicaOn ? arrancarMusica() : pararMusica();
+    },
+  };
+})();
+addEventListener('pointerdown', () => Sonido.iniciar(), { passive: true });
+addEventListener('keydown', () => Sonido.iniciar());
+
+// ---------------------------------------------------------------------------
+// Confeti (subir de nivel, pedido perfecto, desafío ganado)
+// ---------------------------------------------------------------------------
+const confeti = (() => {
+  const c = document.createElement('canvas'); c.id = 'confeti'; document.body.appendChild(c);
+  const g = c.getContext('2d');
+  const colores = ['#1538be', '#8fa2ff', '#ffffff', '#f2c230', ...Object.values(COLORES)];
+  let piezas = [], corriendo = false;
+  function cuadro() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    if (c.width !== innerWidth * dpr) { c.width = innerWidth * dpr; c.height = innerHeight * dpr; }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, innerWidth, innerHeight);
+    piezas = piezas.filter((p) => p.y < innerHeight + 30);
+    piezas.forEach((p) => {
+      p.vy += 0.32; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.scale(1, Math.cos(p.rot * 1.7));
+      g.fillStyle = p.color; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore();
+    });
+    if (piezas.length) requestAnimationFrame(cuadro); else { corriendo = false; g.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  return function lanzar(cantidad = 140, x = innerWidth / 2, y = innerHeight * 0.3) {
+    if (reduce) return;
+    for (let i = 0; i < cantidad; i++) {
+      const a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 9;
+      piezas.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+        w: 6 + Math.random() * 6, h: 4 + Math.random() * 4, color: pick(colores) });
+    }
+    if (!corriendo) { corriendo = true; requestAnimationFrame(cuadro); }
+  };
+})();
+
+// ---------------------------------------------------------------------------
+// Animaciones cortas (se actualizan en el bucle)
+// ---------------------------------------------------------------------------
+const animaciones = [];
+function animar(segundos, paso, alTerminar) { animaciones.push({ t: 0, dur: reduce ? 0.01 : segundos, paso, alTerminar }); }
+const suave = (k) => 1 - Math.pow(1 - k, 3);
+const rebote = (k) => 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2);
+function correrAnimaciones(dt) {
+  for (let i = animaciones.length - 1; i >= 0; i--) {
+    const a = animaciones[i]; a.t += dt;
+    const k = Math.min(1, a.t / a.dur); a.paso(k);
+    if (k >= 1) { animaciones.splice(i, 1); if (a.alTerminar) a.alTerminar(); }
+  }
+}
+// Un objeto que vuela en arco de un punto a otro.
+function volar(objeto, desde, hasta, { segundos = 0.7, altura = 1.2, escalaFinal = 1 } = {}, alTerminar) {
+  const escala0 = objeto.scale.clone();
+  animar(segundos, (k) => {
+    objeto.position.lerpVectors(desde, hasta, k);
+    objeto.position.y += Math.sin(k * Math.PI) * altura;
+    objeto.scale.copy(escala0).multiplyScalar(1 + (escalaFinal - 1) * k);
+    objeto.rotation.y += 0.06;
+  }, alTerminar);
 }
 
 // ---------------------------------------------------------------------------
@@ -735,26 +1050,36 @@ function crearPersonaje(nombre, color, pos, clave) {
   const grupo = new THREE.Group(); grupo.add(figura);
   const sombra = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), matSombra);
   sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.02; grupo.add(sombra);
-  const aro = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 40), new THREE.MeshBasicMaterial({ color: col(color), transparent: true, opacity: 0.95, side: THREE.DoubleSide, toneMapped: false }));
+  const aro = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 40), neon(new THREE.MeshBasicMaterial({ color: col(color), transparent: true, opacity: 0.95, side: THREE.DoubleSide, toneMapped: false })));
   aro.rotation.x = -Math.PI / 2; aro.position.y = 0.03; grupo.add(aro);
   const halo = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.75, 40), new THREE.MeshBasicMaterial({ color: col(color), transparent: true, opacity: 0.18, side: THREE.DoubleSide, toneMapped: false, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.rotation.x = -Math.PI / 2; halo.position.y = 0.025; grupo.add(halo);
   grupo.position.copy(pos); scene.add(grupo);
   const etiqueta = document.createElement('div');
   etiqueta.className = 'nombre-3d'; etiqueta.style.color = color; etiqueta.textContent = nombre; document.body.appendChild(etiqueta);
-  const p = { nombre, color, grupo, figura, alto, fase: Math.random() * 6, mira: 1, caminando: false, destino: null, carga: null, globo: null, etiqueta };
+  const p = { nombre, color, grupo, figura, sombra, alto, fase: Math.random() * 6, mira: 1, caminando: false, destino: null, carga: null, globo: null, etiqueta, saltoY: 0, saltoV: 0 };
   personajes.push(p); return p;
 }
 
 function decir(p, texto, segundos = 3) {
   if (!p.globo) { p.globo = document.createElement('div'); p.globo.className = 'globo'; p.globo.style.setProperty('--c', p.color); document.body.appendChild(p.globo); }
   p.globo.textContent = texto; p.globo.hidden = false; p.globoHasta = performance.now() + segundos * 1000;
+  p.globo.classList.toggle('emoji', esEmoji(texto));
 }
+const esEmoji = (t) => /^\p{Extended_Pictographic}[\p{Extended_Pictographic}\u200d\ufe0f\s]*$/u.test(String(t || '').trim());
+function saltar(p) {
+  if (p.saltoY > 0.001) return;
+  p.saltoV = 5.2;
+  if (p === jugador) Sonido.play('salto');
+}
+const EMOTES = ['👋', '😂', '💪', '🔥'];
+function emote(e) { decirAlEquipo(e, false); saltar(jugador); latido(); }
 
 function ponerCarga(p, si) {
   if (si && !p.carga) {
     p.carga = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), mat('carton0', () => new THREE.MeshStandardMaterial({ map: texturasCaja[0], roughness: 0.9 })));
     p.carga.castShadow = true; p.carga.position.set(0, p.alto * 0.55, 0.35); p.grupo.add(p.carga);
+    p.carga.scale.setScalar(0.01); const c = p.carga; animar(0.35, (k) => c.scale.setScalar(Math.max(0.01, rebote(k))));
   } else if (!si && p.carga) { p.grupo.remove(p.carga); p.carga = null; }
 }
 
@@ -789,7 +1114,18 @@ function animarPersonaje(p, dt, t) {
   p.fase += dt * (p.caminando ? 11 : 2);
   const salto = p.caminando && !reduce ? Math.abs(Math.sin(p.fase)) * 0.12 : 0;
   const respira = p.caminando ? 0 : Math.sin(p.fase) * 0.012;
-  p.figura.position.y = salto;
+  if (p.saltoV || p.saltoY) {
+    p.saltoV -= 16 * dt; p.saltoY = Math.max(0, p.saltoY + p.saltoV * dt);
+    if (p.saltoY === 0 && p.saltoV < 0) { p.saltoV = 0; if (p === jugador) Sonido.play('paso'); }
+  }
+  p.figura.position.y = salto + p.saltoY;
+  p.sombra.scale.setScalar(1 - Math.min(0.5, p.saltoY * 0.5));
+  if (p.carga) p.carga.position.y = p.alto * 0.55 + p.saltoY;
+  // Pasos: un sonido cada vez que el pie toca el piso (solo los del jugador).
+  if (p === jugador && p.caminando && !p.saltoY) {
+    const paso = Math.floor(p.fase / Math.PI);
+    if (paso !== p.ultimoPaso) { p.ultimoPaso = paso; Sonido.play('paso'); }
+  }
   // Los sprites no se espejan con escala negativa: se invierte la textura.
   const map = p.figura.material.map;
   if (map && map.repeat.x !== p.mira) { map.repeat.x = p.mira; map.offset.x = p.mira < 0 ? 1 : 0; }
@@ -840,7 +1176,8 @@ function ganarXp(res) {
   const el = document.createElement('div'); el.className = 'xp'; el.textContent = `+${res.ganado} XP`;
   el.style.left = pos.x + 'px'; el.style.top = pos.y + 'px'; el.style.transform = 'translate(-50%,0)';
   document.body.appendChild(el); setTimeout(() => el.remove(), 1500);
-  if (res.nivel > nivelAntes) toast(`¡NIVEL ${res.nivel}!`);
+  Sonido.play('xp');
+  if (res.nivel > nivelAntes) { toast(`¡NIVEL ${res.nivel}!`); setTimeout(() => Sonido.play('nivel'), 250); confeti(180); saltar(jugador); }
 }
 
 function toast(texto) {
@@ -919,7 +1256,7 @@ function elegirFicha(f) {
   }
   if (!f.zona) {
     if (ini.puedeUbicar) {
-      botDice(`Uh, ${f.descripcion} anda perdido, no tiene ubicación 😬. ¿Me hacés el favor? Agarralo y llevalo a la estantería donde lo vas a dejar. Te doy +${ini.xpPorAccion.ubicado} XP 😉`);
+      botDice(`Uh, ${f.descripcion} (${f.stock} u., ${f.deposito || 'depósito'}) anda perdido, no tiene ubicación 😬. ¿Me hacés el favor? Agarralo y llevalo a la estantería donde lo vas a dejar. Te doy +${ini.xpPorAccion.ubicado} XP 😉`);
       ponerMision({ tipo: 'ubicar', ficha: f });
     } else botDice(`${f.descripcion} no tiene ubicación cargada. Avisale a Gabriel o a Franco para que lo ubiquen.`);
     return;
@@ -1038,7 +1375,7 @@ function opcionesFlotantes(titulo, botones) {
   const fila = $('accion').querySelector('div div:last-child');
   botones.forEach((b) => {
     const el = document.createElement('button'); el.type = 'button'; el.className = 'btn' + (b.sec ? ' sec' : ''); el.textContent = b.texto;
-    el.onclick = () => { menu = null; accionActual = null; $('accion').hidden = true; b.fn(); };
+    el.onclick = () => { menu = null; accionActual = null; $('accion').hidden = true; Sonido.play('clic'); b.fn(); };
     fila.appendChild(el);
   });
 }
@@ -1076,6 +1413,7 @@ function tamanoCaja(items) {
 
 function errorPedido(leccion) {
   pedido.errores++;
+  Sonido.play('error');
   decir(bot, leccion, 5);
   toast('❌');
 }
@@ -1102,7 +1440,7 @@ async function verPC() {
   if (pedido) {
     opcionesFlotantes(`Pedido ${pedido.id} · envío ${pedido.envio}: ` + pedido.items.map((i) => `${i.cantidad}× ${i.descripcion} (${i.etiqueta})`).join(' + '), [
       { texto: 'Sigo con este', fn: () => {} },
-      { texto: 'Abandonar', sec: true, fn: () => { pedido = null; ponerCarga(jugador, false); dibujarPC(); pintarPedido(); decir(bot, 'Ok, lo dejamos. Tomá otro cuando quieras.', 3); } },
+      { texto: 'Abandonar', sec: true, fn: () => { pedido = null; limpiarArmado(); ponerCarga(jugador, false); dibujarPC(); pintarPedido(); decir(bot, 'Ok, lo dejamos. Tomá otro cuando quieras.', 3); } },
     ]);
     return;
   }
@@ -1110,6 +1448,7 @@ async function verPC() {
   try {
     const p = await servidor('botSalaNuevoPedido', ini.zonas);
     pedido = Object.assign(p, { idx: 0, fase: 'buscar', errores: 0, pasoArmado: 0, ayuda: false });
+    Sonido.play('mensaje');
     dibujarPC([`Pedido ${p.id} · ${p.envio}`, ...p.items.map((i) => `${i.cantidad}× ${i.descripcion.slice(0, 30)}`), ...p.items.map((i) => `SKU ${i.etiqueta}`)]);
     decir(jugador, 'Tomo el pedido ' + p.id, 3);
     decir(bot, pick(['¡Pedido nuevo! Fijate el SKU y andá a buscarlo. Si no sabés dónde está, preguntame 😉', 'Arrancamos: buscalo, compará la etiqueta, contá y revisá el estado 💪']), 5);
@@ -1150,7 +1489,7 @@ function compararEtiqueta(item) {
         const t = item.trampas.find((x) => x.etiqueta === et);
         errorPedido(`Ojo: esa etiqueta es ${et}${t ? ' (' + t.descripcion + ')' : ''}. El pedido pide ${item.etiqueta}. Compará el código completo, dígito por dígito.`);
         setTimeout(() => compararEtiqueta(item), 400);
-      } else verificarCantidad(item);
+      } else { Sonido.play('ok'); verificarCantidad(item); }
     },
   })));
 }
@@ -1160,7 +1499,7 @@ function verificarCantidad(item) {
     texto: n + (n === 1 ? ' unidad' : ' unidades'),
     fn: () => {
       if (n !== item.cantidad) { errorPedido(`El pedido pide ${item.cantidad}. Siempre contá antes de embalar 🔢`); setTimeout(() => verificarCantidad(item), 400); }
-      else revisarEstado(item);
+      else { Sonido.play('clic'); revisarEstado(item); }
     },
   })));
 }
@@ -1184,7 +1523,7 @@ function revisarEstado(item) {
 }
 
 function tomarItem(item) {
-  ponerCarga(jugador, true);
+  ponerCarga(jugador, true); Sonido.play('pop');
   decir(jugador, `${item.cantidad}× ${item.descripcion} ✔`, 3);
   pedido.idx++; pedido.ayuda = false;
   if (pedido.idx >= pedido.items.length) {
@@ -1223,9 +1562,10 @@ function elegirCaja() {
 }
 
 function avanzarArmado() {
+  animarArmado(PASOS_ARMADO[pedido.pasoArmado].clave);
   pedido.pasoArmado++;
-  if (pedido.pasoArmado < PASOS_ARMADO.length) { setTimeout(armarPedido, 250); return; }
-  sumarCajaArmada();
+  if (pedido.pasoArmado < PASOS_ARMADO.length) { setTimeout(armarPedido, 450); return; }
+  setTimeout(llevarCajaArmada, 700);
   soltarBasura(new THREE.Vector3(DESPACHO.x + (Math.random() - 0.5) * 1.5, 0, DESPACHO.z + 1.3), 'papel sobrante');
   pedido.fase = 'canasto';
   decir(bot, `¡Embalado! Quedó papel sobrante: juntalo y reciclalo ♻ Y el paquete va al canasto ${pedido.envio}.`, 5);
@@ -1235,11 +1575,18 @@ function avanzarArmado() {
 async function dejarEnCanasto(c) {
   if (c.nombre !== pedido.envio) { errorPedido(`Ese canasto es ${c.nombre}; este pedido sale por ${pedido.envio}. Si va al canasto equivocado, no llega 🚚`); return; }
   const p = pedido; pedido = null;
-  ponerCarga(jugador, false); sumarCajaCanasto(c); dibujarPC(); pintarPedido();
+  ponerCarga(jugador, false); dibujarPC(); pintarPedido();
+  // La caja vuela de las manos al canasto.
+  const paquete = cajaCarton(0.36, 0.26, 0.36, 0, 0, 0);
+  volar(paquete, jugador.grupo.position.clone().setY(1.1), new THREE.Vector3(c.x, 0.3, c.z), { segundos: 0.55, altura: 0.8 }, () => {
+    scene.remove(paquete); sumarCajaCanasto(c); Sonido.play('carton');
+    if (paquetesEnCanastos() >= 3) setTimeout(retiroColecta, 2500);
+  });
   try {
     const r = await servidor('botSalaCompletarPedido', p.id, p.errores);
     ganarXp(r.xp);
     toast(p.errores ? `📦 Pedido listo · ${p.errores} error(es)` : '✅ ¡Pedido perfecto!');
+    if (!p.errores) { confeti(110); Sonido.play('ok'); }
     decir(bot, p.errores ? `Listo, despachado. Tuviste ${p.errores} error(es): la próxima sale perfecto 💪` : pick(['¡Pedido perfecto! Así se trabaja 💚', `${Hottie.apodo(ini.jugador.nombre)}, sos una máquina 🏆`]), 4);
   } catch (e) { decir(bot, e.message || String(e), 5); }
 }
@@ -1265,12 +1612,13 @@ function lugarLibre() {
 setInterval(() => { if (basuras.length < 4 && !document.hidden) soltarBasura(lugarLibre(), Math.random() < 0.6 ? 'papel tirado' : 'cartón tirado'); }, 40000);
 function juntarBasura(b) {
   scene.remove(b.mesh); basuras.splice(basuras.indexOf(b), 1); enMano++;
+  Sonido.play('papel');
   decir(jugador, enMano === 1 ? 'Lo junto 🧹' : `Llevo ${enMano}`, 2);
   if (enMano === 1) decir(bot, 'Eso, orden y limpieza 🧹 Llevalo al tacho de reciclaje ♻', 3);
 }
 async function reciclar() {
   const n = enMano; enMano = 0;
-  decir(jugador, '♻ Reciclado', 2);
+  decir(jugador, '♻ Reciclado', 2); Sonido.play('carton');
   let total = 0;
   for (let i = 0; i < n; i++) {
     const r = await servidor('botSumarXP', 'limpieza', 'L' + Date.now().toString(36) + i).catch(() => null);
@@ -1286,7 +1634,7 @@ function golpearBolsa() {
   const desde = new THREE.Vector3().subVectors(BOLSA, jugador.grupo.position).setY(0).normalize();
   bolsaFisica.eje.set(desde.z, 0, -desde.x).normalize();
   bolsaFisica.vel += 2.2 + Math.random();
-  golpes++;
+  golpes++; Sonido.play('golpe');
   try { localStorage.setItem('hottie-golpes', String(golpes)); } catch (e) { /* sin storage */ }
   decir(jugador, pick(['¡PUM! 🥊', '¡Tomá! 💥', '¡Uno-dos! 🥊']), 1.2);
   if (golpes % 10 === 0) decir(bot, pick([`¡${golpes} golpes! Ya descargaste, ahora a armar pedidos 😅`, 'Tranqui campeón, el pedido no se arma solo 😏', 'Buena técnica 🥊 ¿Volvemos al laburo?']), 4);
@@ -1294,6 +1642,26 @@ function golpearBolsa() {
 
 function abrirDecir() { $('decir').hidden = false; setTimeout(() => $('decir-texto').focus(), 30); }
 $('btn-decir').onclick = abrirDecir;
+EMOTES.forEach((e) => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', 'Emote ' + e);
+  b.onclick = () => { $('decir').hidden = true; emote(e); };
+  $('emotes').appendChild(b);
+});
+// Sonido, música y gráficos.
+function pintarAjustes() {
+  $('btn-sonido').textContent = Sonido.activo() ? '🔊' : '🔇';
+  $('btn-sonido').setAttribute('aria-pressed', String(Sonido.activo()));
+  $('btn-musica').setAttribute('aria-pressed', String(Sonido.musica() && Sonido.activo()));
+  $('btn-calidad').setAttribute('aria-pressed', String(calidadAlta));
+}
+$('btn-sonido').onclick = (e) => { Sonido.iniciar(); Sonido.alternar(); pintarAjustes(); e.currentTarget.blur(); };
+$('btn-musica').onclick = (e) => { Sonido.iniciar(); Sonido.alternarMusica(); pintarAjustes(); e.currentTarget.blur(); };
+$('btn-calidad').onclick = (e) => {
+  calidadAlta = !calidadAlta; calidadElegida = true;
+  try { localStorage.setItem('hottie-calidad', calidadAlta ? 'alta' : 'baja'); } catch (err) { /* sin storage */ }
+  pintarAjustes(); toast(calidadAlta ? '✨ Gráficos altos' : 'Gráficos livianos'); e.currentTarget.blur();
+};
+pintarAjustes();
 $('decir').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const t = $('decir-texto').value.trim();
@@ -1305,6 +1673,8 @@ addEventListener('keydown', (e) => {
   if (!$('decir').hidden) return;
   if (dialogoAbierto) { if (e.key === 'Escape') cerrarDialogo(); return; }
   if (e.key.toLowerCase() === 't') { e.preventDefault(); abrirDecir(); return; }
+  if (e.key === ' ') { e.preventDefault(); saltar(jugador); return; }
+  if (/^[1-4]$/.test(e.key)) { emote(EMOTES[Number(e.key) - 1]); return; }
   teclas[e.key.toLowerCase()] = true;
   if (e.key.toLowerCase() === 'e' && accionActual && accionActual.fn) { e.preventDefault(); accionActual.fn(); }
 });
@@ -1348,7 +1718,7 @@ function actualizarRemotos(lista) {
     p.destinoRemoto = new THREE.Vector3(j.x, 0, j.z);
     p.mira = j.mira || p.mira;
     ponerCarga(p, !!j.carga);
-    if (j.dice && j.diceId !== p.ultimoDice) { p.ultimoDice = j.diceId; decir(p, j.dice, 4); }
+    if (j.dice && j.diceId !== p.ultimoDice) { p.ultimoDice = j.diceId; decir(p, j.dice, 4); if (esEmoji(j.dice)) saltar(p); }
   });
   Object.keys(remotos).forEach((n) => {
     if (vistos.has(n)) return;
@@ -1367,6 +1737,7 @@ function pintarFeed(eventos) {
     div.innerHTML = e.tipo === 'chat' ? `<b>${esc(e.quien)}:</b> ${esc(e.texto)}` : esc(e.texto);
     $('feed').appendChild(div);
     if (e.tipo === 'gana' || e.tipo === 'desafio') toast(e.tipo === 'gana' ? '🏆' : '⚡ DESAFÍO');
+    if (e.tipo === 'chat' && e.quien !== ini.jugador.nombre) Sonido.play('mensaje');
   });
   while ($('feed').children.length > 6) $('feed').firstChild.remove();
 }
@@ -1376,7 +1747,7 @@ function pintarDesafio(d) {
   desafio = d;
   $('desafio').hidden = !d;
   if (!d) return;
-  if (cambio && !d.ganador) decir(bot, '⚡ ¿Quién me encuentra ' + d.producto.descripcion + '? ¡El primero gana +20 XP!', 5);
+  if (cambio && !d.ganador) { decir(bot, '⚡ ¿Quién me encuentra ' + d.producto.descripcion + '? ¡El primero gana +20 XP!', 5); Sonido.play('desafio'); }
   const restante = Math.max(0, 60 - d.segundos);
   $('desafio').innerHTML = d.ganador
     ? `<h3>DESAFÍO TERMINADO</h3><p>🏆 <b>${esc(d.ganador)}</b> lo encontró en la zona ${esc(d.zona)}</p><small>En unos segundos sale otro…</small>`
@@ -1422,8 +1793,8 @@ async function responderDesafio(est) {
   try {
     const r = await servidor('botSalaResponder', desafio.id, est.zona);
     decir(bot, r.mensaje, 4);
-    if (r.correcta) { ganarXp(r.xp); toast('🏆 +20 XP'); }
-    else if (r.ok) esperaDesafio = Date.now() + 10000;
+    if (r.correcta) { ganarXp(r.xp); toast('🏆 +20 XP'); confeti(140); }
+    else if (r.ok) { esperaDesafio = Date.now() + 10000; Sonido.play('error'); }
     latido();
   } catch (e) { decir(bot, e.message || String(e), 4); }
 }
@@ -1432,8 +1803,15 @@ async function responderDesafio(est) {
 // Bucle
 // ---------------------------------------------------------------------------
 const reloj = new THREE.Clock();
+const medidor = { cuadros: 0, tiempo: 0 };
 function tick() {
-  const dt = Math.min(reloj.getDelta(), 0.05), t = reloj.elapsedTime;
+  const crudo = reloj.getDelta(), dt = Math.min(crudo, 0.05), t = reloj.elapsedTime;
+  // Entre los segundos 2 y 7 se mide si la PC da para gráficos altos.
+  if (calidadAlta && !calidadElegida && t > 2 && medidor.tiempo < 5) {
+    medidor.cuadros++; medidor.tiempo += crudo;
+    if (medidor.tiempo >= 5 && medidor.cuadros / medidor.tiempo < 30) { calidadAlta = false; pintarAjustes(); }
+  }
+  correrAnimaciones(dt);
   if (!dialogoAbierto) {
     let dx = 0, dz = 0;
     if (teclas.w || teclas.arrowup) dz -= 1; if (teclas.s || teclas.arrowdown) dz += 1;
@@ -1479,8 +1857,9 @@ function tick() {
     }
     pp.needsUpdate = true;
   }
+  if (baliza.encendida) { luzBaliza.intensity = 1.6 + Math.sin(t * 14) * 1.4; baliza.rotation.y = t * 9; }
   pintarAccion();
-  renderer.render(scene, camara);
+  dibujar();
   requestAnimationFrame(tick);
 }
 
@@ -1498,7 +1877,9 @@ servidor('botSalaInicio').then((datos) => {
   setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);
   $('cargando').hidden = true;
   // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
-  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z) => estanterias[normal(z)].frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position) };
+  if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z), pedido: () => pedido, estanteria: (z) => estanterias[normal(z)].frente, canasto: (n) => CANASTOS[n].frente, basura: () => basuras.map((b) => b.mesh.position),
+    zonas: () => ini.zonas, tamano: () => tamanoCaja(pedido.items), paquetes: paquetesEnCanastos,
+    retiro: () => { ['Flex', 'Colecta', 'Colecta'].forEach((n) => sumarCajaCanasto(CANASTOS[n])); retiroColecta(); } };
   requestAnimationFrame(tick);
 }).catch((e) => { $('cargando').textContent = e.message || String(e); });
 })();

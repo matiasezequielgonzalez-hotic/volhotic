@@ -50,10 +50,11 @@ const BOT = {
 };
 
 // Cómo se reconoce cada línea. La primera regla que coincide gana; el resto es Autopartes.
+// Si la hoja tiene columna Linea, manda esa (Sexhotic siempre pasa a SEX, solo para SEX_ADMIN).
 const BOT_LINEAS = [
-  { linea: 'SEX', soloSexAdmin: true, coincide: (f) => f.marca === 'sexhotic' },
-  { linea: 'Pet', coincide: (f) => f.skuNorm.startsWith('bio') },
-  { linea: 'Tecnología', coincide: (f) => f.skuNorm.startsWith('tec') },
+  { linea: 'SEX', soloSexAdmin: true, coincide: (f) => f.marca === 'sexhotic' || f.linea.includes('sex') || f.cuenta.includes('sexhotic') },
+  { linea: 'Pet', coincide: (f) => !f.linea && f.skuNorm.startsWith('bio') },
+  { linea: 'Tecnología', coincide: (f) => !f.linea && f.skuNorm.startsWith('tec') },
 ];
 const BOT_LINEA_DEFECTO = 'Autopartes';
 
@@ -66,10 +67,13 @@ const BOT_STOPWORDS = new Set([
 ]);
 
 // Columnas de la hoja General que usa el bot (por nombre de encabezado, no por posición).
+// Si una columna tiene varios nombres posibles, se usa el primero que exista en la hoja
+// (sirve para la hoja General vieja y para el inventario nuevo con "Producto", "EAN / OEM" y "Linea").
 const BOT_COLS = {
-  id: 'ID', descripcion: 'Descripcion', sku: 'SKU', stock: 'Stock', marca: 'Marca', oem: 'EAN',
+  id: 'ID', descripcion: ['Descripcion', 'Producto'], sku: 'SKU', stock: 'Stock', marca: 'Marca', oem: ['EAN', 'EAN / OEM', 'OEM'],
   condicion: 'Condicion', deposito: 'Deposito', ubicacion: 'Ubicacion', piso: 'Piso', zona: 'Zona',
-  estado: 'Estado', estadoMl: 'Estado_ML', observacion: 'Observación', carpetaFotos: 'Carpeta_Fotos',
+  estado: 'Estado', estadoMl: ['Estado_ML', 'En ML'], observacion: 'Observación', carpetaFotos: 'Carpeta_Fotos',
+  lineaHoja: ['Linea', 'Línea'], cuenta: 'Cuenta',
 };
 
 // ---------------------------------------------------------------------------
@@ -142,13 +146,18 @@ function botPlanilla_() {
 /** Lee una hoja como texto (getDisplayValues mantiene los ceros: "09600"). */
 function botTabla_(nombreHoja) {
   const hoja = botPlanilla_().getSheetByName(nombreHoja);
-  if (!hoja) return { hoja: null, enc: {}, filas: [], get: () => '' };
+  if (!hoja) return { hoja: null, enc: {}, filas: [], col: () => -1, get: () => '' };
   const valores = hoja.getDataRange().getDisplayValues();
   const enc = {};
   (valores[0] || []).forEach((h, i) => { enc[String(h).trim()] = i; });
+  // columna: un nombre o una lista de nombres posibles (gana el primero que exista).
+  const col = (columna) => {
+    const n = [].concat(columna).find((c) => c in enc);
+    return n === undefined ? -1 : enc[n];
+  };
   return {
-    hoja, enc, filas: valores.slice(1),
-    get: (fila, columna) => (columna in enc ? fila[enc[columna]] : ''),
+    hoja, enc, col, filas: valores.slice(1),
+    get: (fila, columna) => { const i = col(columna); return i < 0 ? '' : fila[i]; },
   };
 }
 
@@ -256,12 +265,13 @@ function botConstruirIndice_() {
   t.filas.forEach((fila) => {
     const f = {};
     Object.keys(BOT_COLS).forEach((campo) => { f[campo] = String(t.get(fila, BOT_COLS[campo]) || '').trim(); });
-    if (!f.descripcion || f.descripcion === 'Descripcion') return; // vacías y encabezados repetidos
+    if (!f.descripcion || f.descripcion === 'Descripcion' || f.descripcion === 'Producto') return; // vacías y encabezados repetidos
     const m = f.stock.match(/-?\d+/);
     f.stock = m ? Number(m[0]) : 0; // "1 caja" -> 1
     const skuNorm = botNormalizarCodigo_(f.sku);
-    const regla = BOT_LINEAS.find((r) => r.coincide({ marca: botNormalizar_(f.marca), skuNorm }));
-    f.linea = regla ? regla.linea : BOT_LINEA_DEFECTO;
+    const regla = BOT_LINEAS.find((r) => r.coincide({
+      marca: botNormalizar_(f.marca), skuNorm, linea: botNormalizar_(f.lineaHoja), cuenta: botNormalizar_(f.cuenta) }));
+    f.linea = regla ? regla.linea : (f.lineaHoja || BOT_LINEA_DEFECTO);
     f.linkMl = links[skuNorm] || '';
     f.texto = botCanonizar_([f.descripcion, f.marca, f.sku, f.oem].join(' '), sinonimos);
     f.codigos = '|' + [f.id, f.sku, f.oem].map(botNormalizarCodigo_).join('|') + '|';
@@ -495,14 +505,14 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
   lock.waitLock(15000);
   try {
     const t = botTabla_(BOT.HOJAS.stock);
-    const colId = t.enc[BOT_COLS.id];
+    const colId = t.col(BOT_COLS.id);
     // Se busca por ID y no por número de fila: si alguien ordenó la hoja, la fila cambia.
     const celda = t.hoja.getRange(2, colId + 1, Math.max(t.hoja.getLastRow() - 1, 1), 1)
       .createTextFinder(id).matchEntireCell(true).findNext();
     if (!celda) throw new Error('No encontré el producto ' + id + ' en General.');
     const fila = celda.getRow();
-    const rPiso = t.hoja.getRange(fila, t.enc[BOT_COLS.piso] + 1);
-    const rZona = t.hoja.getRange(fila, t.enc[BOT_COLS.zona] + 1);
+    const rPiso = t.hoja.getRange(fila, t.col(BOT_COLS.piso) + 1);
+    const rZona = t.hoja.getRange(fila, t.col(BOT_COLS.zona) + 1);
     const pisoActual = rPiso.getDisplayValue().trim();
     const zonaActual = rZona.getDisplayValue().trim();
     if (pisoActual !== String(pisoVisto || '').trim() || zonaActual !== String(zonaVista || '').trim()) {
@@ -919,8 +929,9 @@ function botFotoEquipo_(valor) {
 
 function botInicio() {
   const u = botExigir_();
-  const lineas = ['Todo', BOT_LINEA_DEFECTO].concat(
-    BOT_LINEAS.filter((r) => !r.soloSexAdmin || u.sexAdmin).map((r) => r.linea));
+  // Las líneas que hay de verdad en la hoja (SEX solo si es SEX_ADMIN).
+  const lineas = ['Todo', BOT_LINEA_DEFECTO].concat([...new Set(botVisibles_(u).map((f) => f.linea))]
+    .filter((l) => l !== BOT_LINEA_DEFECTO).sort());
   return {
     nombre: u.nombre, avatar: botAvatarPersona_(u), lineas,
     puedeUbicar: u.puedeUbicar, verPrecios: u.verPrecios,

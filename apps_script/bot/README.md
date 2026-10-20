@@ -120,6 +120,18 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   jugador se busca sin acentos (Sebastián → `sebastian`). Quien no tiene figura aparece como una
   silueta de su color con la inicial. Los retratos de la foto de perfil van por Drive (columna
   Foto de `Equipo`). Para sumar a alguien a la sala: agregá `"nombre": "data:image/webp;base64,..."`.
+- **Columnas de la hoja:** el bot busca los encabezados por nombre y acepta los dos formatos: la
+  General vieja (`Descripcion`, `EAN`) y el inventario nuevo (`Producto`, `EAN / OEM`, `Linea`, `Cuenta`,
+  `En ML`). Si hay columna `Linea`, manda esa: el filtro muestra las líneas que existen (Autopartes,
+  Pethotic, Biohotic…). Todo lo de Sexhotic (por línea, cuenta o marca) pasa a `SEX` y solo lo ve SEX_ADMIN.
+- **Sonido y gráficos (sala):** todo el sonido está sintetizado con Web Audio (pasos, cinta, cartón,
+  papel, bolsa, XP, nivel, errores, bocina) y hay música lo-fi opcional (🎵). ✨ prende el brillo neón
+  (postproceso de three.js cargado de jsDelivr); si la PC no llega a 30 fps, la sala pasa sola a
+  gráficos livianos. Las preferencias quedan guardadas en el navegador de cada uno.
+- **Animaciones:** la caja se arma sobre la mesa paso a paso (caja, papel, cinta, etiqueta), los
+  paquetes vuelan al canasto, confeti al subir de nivel o con un pedido perfecto, y con 3 paquetes en
+  los canastos pasa la colecta: suena la bocina, sube el portón y se los llevan.
+- **Emotes:** Espacio salta y 1–4 mandan 👋 😂 💪 🔥 (los ven todos, sin ensuciar el feed).
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app
