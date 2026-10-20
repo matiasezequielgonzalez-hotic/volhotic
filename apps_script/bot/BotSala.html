@@ -212,6 +212,7 @@
 <?!= botInclude('BotSprites') ?>
 <?!= botInclude('BotCharla') ?>
 <?!= botInclude('BotEscenas') ?>
+<?!= botInclude('BotVideos') ?>
 <?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- Brillo neón (postproceso de three.js r128). Si no cargan, la sala anda igual, sin brillo. -->
@@ -470,6 +471,44 @@ function pallet(x, y, z, w = 1.1, d = 1.1) {
   caja(w, 0.14, d, 0, x, y, z, { material: mat('pallet', () => new THREE.MeshStandardMaterial({ map: texPallet, roughness: 0.95 })) });
 }
 
+// ---------- Pantallas con video (loops sin sonido) ----------
+// Arrancan solas en silencio; si el navegador las frena, arrancan con el primer clic o tecla.
+const pantallas = [];
+function pantallaVideo(clave, w, h, pos, rotY, colorMarco) {
+  const fuentes = typeof BOT_VIDEOS !== 'undefined' && BOT_VIDEOS[clave];
+  const prueba = document.createElement('video');
+  const src = fuentes && (typeof fuentes === 'string' ? fuentes
+    : prueba.canPlayType('video/mp4; codecs="avc1.4D401E"') ? fuentes.mp4 : prueba.canPlayType('video/webm; codecs="vp9"') ? fuentes.webm : fuentes.mp4);
+  let mapa, video = null;
+  if (src) {
+    video = document.createElement('video');
+    Object.assign(video, { src, muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto' });
+    video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
+    mapa = new THREE.VideoTexture(video);
+    mapa.encoding = THREE.sRGBEncoding;
+    video.play().catch(() => {});
+  } else {
+    // Sin video todavía: pantalla con "próximamente".
+    mapa = lienzo(512, 288, (g, W, H) => {
+      g.fillStyle = '#120a1a'; g.fillRect(0, 0, W, H); g.fillStyle = colorMarco; g.font = '700 54px "Helvetica Neue", Helvetica, Arial, sans-serif';
+      g.textAlign = 'center'; g.fillText('próximamente', W / 2, H / 2 + 18);
+    });
+  }
+  const grupo = new THREE.Group(); grupo.position.copy(pos); grupo.rotation.y = rotY || 0; scene.add(grupo);
+  const marco = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.16, h + 0.16), neon(new THREE.MeshBasicMaterial({ color: col(colorMarco), toneMapped: false }), 1.6));
+  marco.position.z = -0.01; grupo.add(marco);
+  const fondo = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.1, h + 0.1), new THREE.MeshBasicMaterial({ color: col(0x0b0c0f) }));
+  fondo.position.z = -0.005; grupo.add(fondo);
+  const pantalla = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: mapa, toneMapped: false }));
+  grupo.add(pantalla);
+  pantallas.push({ video, grupo });
+  return grupo;
+}
+function reproducirPantallas() { pantallas.forEach((p) => { if (p.video && p.video.paused) p.video.play().catch(() => {}); }); }
+addEventListener('pointerdown', reproducirPantallas, { passive: true });
+addEventListener('keydown', reproducirPantallas);
+document.addEventListener('visibilitychange', () => pantallas.forEach((p) => { if (!p.video) return; document.hidden ? p.video.pause() : p.video.play().catch(() => {}); }));
+
 // ---------- Piso y señalización ----------
 const suelo = new THREE.Mesh(new THREE.PlaneGeometry(ANCHO, FONDO),
   new THREE.MeshStandardMaterial({ map: texPiso, roughness: 0.55, metalness: 0.05 }));
@@ -496,6 +535,8 @@ const cartel = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 2), new THREE.MeshBas
   map: texturaTexto('hotic.', '#ffffff', { ancho: 1024, alto: 272, fuente: '700 220px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo: null }), transparent: true, toneMapped: false }));
 neon(cartel.material, 1.5);
 cartel.position.set(-ANCHO / 2 + 0.17, 3.6, -1.5); cartel.rotation.y = Math.PI / 2; scene.add(cartel);
+// Pantalla grande en la pared de marca, al lado del cartel: hottie entregando un paquete.
+pantallaVideo('entrega', 3.6, 2.03, new THREE.Vector3(-ANCHO / 2 + 0.2, 3.2, 3.4), Math.PI / 2, '#22c7c9');
 // Portón enrollable en la pared del fondo, a la derecha.
 const porton = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 4.4), new THREE.MeshStandardMaterial({ map: texPorton, roughness: 0.5, metalness: 0.5 }));
 porton.position.set(ANCHO / 2 - 3.2, 2.2, -FONDO / 2 + 0.17); scene.add(porton);
@@ -680,6 +721,8 @@ function armarSalaSex() {
   const cartelSex = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.6), neon(new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false,
     map: texturaTexto('sexhotic.', '#ff9bd8', { ancho: 1024, alto: 272, fuente: 'italic 700 200px "Helvetica Neue", Helvetica, Arial, sans-serif', fondo: null }) }), 1.9));
   cartelSex.position.set(SEX.x - 1.5, 3.5, SEX.z - SEX.fondo / 2 + 0.17); scene.add(cartelSex);
+  // Pantalla de la sala (video "sex" de BotVideos; si todavía no está, dice "próximamente").
+  pantallaVideo('sex', 2.6, 1.46, new THREE.Vector3(SEX.x + 2.8, 3.78, SEX.z - SEX.fondo / 2 + 0.2), 0, ROSA);
   // Telón de terciopelo.
   const telon = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 4.6), new THREE.MeshStandardMaterial({ roughness: 0.95, map: lienzo(256, 256, (g, W, H) => {
     for (let x = 0; x < W; x += 16) { const gr = g.createLinearGradient(x, 0, x + 16, 0); gr.addColorStop(0, '#3a0b2c'); gr.addColorStop(0.5, '#7a1650'); gr.addColorStop(1, '#3a0b2c'); g.fillStyle = gr; g.fillRect(x, 0, 16, H); } }) }));
@@ -834,8 +877,11 @@ const cartelDesp = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.62), new THREE.
   g.fillStyle = '#1538be'; g.fillRect(0, 0, W, H);
   g.fillStyle = '#fff'; g.font = '700 84px "Helvetica Neue", Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('armado.', W / 2, 96);
 }) }));
-cartelDesp.position.set(DESPACHO.x, 3.4, DESPACHO.z); scene.add(cartelDesp);
-for (const dx of [-0.9, 0.9]) caja(0.015, 1.8, 0.015, 0x15171b, DESPACHO.x + dx, 3.7, DESPACHO.z, { sombra: false });
+cartelDesp.position.set(DESPACHO.x, 4.35, DESPACHO.z); scene.add(cartelDesp);
+for (const dx of [-0.9, 0.9]) caja(0.015, 1.0, 0.015, 0x15171b, DESPACHO.x + dx, 4.6, DESPACHO.z, { sombra: false });
+// Pantalla colgada arriba de la mesa: hottie escaneando y embalando.
+pantallaVideo('armado', 2.4, 1.35, new THREE.Vector3(DESPACHO.x, 3.2, DESPACHO.z), 0, '#22c7c9');
+for (const dx of [-1.0, 1.0]) caja(0.015, 0.7, 0.015, 0x15171b, DESPACHO.x + dx, 3.9, DESPACHO.z - 0.02, { sombra: false });
 const pilaDespacho = [];
 function sumarCajaDespacho() { // cajas de cartón que se van apilando en la mesa
   const n = pilaDespacho.length, colN = n % 4, fila = Math.floor(n / 4) % 4;
@@ -1618,7 +1664,7 @@ function accionCercana() {
   const pa = accionPedido(pos);
   if (desafio && !desafio.ganador) {
     const est = estCerca(pos);
-    if (est && !(mision && mision.tipo === 'buscar' && mision.est === est) && !(mision && mision.tipo === 'ubicar')) {
+    if (est && !est.sector && !(mision && mision.tipo === 'buscar' && mision.est === est) && !(mision && mision.tipo === 'ubicar')) {
       const da = { texto: `⚡ Desafío: está acá (${est.nombre})`, fn: () => responderDesafio(est) };
       // Con pedido en curso en el mismo rack, se elige qué hacer.
       if (pa) return { texto: 'Pedido o desafío', fn: () => opcionesFlotantes('¿Qué hacés acá?', [{ texto: '📦 ' + pa.texto, fn: pa.fn }, { texto: da.texto, fn: da.fn }]) };

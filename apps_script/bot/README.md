@@ -14,6 +14,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 | `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
 | `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
 | `BotEscenas.html` | Escenas de hottie para la interfaz de la sala (venta, entrega, escaneo) | Archivo HTML `BotEscenas` |
+| `BotVideos.html` | Videos de las pantallas de la sala (mp4 + webm, en base64) | Archivo HTML `BotVideos` |
 | `BotCharla.html` | Personalidad de hottie: charla y frases | Archivo HTML `BotCharla` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
 | `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
@@ -153,6 +154,9 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   12 horas, y después de 5 intentos fallidos bloquea 10 minutos. Adentro: vitrina, PC de ventas
   sexhotic., mesa de embalaje discreto (paso extra: caja neutra) y hottie con humor más picante sobre el
   oficio (sin coquetear con nadie: es un bot y una herramienta de trabajo).
+- **Pantallas con video:** en la pared de marca (hottie entregando) y arriba de la mesa de armado (hottie
+  embalando), en loop y sin sonido. En la sala sexhotic. hay una pantalla lista que dice "próximamente"
+  hasta que agregues el video `sex` en `BotVideos.html`.
 - **Caché:** el índice se guarda 10 minutos en `CacheService`; una corrección de ubicación lo renueva.
 
 ## Revisar contra tu app
