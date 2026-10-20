@@ -13,6 +13,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 | `BotWidget.html` | Ventana emergente (botón flotante + chat) | Archivo HTML `BotWidget` |
 | `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
 | `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
+| `BotCharla.html` | Personalidad de Hottie: charla y frases | Archivo HTML `BotCharla` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
 | `Precios_plantilla.csv` | Encabezados de la lista de precios | Hoja nueva `Precios` |
 
@@ -65,6 +66,13 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   de `Icono` en un círculo; si tampoco hay, las iniciales con un color fijo por persona. La foto
   tiene que pesar menos de 300 KB (256 px alcanza) y el dueño del script tiene que poder abrirla.
   La primera vez Apps Script pide permiso de Drive.
+- **Personalidad (`BotCharla.html`):** antes de buscar, Hottie reconoce charla: saludos según la
+  hora y con apodo (Facu, Seba, Gabi, Agus), "¿cómo estás?", "gracias", "¿quién sos?", "¿qué podés
+  hacer?", "¿cómo voy?" (nivel y ranking, en la sala), chistes de depósito, "chau", y si alguien la
+  chamuya lo corta con humor y vuelve al laburo. Las búsquedas también tienen frases que rotan y
+  comentan el stock ("queda una sola", "hay una banda"). Abajo de cada respuesta hay botones de
+  respuesta rápida. Para cambiar cómo habla, editá las listas de frases de ese archivo.
+  "Hola hottie, ¿tenés disco de freno para gol?" igual busca: las palabras de charla se ignoran.
 - **Modo Sala (3D, three.js r128 desde cdnjs):** cada uno maneja su figura con WASD/flechas, tocando
   el piso o arrastrando para girar la cámara. Con **E** habla con Hottie en su terminal; le pregunta
   por un repuesto (búsqueda real) y ella marca con un rayo de luz la estantería de esa zona. Ahí

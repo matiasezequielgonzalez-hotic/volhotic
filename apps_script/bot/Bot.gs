@@ -56,6 +56,9 @@ const BOT_LINEA_DEFECTO = 'Autopartes';
 const BOT_STOPWORDS = new Set([
   'de', 'del', 'la', 'el', 'los', 'las', 'para', 'con', 'por', 'y', 'a', 'en', 'un', 'una',
   'unos', 'unas', 'al', 'x', 'tenes', 'tienen', 'hay', 'tengo', 'busco', 'necesito',
+  // Charla que se cuela en las búsquedas: "hola hottie, ¿dónde está el disco de gol?"
+  'hola', 'hottie', 'buenas', 'che', 'donde', 'esta', 'estan', 'queda', 'quedan', 'me', 'pasas', 'pasame',
+  'porfa', 'favor', 'tenemos', 'algun', 'alguno', 'alguna', 'quiero', 'dame', 'sabes',
 ]);
 
 // Columnas de la hoja General que usa el bot (por nombre de encabezado, no por posición).
@@ -310,8 +313,11 @@ function botBuscarPorCodigo_(items, texto) {
 
 function botBuscarPorPalabras_(items, texto) {
   const sinonimos = botSinonimos_();
+  // Las palabras vacías se sacan antes y después del singular ("tenes" -> "ten", "buenas" -> "buena").
   const palabras = botCanonizar_(texto, sinonimos).split(' ')
-    .map((w) => botRaiz_(w.replace(/[^a-z0-9./-]/g, '')))
+    .map((w) => w.replace(/[^a-z0-9./-]/g, ''))
+    .filter((w) => w && !BOT_STOPWORDS.has(w))
+    .map(botRaiz_)
     .filter((w) => w && !BOT_STOPWORDS.has(w));
   if (!palabras.length) return { resultados: [], palabras };
   const resultados = items.filter((f) => palabras.every((p) => f.texto.includes(p)));

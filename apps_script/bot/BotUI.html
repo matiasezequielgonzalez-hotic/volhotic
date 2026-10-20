@@ -36,7 +36,8 @@
   .bot { display: flex; gap: 8px; align-items: flex-end; max-width: 100%; }
   .bot .avatar { width: 34px; height: 34px; }
   .burbuja { background: var(--panel); border: 1px solid var(--line); border-radius: 12px 12px 12px 3px; padding: 10px 12px; display: grid; gap: 10px; min-width: 0; flex: 1; }
-  .texto { color: var(--muted); }
+  .texto { color: var(--muted); white-space: pre-line; }
+  .dice { color: var(--fg); white-space: pre-line; }
   .nota { color: var(--warn); font-size: 13px; }
 
   .ficha { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -94,6 +95,7 @@
   </form>
 </footer>
 
+<?!= botInclude('BotCharla') ?>
 <script>
   const AVATAR = document.querySelector('header .avatar').src;
   const estado = { linea: 'Todo', inicio: null };
@@ -159,22 +161,25 @@
       </div>`;
   }
 
+  const chipsHtml = (lista) => (lista && lista.length)
+    ? `<div class="sug">${lista.map((s) => `<button type="button" data-sugerencia="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : '';
+
   async function buscar(texto) {
     mensajeYo(texto);
+    const charla = Hottie.charla(texto, { nombre: estado.inicio && estado.inicio.nombre });
+    if (charla) { mensajeBot(`<div class="dice">${esc(charla.texto)}</div>${chipsHtml(charla.chips)}`); return; }
     document.body.classList.add('buscando');
     try {
       const r = await servidor('botBuscar', texto, estado.linea);
       let html = '';
       if (!r.total) {
-        html = `<div class="texto">No encontré nada con “${esc(texto)}”. Probá con menos palabras o con el código.</div>`;
-        if (r.sugerencias.length) {
-          html += `<div class="texto">¿Quisiste decir…?</div><div class="sug">${r.sugerencias
-            .map((s) => `<button type="button" data-sugerencia="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
-        }
+        html = `<div class="dice">${esc(Hottie.nada(texto, r.sugerencias.length > 0))}</div>${chipsHtml(r.sugerencias)}`;
       } else {
-        html = r.fichas.map(fichaHtml).join('');
+        const nombre = estado.inicio && estado.inicio.nombre;
+        html = `<div class="dice">${esc(r.total === 1 ? Hottie.encontrado(r.fichas[0], { nombre }) : Hottie.varios(r.total, r.fichas.length))}</div>`;
+        html += r.fichas.map(fichaHtml).join('');
         if (r.total > r.fichas.length) {
-          html += `<div class="texto">Hay ${r.total} resultados; te muestro ${r.fichas.length}. Sumá el modelo, el año o la marca para acotar.</div>`;
+          html += `<div class="texto">Sumá el modelo, el año o la marca para acotar.</div>`;
         }
       }
       if (r.nota) html += `<div class="nota">${esc(r.nota)}</div>`;
@@ -261,8 +266,9 @@
     estado.inicio = ini;
     document.getElementById('saludo').textContent = `Hola ${ini.nombre}`;
     pintarLineas(ini.lineas);
-    mensajeBot(`<div class="texto">¡Hola ${esc(ini.nombre)}! Soy Hottie. Decime qué buscás: una descripción
-      (“amortiguador delantero bora”), un código OEM o SKU (1J0411336H) o un ID (P00002).</div>`);
+    mensajeBot(`<div class="dice">${esc(Hottie.saludo(ini.nombre))}</div>
+      <div class="texto">Pasame una descripción (“amortiguador delantero bora”), un código OEM o SKU (1J0411336H) o un ID (P00002).</div>
+      ${chipsHtml(Hottie.chipsInicio)}`);
   }).catch((e) => {
     document.getElementById('saludo').textContent = 'Sin acceso';
     mensajeBot(`<div class="nota">${esc(e.message || e)}</div>`);

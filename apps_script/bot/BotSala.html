@@ -63,7 +63,10 @@
     box-shadow: 0 0 30px rgba(94, 242, 196, .25); }
   #dialogo .retrato { width: 110px; height: 110px; }
   #dialogo .nombre { font: 700 13px var(--display); color: var(--mint); letter-spacing: .14em; }
-  #dialogo .texto { min-height: 44px; font-size: 15px; margin: 4px 0 10px; }
+  #dialogo .texto { min-height: 44px; font-size: 15px; margin: 4px 0 10px; white-space: pre-line; }
+  #chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  #chips button { font: 500 12px var(--body); color: var(--mint); background: transparent; border: 1px solid var(--line); border-radius: 99px; padding: 5px 10px; cursor: pointer; }
+  #chips button:hover { border-color: var(--mint); }
   #dialogo form { display: flex; gap: 8px; }
   #dialogo input { flex: 1; min-width: 0; background: #050808; color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
   #opciones { display: grid; gap: 6px; margin-bottom: 10px; }
@@ -107,6 +110,7 @@
       <input id="pregunta" autocomplete="off" placeholder="Ej: volante bimasa vento · 1J0411336H · P00002" aria-label="Qué buscás">
       <button class="btn" type="submit">Preguntar</button>
     </form>
+    <div id="chips"></div>
   </div>
   <button id="cerrar" type="button" aria-label="Cerrar">×</button>
 </div>
@@ -114,6 +118,7 @@
 <div id="cargando">CARGANDO LA SALA…</div>
 
 <?!= botInclude('BotSprites') ?>
+<?!= botInclude('BotCharla') ?>
 <?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -448,6 +453,15 @@ function botDice(texto) {
   escribiendo = setInterval(() => { el.textContent = texto.slice(0, ++i); if (i >= texto.length) clearInterval(escribiendo); }, 16);
   decir(bot, texto.length > 70 ? texto.slice(0, 68) + '…' : texto, 4);
 }
+function ctxCharla() { return { nombre: ini.jugador.nombre, jugador: ini.jugador, ranking: ini.ranking }; }
+function chips(lista) {
+  $('chips').innerHTML = '';
+  (lista || []).forEach((t) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+    b.onclick = () => { decir(jugador, t, 2.5); preguntar(t); };
+    $('chips').appendChild(b);
+  });
+}
 function opciones(lista) {
   $('opciones').innerHTML = '';
   lista.forEach(({ html, accion }) => {
@@ -458,8 +472,10 @@ function opciones(lista) {
 function abrirDialogo() {
   dialogoAbierto = true; $('dialogo').hidden = false; $('accion').hidden = true;
   opciones([]);
-  botDice(mision ? `¿Cómo vas con ${mision.ficha.descripcion}? Si querés, buscamos otra cosa.`
-    : pick([`¡Hola ${ini.jugador.nombre}! ¿Qué salimos a buscar?`, `${ini.jugador.nombre}, decime qué necesitás y te digo dónde está.`, '¿Qué te traigo hoy? Pasame la descripción o el código.']));
+  const apodo = Hottie.apodo(ini.jugador.nombre);
+  botDice(mision ? pick([`¿Y, ${apodo}? ¿Encontraste ${mision.ficha.descripcion}? Seguí la luz 😉`, `Te marqué la zona, ${apodo}. Si querés buscamos otra cosa.`])
+    : Hottie.saludo(ini.jugador.nombre));
+  chips(Hottie.chipsInicio);
   setTimeout(() => $('pregunta').focus(), 50);
 }
 function cerrarDialogo() { dialogoAbierto = false; $('dialogo').hidden = true; clearInterval(escribiendo); }
@@ -470,33 +486,35 @@ function lineaFicha(f) {
 }
 
 function elegirFicha(f) {
-  opciones([]);
+  opciones([]); chips([]);
   if (!f.zona) {
     if (ini.puedeUbicar) {
-      botDice(`Uh, ${f.descripcion} no tiene ubicación 😬. ¿Me ayudás? Agarralo y llevalo a la estantería donde lo vas a dejar.`);
+      botDice(`Uh, ${f.descripcion} anda perdido, no tiene ubicación 😬. ¿Me hacés el favor? Agarralo y llevalo a la estantería donde lo vas a dejar. Te doy +${ini.xpPorAccion.ubicado} XP 😉`);
       ponerMision({ tipo: 'ubicar', ficha: f });
     } else botDice(`${f.descripcion} no tiene ubicación cargada. Avisale a Gabriel o a Franco para que lo ubiquen.`);
     return;
   }
   const est = estanterias[normal(f.zona)];
   if (!est) { botDice(`${f.descripcion}: está en zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''} de ${f.deposito || 'el depósito'}. Esa zona no está en esta sala.`); return; }
-  botDice(pick([`¡Lo tengo! ${f.descripcion}, ${f.stock} unidades. Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Te marco el camino 😉`,
-    `Está en la zona ${f.zona}. Seguí la luz, ${ini.jugador.nombre}.`, `Zona ${f.zona}${f.piso ? ', piso ' + f.piso : ''}. Andá que te espero 💚`]));
+  botDice(Hottie.encontrado(f, ctxCharla()) + ' ' + pick(['Te marco el camino 💡', 'Seguí la luz 😉', 'Andá que te espero 💚', 'Si lo encontrás son +' + ini.xpPorAccion.encontrado + ' XP 🎯']));
   ponerMision({ tipo: 'buscar', ficha: f, est });
   setTimeout(cerrarDialogo, reduce ? 600 : 2200);
 }
 
 async function preguntar(texto) {
-  opciones([]); botDice('Buscando…');
+  opciones([]); chips([]);
+  const charla = Hottie.charla(texto, ctxCharla());
+  if (charla) { botDice(charla.texto); chips(charla.chips); return; }
+  botDice(Hottie.buscando());
   try {
     const r = await servidor('botBuscar', texto, 'Todo');
     if (!r.total) {
-      botDice(`No encontré nada con "${texto}" 🤔. ${r.sugerencias.length ? '¿Quisiste decir…?' : 'Probá con menos palabras o con el código.'}`);
+      botDice(Hottie.nada(texto, r.sugerencias.length > 0));
       opciones(r.sugerencias.map((s) => ({ html: esc(s), accion: () => preguntar(s) })));
       return;
     }
     if (r.fichas.length === 1) return elegirFicha(r.fichas[0]);
-    botDice(r.total > r.fichas.length ? `Encontré ${r.total}. Te muestro los primeros, ¿cuál es?` : `Encontré ${r.total}. ¿Cuál buscás?`);
+    botDice(Hottie.varios(r.total, r.fichas.length));
     opciones(r.fichas.map((f) => ({ html: lineaFicha(f), accion: () => elegirFicha(f) })));
   } catch (e) { botDice('Se me cortó la conexión con la planilla. Probá de nuevo. (' + (e.message || e) + ')'); }
 }
@@ -681,7 +699,7 @@ servidor('botSalaInicio').then((datos) => {
     const p = crearPersonaje(n, null, new THREE.Vector3(-3 + i * 3, 0, 3 + (i % 2) * 2)); p.companero = true;
   });
   pintarJugador(); pintarRanking(); ponerMision(null);
-  setTimeout(() => decir(bot, `¡Hola ${ini.jugador.nombre}! Vení a la terminal 👋`, 4), 600);
+  setTimeout(() => decir(bot, pick([`¡${Hottie.apodo(ini.jugador.nombre)}! Vení a la terminal 👋`, `Hola ${Hottie.apodo(ini.jugador.nombre)}, acá estoy 👋`, '¿Quién me busca algo? 😏']), 4), 600);
   $('cargando').hidden = true;
   // Solo en modo demo: ayuda para probar la sala fuera de Apps Script.
   if (DEMO) window.salaDemo = { jugador: () => jugador.grupo.position, hottie: () => bot.grupo.position, ir: (x, z) => jugador.grupo.position.set(x, 0, z) };
