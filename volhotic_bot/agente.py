@@ -46,8 +46,9 @@ HERRAMIENTAS = [
     {
         "name": "buscar_por_codigo",
         "description": (
-            "Busca un repuesto por su código: SKU del fabricante (ej: '415 0431 10') o código OEM / "
-            "número de pieza original (ej: '1J0411336H', 'G052145'). Ignora espacios, guiones y "
+            "Busca un repuesto por su código: SKU del fabricante (ej: '415 0431 10'), código OEM / "
+            "número de pieza original (ej: '1J0411336H', 'G052145') o ID interno (ej: 'P00002'). "
+            "Ignora espacios, guiones y "
             "barras, y acepta códigos parciales."
         ),
         "input_schema": {
@@ -70,13 +71,14 @@ buscar_por_codigo; si describe la pieza, usá buscar_repuestos. Si la consulta e
 (ej: "disco de freno" sin modelo), mostrá las opciones más relevantes y preguntá el modelo/año.
 
 En los datos, "marca" es la marca del repuesto: "Legitimo" significa original de fábrica, \
-"Importado" es alternativo importado. "codigo_oem" es el número de pieza original de la automotriz.
+"Importado" es alternativo importado. "codigo_oem" es el número de pieza original de la automotriz. \
+Si un artículo tiene "link_ml", es su publicación en Mercado Libre: compartila cuando sirva.
 
 No tenés precios: si los piden, decí que un vendedor los confirma."""
 
 PROMPT_INTERNO = """
-Estás hablando con alguien del equipo de Volhotic. Podés mostrar ubicación en el depósito \
-(ubicacion, piso, zona), estado de publicación y observaciones internas. Si una ubicación \
+Estás hablando con alguien del equipo de Volhotic. Podés mostrar el ID interno (id_producto), \
+el depósito y la ubicación (ubicacion, piso, zona), el estado de publicación y las observaciones. Si una ubicación \
 dice "SIN STOCK" pero la cantidad es mayor a cero, avisá que el dato está inconsistente."""
 
 PROMPT_CLIENTE = """

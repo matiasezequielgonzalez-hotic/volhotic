@@ -18,13 +18,18 @@ def formatear(resultados: list[Repuesto], interno: bool = True) -> str:
     lineas = []
     for r in resultados[:MAX_RESULTADOS]:
         linea = f"• {r.descripcion} — {r.marca or 's/marca'} — stock: {r.stock}"
+        if r.condicion:
+            linea += f" ({r.condicion})"
         codigos = " / ".join(c for c in (r.sku, r.codigo_oem) if c)
         if codigos:
             linea += f"\n   cód: {codigos}"
+        if r.link_ml:
+            linea += f"\n   {r.link_ml}"
         if interno:
             lugar = ", ".join(
                 f"{nombre} {valor}" for nombre, valor in
-                (("ubic.", r.ubicacion), ("piso", r.piso), ("zona", r.zona)) if valor
+                (("id", r.id_producto), ("dep.", r.deposito), ("ubic.", r.ubicacion),
+                 ("piso", r.piso), ("zona", r.zona)) if valor
             )
             if lugar:
                 linea += f"\n   {lugar}"

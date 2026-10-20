@@ -82,3 +82,57 @@ def test_agente_ejecuta_herramientas(inventario):
     assert resultado_herramienta["tool_use_id"] == "tu_1"
     assert "Abrasadera" in resultado_herramienta["content"]
     assert cliente.pedidos[0]["model"] and cliente.pedidos[0]["fallbacks"] == "default"
+
+
+# --- Google Sheets (formato de apps_script/ExportarStock.gs) -----------------
+
+from volhotic_bot.fuentes import InventarioVivo, leer_filas, link_mercadolibre
+
+JSON_PLANILLA = Path(__file__).resolve().parent / "datos" / "planilla_ejemplo.json"
+
+
+def test_planilla_json_columnas_nuevas():
+    inventario = InventarioVivo(str(JSON_PLANILLA), intervalo_min=0)
+    assert inventario.resumen()["articulos"] == 3  # la fila P00001 sin descripción se saltea
+    disco = inventario.buscar_por_codigo("1J0615301E")[0]
+    assert disco.deposito == "Segurola" and disco.condicion == "Nuevo"
+    # Se cruza con la hoja Publicaciones por SKU
+    assert disco.link_ml == "https://articulo.mercadolibre.com.ar/MLA-667587416"
+    # Publicación pausada: sin link. Y el cero a la izquierda del SKU se mantiene.
+    capot = inventario.buscar_por_codigo("09600")[0]
+    assert capot.sku == "09600" and capot.link_ml == ""
+
+
+def test_busqueda_por_id_interno():
+    inventario = InventarioVivo(str(JSON_PLANILLA), intervalo_min=0)
+    assert inventario.buscar_por_codigo("P00002")[0].descripcion == "Abrasadera Golf Bora"
+
+
+def test_modo_cliente_oculta_deposito():
+    inventario = InventarioVivo(str(JSON_PLANILLA), intervalo_min=0)
+    disco = inventario.buscar_por_codigo("1J0615301E")[0]
+    publico = disco.a_dict(interno=False)
+    assert "deposito" not in publico and "observacion" not in publico
+    assert publico["link_ml"].startswith("https://")
+
+
+def test_error_de_la_web_app(tmp_path):
+    ruta = tmp_path / "error.json"
+    ruta.write_text('{"error": "no autorizado"}', encoding="utf-8")
+    with pytest.raises(RuntimeError, match="no autorizado"):
+        leer_filas(str(ruta))
+
+
+def test_recarga_fallida_mantiene_datos(tmp_path):
+    ruta = tmp_path / "planilla.json"
+    ruta.write_text(JSON_PLANILLA.read_text(encoding="utf-8"), encoding="utf-8")
+    inventario = InventarioVivo(str(ruta), intervalo_min=0)
+    ruta.write_text("esto no es json", encoding="utf-8")
+    with pytest.raises(Exception):
+        inventario.recargar()
+    assert inventario.resumen()["articulos"] == 3
+
+
+def test_link_mercadolibre():
+    assert link_mercadolibre("MLA688185887") == "https://articulo.mercadolibre.com.ar/MLA-688185887"
+    assert link_mercadolibre("") == ""

@@ -1,0 +1,15 @@
+{
+  "actualizado": "2026-10-20T00:00:00.000Z",
+  "general": [
+    ["ID", "Descripcion", "SKU", "Stock", "Marca", "EAN", "Condicion", "Deposito", "Ubicacion", "Piso", "Zona", "Estado", "Estado_ML", "Observación"],
+    ["P00001", " ", "", "", "", "", "", "Batalla", "", "", "", "", "", ""],
+    ["P00002", "Abrasadera Golf Bora", "23366", "8", "Febi", "1J0411336H", "Nuevo", "Batalla", "", "1", "4A", "", "", ""],
+    ["P00003", "Disco De Freno Delantero Bora/Suran", "92082303", "3", "Textar", "1J0615301E", "Nuevo", "Segurola", "", "", "", "Publicado", "active", "Encontré 1"],
+    ["P00004", "Amortiguador De Capot Audi A4", "09600", "0", "Ossca", "8T0823359", "Nuevo", "Batalla", "", "", "", "", "", ""]
+  ],
+  "publicaciones": [
+    ["MLA", "SKU", "Estado_ML"],
+    ["MLA667587416", "92082303", "active"],
+    ["MLA111111111", "09600", "paused"]
+  ]
+}
