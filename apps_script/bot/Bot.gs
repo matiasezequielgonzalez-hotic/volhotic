@@ -538,12 +538,19 @@ function botCorregirUbicacion(id, pisoVisto, zonaVista, pisoNuevo, zonaNueva) {
 // XP del Modo Sala
 // ---------------------------------------------------------------------------
 
-const BOT_XP = { encontrado: 10, despachado: 5, reporte: 3, ubicado: 15, desafio: 20, pedido: 25, pedido_err: 10, limpieza: 2 };
+const BOT_XP = {
+  encontrado: 10, despachado: 5, reporte: 3, ubicado: 15, desafio: 20, limpieza: 2,
+  pedido: 25,       // venta despachada sin errores y antes del corte
+  pedido_err: 10,   // despachada a tiempo, con errores que se corrigieron en el camino
+  pedido_tarde: 5,  // despachada después del horario de corte (en ML sería una venta demorada)
+  criterio: 15,     // frenó una venta que necesitaba al encargado (no se despacha algo distinto a lo vendido)
+  pregunta: 3,      // pregunta rápida de hottie bien respondida (repaso espaciado)
+};
 // Lo que la pantalla puede pedir directamente. Reporte y ubicado los suma el servidor
 // al hacer la acción real, así nadie se los puede dar sin hacerla.
-const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado', 'limpieza'];
+const BOT_XP_DESDE_CLIENTE = ['encontrado', 'despachado', 'limpieza', 'pregunta'];
 // Topes diarios por acción (además del tope general).
-const BOT_XP_TOPE_ACCION = { limpieza: 20 };
+const BOT_XP_TOPE_ACCION = { limpieza: 20, pregunta: 30 };
 const BOT_XP_TOPE_DIARIO = 300;
 
 function botHojaXp_() {
@@ -615,7 +622,8 @@ function botSumarXP(accion, ref) {
   const u = botExigir_();
   if (!BOT_XP_DESDE_CLIENTE.includes(accion)) throw new Error('Esa XP se gana haciendo la acción.');
   ref = String(ref || '').trim().slice(0, 40);
-  if (accion !== 'limpieza' && !botVisibles_(u).some((f) => f.id === ref)) throw new Error('No encontré el producto ' + ref + '.');
+  if (accion === 'pregunta') ref = ref.replace(/[^a-z0-9_-]/gi, '').slice(0, 20); // id de la pregunta: una vez por día cada una
+  else if (accion !== 'limpieza' && !botVisibles_(u).some((f) => f.id === ref)) throw new Error('No encontré el producto ' + ref + '.');
   return botDarXp_(u, accion, ref);
 }
 
@@ -774,7 +782,7 @@ function botSalaLatido(estado) {
 
   const desde = Number(estado.ultimoEvento) || 0;
   const eventos = botSalaLeer_('sala_eventos', []).filter((e) => e.id > desde);
-  return { jugadores, eventos, desafio: botSalaDesafioVisible_(d), ahora };
+  return { jugadores, eventos, desafio: botSalaDesafioVisible_(d), ahora, reputacion: botSalaLeer_('sala_reputacion', null) };
 }
 
 function botSalaResponder(desafioId, zona) {
@@ -815,7 +823,71 @@ function botSalaResponder(desafioId, zona) {
 
 const BOT_ENVIOS = ['Flex', 'Colecta', 'Retiro'];
 
-/** Arma un pedido con productos reales que estén en las zonas de la sala. */
+// Dificultad según el nivel del jugador: el juego acompaña al que arranca y exige al que ya sabe.
+//  minutosCorte: tiempo real para despachar antes del "horario de corte".
+//  ocultar: datos que el checklist deja de mostrar (hay que recordarlos o volver a mirar la venta en la PC).
+//  casiIguales: etiquetas trampa que difieren en un solo carácter (entrena la atención al detalle).
+const BOT_DIFICULTAD = [
+  { nombre: 'Aprendiz', desdeNivel: 1, minutosCorte: 8, ocultar: [], casiIguales: 0, mensaje: 0.3, pack: 0.15 },
+  { nombre: 'Pro', desdeNivel: 3, minutosCorte: 6, ocultar: ['etiqueta', 'cantidad'], casiIguales: 1, mensaje: 0.45, pack: 0.3 },
+  { nombre: 'Experto', desdeNivel: 6, minutosCorte: 4.5, ocultar: ['etiqueta', 'cantidad', 'envio'], casiIguales: 2, mensaje: 0.55, pack: 0.45 },
+];
+
+// Mensajes del comprador. Regla de fondo: se despacha exactamente lo que dice la venta;
+// lo que cambia la venta, la factura o los datos de contacto lo maneja el encargado, siempre dentro de Mercado Libre.
+const BOT_MENSAJES_COMPRADOR = [
+  { texto: '¡Hola! Es para regalo, ¿lo pueden embalar bien? 🎁', correcta: 0, frena: false,
+    opciones: ['Lo embalo bien protegido, como siempre', 'Le pongo papel de regalo por mi cuenta', 'Freno el pedido hasta que alguien le conteste'],
+    leccion: 'Todo pedido se embala bien protegido. No hace falta frenar nada ni inventar extras.' },
+  { texto: 'Me equivoqué, necesito otra medida. ¿Me mandan la otra?', correcta: 1, frena: true,
+    opciones: ['Le mando la otra medida', 'No lo despacho y aviso al encargado', 'Despacho lo que dice la venta igual'],
+    leccion: 'Nunca se despacha algo distinto a lo vendido, y tampoco conviene mandar algo que ya sabemos que no le sirve. Se frena y lo resuelve el encargado (cancelación o nueva venta).' },
+  { texto: '¿Me pasás tu WhatsApp así coordinamos?', correcta: 2, frena: false,
+    opciones: ['Le paso mi número', 'Le paso el de la empresa', 'No: todo se habla por la mensajería de Mercado Libre'],
+    leccion: 'La charla con el comprador queda dentro de Mercado Libre: protege la venta y la reputación. Vos seguís armando.' },
+  { texto: '¿Me pueden hacer factura A?', correcta: 0, frena: false,
+    opciones: ['Aviso al encargado y sigo armando', 'Freno el pedido hasta que esté la factura', 'Le escribo los datos en la caja'],
+    leccion: 'La factura la gestiona administración. El pedido sigue su curso para no llegar tarde al corte.' },
+  { texto: 'Lo necesito urgente, ¿sale hoy?', correcta: 1, frena: false,
+    opciones: ['Le prometo que llega hoy', 'Lo armo ya para que salga antes del corte', 'Lo dejo para después de los otros'],
+    leccion: 'No prometas fechas: la promesa la da Mercado Libre. Lo que sí depende de vos es despacharlo antes del horario de corte.' },
+  { texto: 'Compré 2 pero solo necesito 1, ¿me mandan 1?', correcta: 1, frena: true,
+    opciones: ['Mando 1 y listo', 'No lo despacho y aviso al encargado', 'Mando 2 igual, es lo que dice la venta'],
+    leccion: 'Si el comprador pide cambiar la venta, no se despacha hasta que el encargado la modifique o la cancele.' },
+];
+
+// Lado y posición: si la descripción lo dice, se practica no confundirlo.
+const BOT_VARIANTES = [['izquierdo', 'derecho'], ['izquierda', 'derecha'], ['delantero', 'trasero'], ['delantera', 'trasera'], ['superior', 'inferior']];
+const BOT_COMPRADORES = ['JUANCHO_22', 'MARIANELA.R', 'TALLER_ELGRINGO', 'LUCAS1987', 'REPUESTOSOESTE', 'CAROSANZ', 'EL_TANO_MECANICO', 'PATRI.G', 'NICOVW', 'MECANICA_LOS_HERMANOS'];
+
+function botDificultad_(nivel) {
+  return BOT_DIFICULTAD.filter((d) => nivel >= d.desdeNivel).pop();
+}
+
+/** Una etiqueta que difiere en un solo carácter (dos dígitos cambiados de lugar o un dígito distinto). */
+function botCasiIgual_(etiqueta) {
+  const c = String(etiqueta).split('');
+  const pos = c.map((x, i) => i).filter((i) => /[0-9A-Za-z]/.test(c[i]));
+  if (pos.length < 3) return '';
+  const i = pos[1 + Math.floor(Math.random() * (pos.length - 2))];
+  if (Math.random() < 0.5 && /\d/.test(c[i]) && c[i + 1] && /\d/.test(c[i + 1]) && c[i] !== c[i + 1]) [c[i], c[i + 1]] = [c[i + 1], c[i]];
+  else c[i] = /\d/.test(c[i]) ? String((Number(c[i]) + 1 + Math.floor(Math.random() * 8)) % 10) : (c[i].toUpperCase() === 'B' ? '8' : 'B');
+  const r = c.join('');
+  return r === etiqueta ? '' : r;
+}
+
+/** Título de la publicación en ML (hoja Publicaciones) o uno armado con la descripción. */
+function botTitulosMl_() {
+  const t = botTabla_(BOT.HOJAS.publicaciones);
+  const titulos = {};
+  t.filas.forEach((f) => {
+    const sku = botNormalizarCodigo_(t.get(f, 'SKU'));
+    const titulo = String(t.get(f, 'Titulo')).trim();
+    if (sku && titulo && !titulos[sku]) titulos[sku] = titulo;
+  });
+  return titulos;
+}
+
 function botSalaNuevoPedido(zonas) {
   const u = botExigir_();
   zonas = (Array.isArray(zonas) ? zonas : []).map(String);
@@ -823,46 +895,106 @@ function botSalaNuevoPedido(zonas) {
   const candidatos = conEtiqueta.filter((f) => zonas.includes(f.zona));
   if (!candidatos.length) throw new Error('No hay productos con zona en la sala para armar un pedido.');
   const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
-  const cantidadItems = Math.random() < 0.7 ? 1 : 2;
+  const { total } = botTotalesXp_();
+  const nivel = botNivel_(total[u.nombre] || 0).nivel;
+  const dif = botDificultad_(nivel);
+  const titulos = botTitulosMl_();
+  // Pack: varios productos de la misma venta, en una sola caja con una sola etiqueta.
+  const cantidadItems = Math.random() < dif.pack ? (dif.nombre === 'Experto' && Math.random() < 0.4 ? 3 : 2) : 1;
   const items = [];
-  while (items.length < cantidadItems) {
+  for (let intentos = 0; items.length < cantidadItems && intentos < 50; intentos++) {
     const f = azar(candidatos);
     if (items.some((i) => i.id === f.id)) continue;
     const etiqueta = f.sku || f.oem;
-    // Etiquetas "trampa": productos parecidos (misma primera palabra) para practicar la comparación.
+    // Etiquetas "trampa": productos parecidos (misma primera palabra) y, con más nivel, códigos casi iguales.
     const primera = botNormalizar_(f.descripcion).split(' ')[0];
     let parecidas = conEtiqueta.filter((x) => x.id !== f.id && (x.sku || x.oem) !== etiqueta && botNormalizar_(x.descripcion).startsWith(primera));
     if (parecidas.length < 2) parecidas = conEtiqueta.filter((x) => x.id !== f.id && (x.sku || x.oem) !== etiqueta);
     const trampas = [];
+    for (let k = 0; k < dif.casiIguales; k++) {
+      const casi = botCasiIgual_(etiqueta);
+      if (casi && !trampas.some((t) => t.etiqueta === casi)) trampas.push({ etiqueta: casi, descripcion: f.descripcion + ' (otra medida)', casi: true });
+    }
     while (trampas.length < 2 && parecidas.length) {
       const x = parecidas.splice(Math.floor(Math.random() * parecidas.length), 1)[0];
       if (!trampas.some((t) => t.etiqueta === (x.sku || x.oem))) trampas.push({ etiqueta: x.sku || x.oem, descripcion: x.descripcion });
     }
+    const palabras = botNormalizar_(f.descripcion).split(' ');
+    const par = BOT_VARIANTES.find(([a, b]) => palabras.includes(a) || palabras.includes(b));
+    const variante = par ? (palabras.includes(par[0]) ? { pide: par[0], otra: par[1] } : { pide: par[1], otra: par[0] }) : null;
     items.push({
       id: f.id, descripcion: f.descripcion, marca: f.marca, zona: f.zona, piso: f.piso, etiqueta,
+      titulo: titulos[botNormalizarCodigo_(f.sku)] || [f.descripcion, f.marca].filter(Boolean).join(' '),
       cantidad: f.stock >= 2 && Math.random() < 0.3 ? 2 : 1,
       danado: Math.random() < 0.2, // a veces la primera unidad viene golpeada
-      trampas,
+      variante, trampas,
     });
   }
-  const pedido = { id: 'ML-' + Date.now().toString(36).slice(-5).toUpperCase(), items, envio: azar(BOT_ENVIOS), creado: Date.now() };
+  const creado = Date.now();
+  const mensaje = Math.random() < dif.mensaje ? azar(BOT_MENSAJES_COMPRADOR) : null;
+  const pedido = {
+    id: 'ML-' + creado.toString(36).slice(-5).toUpperCase(),
+    venta: '2000' + String(creado).slice(-9) + String(Math.floor(Math.random() * 900) + 100),
+    comprador: azar(BOT_COMPRADORES),
+    items, envio: azar(BOT_ENVIOS), creado, corte: creado + dif.minutosCorte * 60000,
+    dificultad: { nombre: dif.nombre, ocultar: dif.ocultar },
+    mensaje: mensaje && { texto: mensaje.texto, opciones: mensaje.opciones, correcta: mensaje.correcta, frena: mensaje.frena, leccion: mensaje.leccion },
+  };
   botSalaGuardar_('sala_pedido_' + botNormalizarCodigo_(u.nombre), pedido, 7200);
   return pedido;
 }
 
-function botSalaCompletarPedido(id, errores) {
+/**
+ * Cierra el pedido. resultado: { errores, pausado } (o un número de errores, como antes).
+ * Despachado después del corte = venta demorada. Pausado = lo frenó bien para el encargado.
+ */
+function botSalaCompletarPedido(id, resultado) {
   const u = botExigir_();
   const clave = 'sala_pedido_' + botNormalizarCodigo_(u.nombre);
   const pedido = botSalaLeer_(clave, null);
   if (!pedido || pedido.id !== id) throw new Error('Ese pedido no es tuyo o ya se cerró.');
-  if (Date.now() - pedido.creado < 20000) throw new Error('Muy rápido 😅 Revisá bien el pedido antes de cerrarlo.');
+  const r = typeof resultado === 'object' && resultado ? resultado : { errores: resultado };
+  const errores = Math.max(0, Number(r.errores) || 0);
+  const pausado = !!r.pausado && !!(pedido.mensaje && pedido.mensaje.frena);
+  if (!pausado && Date.now() - pedido.creado < 20000) throw new Error('Muy rápido 😅 Revisá bien el pedido antes de cerrarlo.');
   CacheService.getScriptCache().remove(clave);
-  errores = Math.max(0, Number(errores) || 0);
-  const xp = botDarXp_(u, errores === 0 ? 'pedido' : 'pedido_err', id);
-  botSalaEvento_('logro', errores === 0
-    ? '✅ ' + u.nombre + ' armó el pedido ' + id + ' perfecto (+' + BOT_XP.pedido + ' XP)'
-    : '📦 ' + u.nombre + ' armó el pedido ' + id + ' con ' + errores + (errores === 1 ? ' error' : ' errores'), u.nombre);
-  return { xp, errores };
+  const tarde = !pausado && Date.now() > (pedido.corte || Infinity);
+  const accion = pausado ? 'criterio' : tarde ? 'pedido_tarde' : errores === 0 ? 'pedido' : 'pedido_err';
+  const xp = botDarXp_(u, accion, id);
+  botSalaReputacion_(accion);
+  const textos = {
+    criterio: '🛑 ' + u.nombre + ' frenó la venta ' + id + ' para el encargado. ¡Buen criterio!',
+    pedido_tarde: '⏰ ' + u.nombre + ' despachó ' + id + ' después del corte (venta demorada)',
+    pedido: '✅ ' + u.nombre + ' despachó ' + id + ' perfecto y a tiempo (+' + BOT_XP.pedido + ' XP)',
+    pedido_err: '📦 ' + u.nombre + ' despachó ' + id + ' con ' + errores + (errores === 1 ? ' error corregido' : ' errores corregidos'),
+  };
+  botSalaEvento_('logro', textos[accion], u.nombre);
+  return { xp, errores, tarde, pausado, reputacion: botSalaReputacion_() };
+}
+
+/**
+ * Termómetro del día del equipo (como la reputación de ML, pero de práctica): cuenta despachos
+ * perfectos, con errores y demorados. Vive en caché para que el latido no lea la hoja cada 2 segundos.
+ */
+function botSalaReputacion_(sumar) {
+  const hoy = Utilities.formatDate(new Date(), BOT.ZONA_HORARIA, 'dd/MM/yyyy');
+  const clave = 'sala_reputacion';
+  let rep = botSalaLeer_(clave, null);
+  if (!rep || rep.dia !== hoy) {
+    rep = { dia: hoy, perfectos: 0, conErrores: 0, demorados: 0, frenados: 0 };
+    const t = botTabla_(BOT.HOJAS.xp);
+    t.filas.forEach((f) => {
+      if (!String(t.get(f, 'Fecha')).startsWith(hoy)) return;
+      const a = String(t.get(f, 'Accion'));
+      if (a === 'pedido') rep.perfectos++; else if (a === 'pedido_err') rep.conErrores++;
+      else if (a === 'pedido_tarde') rep.demorados++; else if (a === 'criterio') rep.frenados++;
+    });
+  } else if (sumar) {
+    const campo = { pedido: 'perfectos', pedido_err: 'conErrores', pedido_tarde: 'demorados', criterio: 'frenados' }[sumar];
+    if (campo) rep[campo]++;
+  }
+  botSalaGuardar_(clave, rep, 21600);
+  return rep;
 }
 
 /** Eventos que avisa la pantalla (encontró, despachó) para el feed de todos. */
