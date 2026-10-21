@@ -2,14 +2,25 @@
   "version": "2026-10-21",
   "titulo": "Escuela hotic. de Mercado Libre Argentina",
   "aviso": "Contenido armado con fuentes oficiales de Mercado Libre Argentina, ARCA y el Estado argentino (ver reports/Escuela Mercado Libre Argentina.md). Las páginas oficiales se leyeron por extractos: antes de dar cada clase, abrir la fuente y comparar con el panel del vendedor. Estados: oficial = página oficial de ML AR, ARCA o Estado; dev = documentación técnica de ML AR; no_oficial = tercero, solo de referencia; confirmar = depende de la cuenta o no se pudo verificar: mirarlo en el panel el día de la clase.",
-  "orden": ["reputacion", "despacho", "embalaje", "atencion", "publicar", "facturacion", "adultos"],
+  "orden": [
+    "reputacion",
+    "despacho",
+    "embalaje",
+    "atencion",
+    "publicar",
+    "facturacion",
+    "adultos"
+  ],
   "cursos": [
     {
       "id": "reputacion",
       "titulo": "Reputación: el número que nos da de comer",
       "para": "todos",
       "descripcion": "Cómo mide Mercado Libre a la cuenta, qué la baja y qué pasa con cada color.",
-      "practica": { "modo": "sala_termometro", "texto": "Mirá el termómetro del equipo después de cada venta de práctica." },
+      "practica": {
+        "modo": "sala_termometro",
+        "texto": "Mirá el termómetro del equipo después de cada venta de práctica."
+      },
       "lecciones": [
         {
           "id": "rep-1",
@@ -17,18 +28,66 @@
           "minutos": 5,
           "objetivo": "Saber qué tres cosas miden y desde cuándo cambió la forma de medirlas.",
           "puntos": [
-            { "texto": "La reputación se arma con tres métricas: reclamos, ventas canceladas por el vendedor y envíos incorrectos (despachos con demora). Se actualiza todos los días.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Como-funciona-la-reputacion-de-vendedor_4024" },
-            { "texto": "Cada métrica se mira por separado: no se suman entre sí.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/analiza-tus-metricas-de-atencion-y-reduci-problemas-en-tus-ventas" },
-            { "texto": "Desde el 16 de septiembre de 2026: con 101 ventas o más en los últimos 60 días te miden por 60 días; con menos, por 365 días (antes el corte era 50 ventas).", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion" },
-            { "texto": "Medidos por 365 días, un error tarda hasta un año en dejar de pesar.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion" }
+            {
+              "texto": "La reputación se arma con tres métricas: reclamos, ventas canceladas por el vendedor y envíos incorrectos (despachos con demora). Se actualiza todos los días.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Como-funciona-la-reputacion-de-vendedor_4024"
+            },
+            {
+              "texto": "Cada métrica se mira por separado: no se suman entre sí.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/analiza-tus-metricas-de-atencion-y-reduci-problemas-en-tus-ventas"
+            },
+            {
+              "texto": "Desde el 16 de septiembre de 2026: con 101 ventas o más en los últimos 60 días te miden por 60 días; con menos, por 365 días (antes el corte era 50 ventas).",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion"
+            },
+            {
+              "texto": "Medidos por 365 días, un error tarda hasta un año en dejar de pesar.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion"
+            }
           ],
           "error_comun": "Pensar que un mal mes se olvida rápido: con la medición de 365 días, cada demora queda un año en la cuenta.",
           "en_la_sala": "Cada venta de práctica despachada tarde baja el termómetro del equipo.",
-          "confirmar_en_panel": ["Si la cuenta se mide por 60 o por 365 días."],
+          "confirmar_en_panel": [
+            "Si la cuenta se mide por 60 o por 365 días."
+          ],
           "preguntas": [
-            { "id": "rep1a", "q": "¿Qué tres cosas mide la reputación de Mercado Libre?", "o": ["Reclamos, cancelaciones del vendedor y envíos con demora", "Cantidad de publicaciones, fotos y precios", "Visitas, preguntas y ventas"], "c": 0, "p": "Son reclamos, ventas canceladas por el vendedor y envíos incorrectos (demoras). Cada una se mira por separado." },
-            { "id": "rep1b", "q": "Desde septiembre de 2026, una cuenta con 80 ventas en los últimos 60 días se mide…", "o": ["Por los últimos 60 días", "Por los últimos 365 días", "Solo por el último mes"], "c": 1, "p": "Con menos de 101 ventas en 60 días, la medición es por 365 días." },
-            { "id": "rep1c", "q": "¿Las tres métricas se suman entre sí?", "o": ["Sí, se suman en un solo porcentaje", "No, cada una se mira por separado", "Solo se suman reclamos y demoras"], "c": 1, "p": "Cada métrica tiene sus propios límites y se mira por separado." }
+            {
+              "id": "rep1a",
+              "q": "¿Qué tres cosas mide la reputación de Mercado Libre?",
+              "o": [
+                "Reclamos, cancelaciones del vendedor y envíos con demora",
+                "Cantidad de publicaciones, fotos y precios",
+                "Visitas, preguntas y ventas"
+              ],
+              "c": 0,
+              "p": "Son reclamos, ventas canceladas por el vendedor y envíos incorrectos (demoras). Cada una se mira por separado."
+            },
+            {
+              "id": "rep1b",
+              "q": "Desde septiembre de 2026, una cuenta con 80 ventas en los últimos 60 días se mide…",
+              "o": [
+                "Por los últimos 60 días",
+                "Por los últimos 365 días",
+                "Solo por el último mes"
+              ],
+              "c": 1,
+              "p": "Con menos de 101 ventas en 60 días, la medición es por 365 días."
+            },
+            {
+              "id": "rep1c",
+              "q": "¿Las tres métricas se suman entre sí?",
+              "o": [
+                "Sí, se suman en un solo porcentaje",
+                "No, cada una se mira por separado",
+                "Solo se suman reclamos y demoras"
+              ],
+              "c": 1,
+              "p": "Cada métrica tiene sus propios límites y se mira por separado."
+            }
           ]
         },
         {
@@ -37,22 +96,87 @@
           "minutos": 6,
           "objetivo": "Conocer los porcentajes que nos sacan del verde y lo que se pierde con naranja o rojo.",
           "puntos": [
-            { "texto": "Medida por 60 días, para estar en verde: reclamos hasta 1,5%, cancelaciones propias hasta 1% y envíos incorrectos (demoras) hasta 10%.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion" },
-            { "texto": "Medida por 365 días, el verde permite reclamos hasta 1,5%, cancelaciones propias hasta 1,5% y demoras hasta 13%.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion" },
-            { "texto": "Ejemplo: con 1.000 ventas en 60 días, 11 cancelaciones propias ya sacan a la cuenta del verde.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion" },
-            { "texto": "Con reputación naranja o roja la publicación compite en catálogo pero no puede ganar.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-funciona-la-competencia-en-catalogo" },
-            { "texto": "Con naranja o roja no se puede activar \"Mi página\" (la tienda dentro de Mercado Libre).", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/disena-tu-pagina-dentro-de-mercado-libre" },
-            { "texto": "En rojo hay menos visibilidad en las búsquedas.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-posicionar-tus-productos-en-los-listados" },
-            { "texto": "El descuento que pone ML en el envío gratis depende de la reputación.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-funcionan-los-envios-de-mercado-libre" },
-            { "texto": "No enseñar el 15% de demoras para verde: es de una nota vieja y está desactualizado.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/despachar-tus-ventas-a-tiempo-la-clave-de-una-buena-reputacion" }
+            {
+              "texto": "Medida por 60 días, para estar en verde: reclamos hasta 1,5%, cancelaciones propias hasta 1% y envíos incorrectos (demoras) hasta 10%.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion"
+            },
+            {
+              "texto": "Medida por 365 días, el verde permite reclamos hasta 1,5%, cancelaciones propias hasta 1,5% y demoras hasta 13%.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion"
+            },
+            {
+              "texto": "Ejemplo: con 1.000 ventas en 60 días, 11 cancelaciones propias ya sacan a la cuenta del verde.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/vamos-a-cambiar-la-forma-en-que-calculamos-tu-reputacion"
+            },
+            {
+              "texto": "Con reputación naranja o roja la publicación compite en catálogo pero no puede ganar.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-funciona-la-competencia-en-catalogo"
+            },
+            {
+              "texto": "Con naranja o roja no se puede activar \"Mi página\" (la tienda dentro de Mercado Libre).",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/disena-tu-pagina-dentro-de-mercado-libre"
+            },
+            {
+              "texto": "En rojo hay menos visibilidad en las búsquedas.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-posicionar-tus-productos-en-los-listados"
+            },
+            {
+              "texto": "El descuento que pone ML en el envío gratis depende de la reputación.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-funcionan-los-envios-de-mercado-libre"
+            },
+            {
+              "texto": "No enseñar el 15% de demoras para verde: es de una nota vieja y está desactualizado.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/despachar-tus-ventas-a-tiempo-la-clave-de-una-buena-reputacion"
+            }
           ],
           "error_comun": "Creer que una cancelación \"no pasa nada\": con 1% de margen, pocas cancelaciones alcanzan para perder el verde.",
           "en_la_sala": "El resumen de cada venta muestra si salió a tiempo o demorada.",
-          "confirmar_en_panel": ["Los límites por color que muestra la sección Reputación.", "El porcentaje de descuento de envío gratis que corresponde a la cuenta."],
+          "confirmar_en_panel": [
+            "Los límites por color que muestra la sección Reputación.",
+            "El porcentaje de descuento de envío gratis que corresponde a la cuenta."
+          ],
           "preguntas": [
-            { "id": "rep2a", "q": "Medida por 60 días, ¿qué porcentaje de despachos con demora es el máximo para seguir en verde?", "o": ["10%", "15%", "25%"], "c": 0, "p": "Hasta 10% medido por 60 días (13% si se mide por 365). El 15% es un dato viejo." },
-            { "id": "rep2b", "q": "Medida por 60 días, ¿cuánto margen hay de cancelaciones propias para seguir en verde?", "o": ["Hasta 1%", "Hasta 5%", "No hay límite"], "c": 0, "p": "Hasta 1%. Con 1.000 ventas, 11 cancelaciones ya sacan del verde." },
-            { "id": "rep2c", "q": "Con reputación naranja, en el catálogo la publicación…", "o": ["Gana igual si tiene el mejor precio", "Compite, pero no puede ganar", "Desaparece del catálogo"], "c": 1, "p": "Con naranja o roja se compite en catálogo pero no se gana la compra." }
+            {
+              "id": "rep2a",
+              "q": "Medida por 60 días, ¿qué porcentaje de despachos con demora es el máximo para seguir en verde?",
+              "o": [
+                "10%",
+                "15%",
+                "25%"
+              ],
+              "c": 0,
+              "p": "Hasta 10% medido por 60 días (13% si se mide por 365). El 15% es un dato viejo."
+            },
+            {
+              "id": "rep2b",
+              "q": "Medida por 60 días, ¿cuánto margen hay de cancelaciones propias para seguir en verde?",
+              "o": [
+                "Hasta 1%",
+                "Hasta 5%",
+                "No hay límite"
+              ],
+              "c": 0,
+              "p": "Hasta 1%. Con 1.000 ventas, 11 cancelaciones ya sacan del verde."
+            },
+            {
+              "id": "rep2c",
+              "q": "Con reputación naranja, en el catálogo la publicación…",
+              "o": [
+                "Gana igual si tiene el mejor precio",
+                "Compite, pero no puede ganar",
+                "Desaparece del catálogo"
+              ],
+              "c": 1,
+              "p": "Con naranja o roja se compite en catálogo pero no se gana la compra."
+            }
           ]
         },
         {
@@ -61,19 +185,65 @@
           "minutos": 5,
           "objetivo": "Saber qué problemas no afectan y cómo salvar la reputación a tiempo.",
           "puntos": [
-            { "texto": "Si el comprador cancela sin culpa del vendedor, no afecta.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion" },
-            { "texto": "Si hubo reclamo y después se cancela, impacta una sola vez, como reclamo.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion" },
-            { "texto": "Solo afectan los reclamos por calidad del producto; un paquete roto o dañado en el viaje no impacta.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/por-que-es-importante-la-reputacion-del-vendedor" },
-            { "texto": "Un reclamo por paquete demorado no afecta si se despacha dentro de los 2 primeros días hábiles desde que se abrió.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/cuida-tu-reputacion-si-te-reclaman-por-un-paquete-demorado" },
-            { "texto": "Las exclusiones se piden desde Métricas > Atención a tus compradores > Revisar todos > Ventas con problemas.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/conoce-las-reglas-de-exclusion" },
-            { "texto": "Devolver la plata cuando no era lo que esperaba el comprador puede afectar la reputación.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/consejos-para-evitar-que-tus-compradores-inicien-un-reclamo" }
+            {
+              "texto": "Si el comprador cancela sin culpa del vendedor, no afecta.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion"
+            },
+            {
+              "texto": "Si hubo reclamo y después se cancela, impacta una sola vez, como reclamo.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion"
+            },
+            {
+              "texto": "Solo afectan los reclamos por calidad del producto; un paquete roto o dañado en el viaje no impacta.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/por-que-es-importante-la-reputacion-del-vendedor"
+            },
+            {
+              "texto": "Un reclamo por paquete demorado no afecta si se despacha dentro de los 2 primeros días hábiles desde que se abrió.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/cuida-tu-reputacion-si-te-reclaman-por-un-paquete-demorado"
+            },
+            {
+              "texto": "Las exclusiones se piden desde Métricas > Atención a tus compradores > Revisar todos > Ventas con problemas.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/conoce-las-reglas-de-exclusion"
+            },
+            {
+              "texto": "Devolver la plata cuando no era lo que esperaba el comprador puede afectar la reputación.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/consejos-para-evitar-que-tus-compradores-inicien-un-reclamo"
+            }
           ],
           "error_comun": "Dejar pasar un reclamo por demora: si se despacha en 2 días hábiles, no afecta.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Las ventas marcadas como \"afectó tu reputación\" y las exclusiones para pedir."],
+          "confirmar_en_panel": [
+            "Las ventas marcadas como \"afectó tu reputación\" y las exclusiones para pedir."
+          ],
           "preguntas": [
-            { "id": "rep3a", "q": "Te reclaman por un paquete demorado. ¿Cómo evitás que afecte la reputación?", "o": ["Despachándolo dentro de los 2 primeros días hábiles desde el reclamo", "Cancelando la venta", "No respondiendo"], "c": 0, "p": "Si despachás dentro de los 2 primeros días hábiles, ese reclamo por demora no afecta." },
-            { "id": "rep3b", "q": "El comprador cancela la compra por su cuenta, sin culpa nuestra. ¿Afecta la reputación?", "o": ["Sí, siempre", "No", "Solo si es Flex"], "c": 1, "p": "Las cancelaciones del comprador sin culpa del vendedor no cuentan." }
+            {
+              "id": "rep3a",
+              "q": "Te reclaman por un paquete demorado. ¿Cómo evitás que afecte la reputación?",
+              "o": [
+                "Despachándolo dentro de los 2 primeros días hábiles desde el reclamo",
+                "Cancelando la venta",
+                "No respondiendo"
+              ],
+              "c": 0,
+              "p": "Si despachás dentro de los 2 primeros días hábiles, ese reclamo por demora no afecta."
+            },
+            {
+              "id": "rep3b",
+              "q": "El comprador cancela la compra por su cuenta, sin culpa nuestra. ¿Afecta la reputación?",
+              "o": [
+                "Sí, siempre",
+                "No",
+                "Solo si es Flex"
+              ],
+              "c": 1,
+              "p": "Las cancelaciones del comprador sin culpa del vendedor no cuentan."
+            }
           ]
         },
         {
@@ -82,16 +252,49 @@
           "minutos": 4,
           "objetivo": "Conocer los requisitos de calidad de MercadoLíder y usarlos como meta del depósito.",
           "puntos": [
-            { "texto": "Requisitos de calidad: más de 4 meses de antigüedad, reputación verde y, en los últimos 60 días, reclamos menores al 1%, mediaciones menores al 0,5%, canceladas por el vendedor menores al 0,5% y despachos con demora menores al 8%.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058" },
-            { "texto": "Niveles por ventas concretadas en 60 días: MercadoLíder 60+, Gold 180+, Platinum 415+.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058" },
-            { "texto": "Los montos de facturación en pesos de cada nivel cambian: el panel muestra cuánto falta.", "estado": "confirmar", "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058" },
-            { "texto": "Beneficios: más exposición cuanto más alto el nivel, envío gratis en productos nuevos y atención personalizada.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/que-necesitas-para-ser-mercadolider" }
+            {
+              "texto": "Requisitos de calidad: más de 4 meses de antigüedad, reputación verde y, en los últimos 60 días, reclamos menores al 1%, mediaciones menores al 0,5%, canceladas por el vendedor menores al 0,5% y despachos con demora menores al 8%.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058"
+            },
+            {
+              "texto": "Niveles por ventas concretadas en 60 días: MercadoLíder 60+, Gold 180+, Platinum 415+.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058"
+            },
+            {
+              "texto": "Los montos de facturación en pesos de cada nivel cambian: el panel muestra cuánto falta.",
+              "estado": "confirmar",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Ser-MercadoL%C3%ADder_4058"
+            },
+            {
+              "texto": "El 16/09/2026, junto con el cambio de reputación, ML subió los requisitos de facturación de MercadoLíder. Según terceros: $1.500.000 (MercadoLíder), $3.000.000 (Gold) y $9.000.000 (Platinum). Los montos de la ayuda oficial ($380.000 / $1.300.000 / $3.820.000) quedaron viejos.",
+              "estado": "no_oficial",
+              "fuente": "https://www.upseller.com/es/blog-article-1020"
+            },
+            {
+              "texto": "Beneficios: más exposición cuanto más alto el nivel, envío gratis en productos nuevos y atención personalizada.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/que-necesitas-para-ser-mercadolider"
+            }
           ],
           "error_comun": "Apuntar al verde: la meta operativa del depósito son los límites de MercadoLíder (demoras menores al 8%).",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Montos de facturación vigentes de cada nivel de MercadoLíder."],
+          "confirmar_en_panel": [
+            "Montos de facturación vigentes de cada nivel de MercadoLíder."
+          ],
           "preguntas": [
-            { "id": "rep4a", "q": "Para MercadoLíder, los despachos con demora tienen que ser menores al…", "o": ["8%", "15%", "30%"], "c": 0, "p": "Menos del 8% en los últimos 60 días: más exigente que el 10% del verde." }
+            {
+              "id": "rep4a",
+              "q": "Para MercadoLíder, los despachos con demora tienen que ser menores al…",
+              "o": [
+                "8%",
+                "15%",
+                "30%"
+              ],
+              "c": 0,
+              "p": "Menos del 8% en los últimos 60 días: más exigente que el 10% del verde."
+            }
           ]
         }
       ]
@@ -101,7 +304,10 @@
       "titulo": "Despachar a tiempo",
       "para": "deposito",
       "descripcion": "Colecta, puntos de despacho, Flex y Full: cuándo una venta cuenta como despachada y cómo no llegar tarde.",
-      "practica": { "modo": "sala_venta", "texto": "Venta de práctica con reloj del horario de corte." },
+      "practica": {
+        "modo": "sala_venta",
+        "texto": "Venta de práctica con reloj del horario de corte."
+      },
       "lecciones": [
         {
           "id": "des-1",
@@ -109,20 +315,77 @@
           "minutos": 6,
           "objetivo": "Entender que \"armado\" no es \"despachado\": lo que cuenta es el escaneo de la etiqueta.",
           "puntos": [
-            { "texto": "Colecta: ML pasa a retirar por el depósito. Las etiquetas impresas y los paquetes listos hasta 1 hora antes de que pase. El transportista escanea y muestra un QR que se cierra con el código de autorización del día.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-envios-colecta" },
-            { "texto": "Las etiquetas de Colecta dicen \"Entregar en la Colecta\" y no sirven para puntos de despacho.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios" },
-            { "texto": "Puntos de despacho (comercios con logo de ML, Pickit o HOP): cada venta indica la hora máxima para despachar y al escanear llega un comprobante por e-mail.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-los-puntos-de-despacho" },
-            { "texto": "Flex: entregamos con logística propia y la entrega se registra escaneando la etiqueta con la app de Envíos Flex.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-gestion-de-envios" },
-            { "texto": "Full: el stock está en un depósito de ML y no imprimimos etiquetas de venta.", "estado": "oficial", "fuente": "https://envios.mercadolibre.com.ar/vender-con-full" },
-            { "texto": "Ninguna logística tiene un botón de \"despachado\": la prueba es el escaneo.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-envios-colecta" }
+            {
+              "texto": "Colecta: ML pasa a retirar por el depósito. Las etiquetas impresas y los paquetes listos hasta 1 hora antes de que pase. El transportista escanea y muestra un QR que se cierra con el código de autorización del día.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-envios-colecta"
+            },
+            {
+              "texto": "Las etiquetas de Colecta dicen \"Entregar en la Colecta\" y no sirven para puntos de despacho.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios"
+            },
+            {
+              "texto": "Puntos de despacho (comercios con logo de ML, Pickit o HOP): cada venta indica la hora máxima para despachar y al escanear llega un comprobante por e-mail.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-los-puntos-de-despacho"
+            },
+            {
+              "texto": "Flex: entregamos con logística propia y la entrega se registra escaneando la etiqueta con la app de Envíos Flex.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-gestion-de-envios"
+            },
+            {
+              "texto": "Full: el stock está en un depósito de ML y no imprimimos etiquetas de venta.",
+              "estado": "oficial",
+              "fuente": "https://envios.mercadolibre.com.ar/vender-con-full"
+            },
+            {
+              "texto": "Ninguna logística tiene un botón de \"despachado\": la prueba es el escaneo.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-tus-ventas-usando-envios-colecta"
+            }
           ],
           "error_comun": "Dejar el paquete armado y creer que ya está despachado.",
           "en_la_sala": "Las ventas de práctica se cierran recién al dejarlas en el canasto de su envío.",
-          "confirmar_en_panel": ["Logística asignada (colecta o puntos de despacho) y horario de colecta.", "Si ME1 o \"acordar con el comprador\" están disponibles para nuestras categorías."],
+          "confirmar_en_panel": [
+            "Logística asignada (colecta o puntos de despacho) y horario de colecta.",
+            "Si ME1 o \"acordar con el comprador\" están disponibles para nuestras categorías."
+          ],
           "preguntas": [
-            { "id": "des1a", "q": "¿Cuándo cuenta como despachada una venta por Colecta?", "o": ["Cuando está embalada", "Cuando el transportista escanea la etiqueta", "Cuando se imprime la etiqueta"], "c": 1, "p": "Lo que cuenta es el escaneo de la etiqueta, no el paquete armado." },
-            { "id": "des1b", "q": "¿Hasta cuándo tienen que estar listos los paquetes de la Colecta?", "o": ["Hasta 1 hora antes de que pase", "Hasta que llegue el camión", "Hasta las 23 hs"], "c": 0, "p": "Etiquetas impresas y paquetes listos hasta 1 hora antes de la colecta." },
-            { "id": "des1c", "q": "¿Una etiqueta que dice \"Entregar en la Colecta\" se puede llevar a un punto de despacho?", "o": ["Sí", "No", "Solo los sábados"], "c": 1, "p": "Las etiquetas de Colecta no sirven en correos ni puntos de despacho." }
+            {
+              "id": "des1a",
+              "q": "¿Cuándo cuenta como despachada una venta por Colecta?",
+              "o": [
+                "Cuando está embalada",
+                "Cuando el transportista escanea la etiqueta",
+                "Cuando se imprime la etiqueta"
+              ],
+              "c": 1,
+              "p": "Lo que cuenta es el escaneo de la etiqueta, no el paquete armado."
+            },
+            {
+              "id": "des1b",
+              "q": "¿Hasta cuándo tienen que estar listos los paquetes de la Colecta?",
+              "o": [
+                "Hasta 1 hora antes de que pase",
+                "Hasta que llegue el camión",
+                "Hasta las 23 hs"
+              ],
+              "c": 0,
+              "p": "Etiquetas impresas y paquetes listos hasta 1 hora antes de la colecta."
+            },
+            {
+              "id": "des1c",
+              "q": "¿Una etiqueta que dice \"Entregar en la Colecta\" se puede llevar a un punto de despacho?",
+              "o": [
+                "Sí",
+                "No",
+                "Solo los sábados"
+              ],
+              "c": 1,
+              "p": "Las etiquetas de Colecta no sirven en correos ni puntos de despacho."
+            }
           ]
         },
         {
@@ -131,21 +394,83 @@
           "minutos": 5,
           "objetivo": "Saber qué venta sale hoy y cuál mañana, y qué se puede configurar.",
           "puntos": [
-            { "texto": "Las ventas hechas antes del horario de corte se despachan ese día; las posteriores, al día siguiente.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuanto-tiempo-tengo-para-despachar-mis-ventas" },
-            { "texto": "En Colecta, el corte lo define el \"Tiempo de preparación\". Para que un cambio rija el mismo día hay que hacerlo hasta 7 horas antes de la colecta.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/24038" },
-            { "texto": "Se puede fijar una capacidad máxima de envíos por día.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/que-configurar-antes-de-despachar-en-las-colectas" },
-            { "texto": "Si la colecta no pasa o no se lleva todo por falta de espacio, ML protege la reputación y los paquetes salen en la próxima.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-despachar-a-tiempo-tus-ventas-en-la-colecta" },
-            { "texto": "Según la zona, la colecta puede pasar también los sábados.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/colecta-sabados" },
-            { "texto": "En feriados opcionales se puede indicar que no hacemos entregas, configurándolo hasta 2 días hábiles antes.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-gestion-feriados" },
-            { "texto": "Lo que manda es la fecha y hora límite que muestra cada venta en Ventas, no las reglas de \"24 o 48 horas\" que circulan.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuanto-tiempo-tengo-para-despachar-mis-ventas" }
+            {
+              "texto": "Las ventas hechas antes del horario de corte se despachan ese día; las posteriores, al día siguiente.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuanto-tiempo-tengo-para-despachar-mis-ventas"
+            },
+            {
+              "texto": "En Colecta, el corte lo define el \"Tiempo de preparación\". Para que un cambio rija el mismo día hay que hacerlo hasta 7 horas antes de la colecta.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/24038"
+            },
+            {
+              "texto": "Se puede fijar una capacidad máxima de envíos por día.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/que-configurar-antes-de-despachar-en-las-colectas"
+            },
+            {
+              "texto": "Si la colecta no pasa o no se lleva todo por falta de espacio, ML protege la reputación y los paquetes salen en la próxima.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-despachar-a-tiempo-tus-ventas-en-la-colecta"
+            },
+            {
+              "texto": "Según la zona, la colecta puede pasar también los sábados.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/colecta-sabados"
+            },
+            {
+              "texto": "En feriados opcionales se puede indicar que no hacemos entregas, configurándolo hasta 2 días hábiles antes.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-gestion-feriados"
+            },
+            {
+              "texto": "Lo que manda es la fecha y hora límite que muestra cada venta en Ventas, no las reglas de \"24 o 48 horas\" que circulan.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuanto-tiempo-tengo-para-despachar-mis-ventas"
+            }
           ],
           "error_comun": "Arrancar el día por lo más fácil: primero va lo que tiene el corte más cercano.",
           "en_la_sala": "Cada venta de práctica tiene su reloj de corte; si se pasa, queda demorada.",
-          "confirmar_en_panel": ["Tiempo de preparación, horario de corte y capacidad diaria configurados.", "Si la colecta pasa los sábados en nuestra zona.", "Qué pasa con una venta que pierde el corte."],
+          "confirmar_en_panel": [
+            "Tiempo de preparación, horario de corte y capacidad diaria configurados.",
+            "Si la colecta pasa los sábados en nuestra zona.",
+            "Qué pasa con una venta que pierde el corte."
+          ],
           "preguntas": [
-            { "id": "des2a", "q": "Una venta entra después del horario de corte. ¿Cuándo hay que despacharla?", "o": ["Hoy mismo", "Al día siguiente", "Cuando haya tiempo"], "c": 1, "p": "Lo que entra antes del corte sale ese día; lo que entra después, al día siguiente." },
-            { "id": "des2b", "q": "Para que un cambio en el tiempo de preparación rija el mismo día, ¿hasta cuándo se puede hacer?", "o": ["Hasta 7 horas antes de la colecta", "Hasta 1 minuto antes", "Hasta el día anterior a la noche"], "c": 0, "p": "Hasta 7 horas antes del horario de colecta." },
-            { "id": "des2c", "q": "La colecta no pasó hoy. ¿Qué pasa con la reputación?", "o": ["Se arruina", "ML la protege y los paquetes salen en la próxima", "Hay que cancelar las ventas"], "c": 1, "p": "Si la colecta no pasa o no se lleva todo, ML protege la reputación." }
+            {
+              "id": "des2a",
+              "q": "Una venta entra después del horario de corte. ¿Cuándo hay que despacharla?",
+              "o": [
+                "Hoy mismo",
+                "Al día siguiente",
+                "Cuando haya tiempo"
+              ],
+              "c": 1,
+              "p": "Lo que entra antes del corte sale ese día; lo que entra después, al día siguiente."
+            },
+            {
+              "id": "des2b",
+              "q": "Para que un cambio en el tiempo de preparación rija el mismo día, ¿hasta cuándo se puede hacer?",
+              "o": [
+                "Hasta 7 horas antes de la colecta",
+                "Hasta 1 minuto antes",
+                "Hasta el día anterior a la noche"
+              ],
+              "c": 0,
+              "p": "Hasta 7 horas antes del horario de colecta."
+            },
+            {
+              "id": "des2c",
+              "q": "La colecta no pasó hoy. ¿Qué pasa con la reputación?",
+              "o": [
+                "Se arruina",
+                "ML la protege y los paquetes salen en la próxima",
+                "Hay que cancelar las ventas"
+              ],
+              "c": 1,
+              "p": "Si la colecta no pasa o no se lleva todo, ML protege la reputación."
+            }
           ]
         },
         {
@@ -154,20 +479,76 @@
           "minutos": 5,
           "objetivo": "Conocer los horarios límite de Flex y por qué una demora pega dos veces.",
           "puntos": [
-            { "texto": "Flex pide reputación amarilla o verde y entregas en el día o al siguiente.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-requisitos" },
-            { "texto": "Si no se entrega antes de las 21 hs (comprador que reprograma o ausente), cuenta como envío incorrecto, salvo visita fallida informada.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/4459" },
-            { "texto": "Si a las 23 hs no se entregó, se reprograma sola y sigue contando como envío incorrecto.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-entregas-en-el-dia" },
-            { "texto": "La exposición semanal depende de los envíos correctos: con menos del 97% pasa a \"regular\" y por debajo del 90% se pierde \"Llega hoy\".", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/4600" },
-            { "texto": "Se pueden configurar envíos de hasta 300 cm por lado y 80 kg.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-aumentar-el-peso-y-las-medidas-de-mis-envios-flex" },
-            { "texto": "La entrega se registra escaneando la etiqueta con la app de Envíos Flex.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-gestion-de-envios" }
+            {
+              "texto": "Flex pide reputación amarilla o verde y entregas en el día o al siguiente.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-requisitos"
+            },
+            {
+              "texto": "Si no se entrega antes de las 21 hs (comprador que reprograma o ausente), cuenta como envío incorrecto, salvo visita fallida informada.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/4459"
+            },
+            {
+              "texto": "Si a las 23 hs no se entregó, se reprograma sola y sigue contando como envío incorrecto.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-entregas-en-el-dia"
+            },
+            {
+              "texto": "La exposición semanal depende de los envíos correctos: con menos del 97% pasa a \"regular\" y por debajo del 90% se pierde \"Llega hoy\".",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/4600"
+            },
+            {
+              "texto": "Se pueden configurar envíos de hasta 300 cm por lado y 80 kg.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-aumentar-el-peso-y-las-medidas-de-mis-envios-flex"
+            },
+            {
+              "texto": "La entrega se registra escaneando la etiqueta con la app de Envíos Flex.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/envios-flex-gestion-de-envios"
+            }
           ],
           "error_comun": "Entregar sin escanear en la app: para ML, esa entrega no existe.",
           "en_la_sala": "El canasto Flex de la sala representa estas entregas.",
-          "confirmar_en_panel": ["Zonas habilitadas, días de entrega (lunes a viernes o 7 días), corte por zona y bonificación vigente."],
+          "confirmar_en_panel": [
+            "Zonas habilitadas, días de entrega (lunes a viernes o 7 días), corte por zona y bonificación vigente."
+          ],
           "preguntas": [
-            { "id": "des3a", "q": "En Flex, ¿qué pasa si a las 23 hs el paquete no se entregó?", "o": ["Se reprograma solo y cuenta como envío incorrecto", "No pasa nada", "Se cancela la venta"], "c": 0, "p": "Se reprograma sola y sigue contando como envío incorrecto." },
-            { "id": "des3b", "q": "En Flex, ¿cómo se registra una entrega?", "o": ["Escaneando la etiqueta con la app de Envíos Flex", "Avisando por WhatsApp", "Marcando un botón en la PC"], "c": 0, "p": "La entrega se registra escaneando la etiqueta con la app de Envíos Flex." },
-            { "id": "des3c", "q": "Con menos del 90% de envíos Flex correctos en la semana…", "o": ["Se pierde el \"Llega hoy\"", "Se gana más exposición", "No cambia nada"], "c": 0, "p": "Debajo del 90% se pierde \"Llega hoy\"; debajo del 97% la exposición pasa a regular." }
+            {
+              "id": "des3a",
+              "q": "En Flex, ¿qué pasa si a las 23 hs el paquete no se entregó?",
+              "o": [
+                "Se reprograma solo y cuenta como envío incorrecto",
+                "No pasa nada",
+                "Se cancela la venta"
+              ],
+              "c": 0,
+              "p": "Se reprograma sola y sigue contando como envío incorrecto."
+            },
+            {
+              "id": "des3b",
+              "q": "En Flex, ¿cómo se registra una entrega?",
+              "o": [
+                "Escaneando la etiqueta con la app de Envíos Flex",
+                "Avisando por WhatsApp",
+                "Marcando un botón en la PC"
+              ],
+              "c": 0,
+              "p": "La entrega se registra escaneando la etiqueta con la app de Envíos Flex."
+            },
+            {
+              "id": "des3c",
+              "q": "Con menos del 90% de envíos Flex correctos en la semana…",
+              "o": [
+                "Se pierde el \"Llega hoy\"",
+                "Se gana más exposición",
+                "No cambia nada"
+              ],
+              "c": 0,
+              "p": "Debajo del 90% se pierde \"Llega hoy\"; debajo del 97% la exposición pasa a regular."
+            }
           ]
         },
         {
@@ -176,17 +557,49 @@
           "minutos": 4,
           "objetivo": "Preparar envíos al depósito de Mercado Libre sin rechazos.",
           "puntos": [
-            { "texto": "Cada unidad lleva su etiqueta de producto con Código ML (obligatoria si el producto no tiene código universal) y cada caja su etiqueta de bulto.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/como-identificar-productos-para-full_5220" },
-            { "texto": "Un producto sin identificar o con un código que no coincide con la publicación se rechaza.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/como-identificar-productos-para-full_5220" },
-            { "texto": "La etiqueta de producto va en la cara más grande del empaque, lisa, sin cinta encima ni tapando otros códigos.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/aprende-a-embalar-y-etiquetar-productos-para-enviar-a-full" },
-            { "texto": "En kits o packs: una sola etiqueta y los demás códigos tapados.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-kits-packs-o-cajas-de-fabrica-a-full" },
-            { "texto": "Full admite productos nuevos de hasta 30 kg y cobra cargos por stock antiguo.", "estado": "oficial", "fuente": "https://envios.mercadolibre.com.ar/vender-con-full" }
+            {
+              "texto": "Cada unidad lleva su etiqueta de producto con Código ML (obligatoria si el producto no tiene código universal) y cada caja su etiqueta de bulto.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/como-identificar-productos-para-full_5220"
+            },
+            {
+              "texto": "Un producto sin identificar o con un código que no coincide con la publicación se rechaza.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/como-identificar-productos-para-full_5220"
+            },
+            {
+              "texto": "La etiqueta de producto va en la cara más grande del empaque, lisa, sin cinta encima ni tapando otros códigos.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/aprende-a-embalar-y-etiquetar-productos-para-enviar-a-full"
+            },
+            {
+              "texto": "En kits o packs: una sola etiqueta y los demás códigos tapados.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-enviar-kits-packs-o-cajas-de-fabrica-a-full"
+            },
+            {
+              "texto": "Full admite productos nuevos de hasta 30 kg y cobra cargos por stock antiguo.",
+              "estado": "oficial",
+              "fuente": "https://envios.mercadolibre.com.ar/vender-con-full"
+            }
           ],
           "error_comun": "Mandar a Full una pieza con la etiqueta de otra publicación: se rechaza.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Cantidades recomendadas, cargos por stock antiguo y formato de etiquetas de producto y bulto."],
+          "confirmar_en_panel": [
+            "Cantidades recomendadas, cargos por stock antiguo y formato de etiquetas de producto y bulto."
+          ],
           "preguntas": [
-            { "id": "des4a", "q": "Para Full, ¿qué pasa si el código de la unidad no coincide con la publicación?", "o": ["Se rechaza", "Se acepta igual", "ML lo corrige solo"], "c": 0, "p": "Un producto sin identificar o con código que no coincide se rechaza." }
+            {
+              "id": "des4a",
+              "q": "Para Full, ¿qué pasa si el código de la unidad no coincide con la publicación?",
+              "o": [
+                "Se rechaza",
+                "Se acepta igual",
+                "ML lo corrige solo"
+              ],
+              "c": 0,
+              "p": "Un producto sin identificar o con código que no coincide se rechaza."
+            }
           ]
         }
       ]
@@ -196,7 +609,10 @@
       "titulo": "Embalar y etiquetar sin rechazos",
       "para": "deposito",
       "descripcion": "Caja, relleno, autopartes frágiles y pesadas, límites de medidas y la etiqueta.",
-      "practica": { "modo": "sala_mesa", "texto": "Mesa de armado: caja justa, protección, cinta y etiqueta." },
+      "practica": {
+        "modo": "sala_mesa",
+        "texto": "Mesa de armado: caja justa, protección, cinta y etiqueta."
+      },
       "lecciones": [
         {
           "id": "emb-1",
@@ -204,17 +620,53 @@
           "minutos": 4,
           "objetivo": "Armar un paquete que llega sano y no se rechaza.",
           "puntos": [
-            { "texto": "Cartón corrugado reforzado, del tamaño más cercano al producto.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "Rellenar para que nada se mueva y cerrar todas las aberturas con cinta ancha y resistente, sin partes expuestas.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "Nada de envolver solo en papel ni reutilizar cajas de otros marketplaces.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "El tamaño final del paquete influye en el costo del envío.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" }
+            {
+              "texto": "Cartón corrugado reforzado, del tamaño más cercano al producto.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "Rellenar para que nada se mueva y cerrar todas las aberturas con cinta ancha y resistente, sin partes expuestas.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "Nada de envolver solo en papel ni reutilizar cajas de otros marketplaces.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "El tamaño final del paquete influye en el costo del envío.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            }
           ],
           "error_comun": "Usar una caja grande \"porque sobra\": la pieza se mueve, se golpea y el envío sale más caro.",
           "en_la_sala": "Elegir la caja justa en la mesa de armado.",
           "confirmar_en_panel": [],
           "preguntas": [
-            { "id": "emb1a", "q": "¿Se puede reutilizar una caja de otro marketplace?", "o": ["Sí, si está sana", "No", "Solo tapando el logo"], "c": 1, "p": "ML pide no reutilizar cajas de otros marketplaces." },
-            { "id": "emb1b", "q": "¿Qué caja se elige?", "o": ["La más grande que haya", "Cartón corrugado reforzado, del tamaño más cercano al producto", "Cualquiera, total va con relleno"], "c": 1, "p": "La caja justa evita golpes y el tamaño final influye en el costo." }
+            {
+              "id": "emb1a",
+              "q": "¿Se puede reutilizar una caja de otro marketplace?",
+              "o": [
+                "Sí, si está sana",
+                "No",
+                "Solo tapando el logo"
+              ],
+              "c": 1,
+              "p": "ML pide no reutilizar cajas de otros marketplaces."
+            },
+            {
+              "id": "emb1b",
+              "q": "¿Qué caja se elige?",
+              "o": [
+                "La más grande que haya",
+                "Cartón corrugado reforzado, del tamaño más cercano al producto",
+                "Cualquiera, total va con relleno"
+              ],
+              "c": 1,
+              "p": "La caja justa evita golpes y el tamaño final influye en el costo."
+            }
           ]
         },
         {
@@ -223,16 +675,48 @@
           "minutos": 4,
           "objetivo": "Aplicar las reglas propias de autopartes.",
           "puntos": [
-            { "texto": "Cada pieza en cartón o con al menos 3 capas de plástico burbuja, sin piezas sueltas ni agrupadas sin separadores.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto" },
-            { "texto": "Piezas pesadas o frágiles en cajón de MDF o madera, con rótulo \"FRÁGIL\".", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto" },
-            { "texto": "Cristales (parabrisas, lunetas, laterales): cajón de madera o MDF con zunchos horizontales y verticales, film y rótulo \"VIDRIO\".", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto" }
+            {
+              "texto": "Cada pieza en cartón o con al menos 3 capas de plástico burbuja, sin piezas sueltas ni agrupadas sin separadores.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto"
+            },
+            {
+              "texto": "Piezas pesadas o frágiles en cajón de MDF o madera, con rótulo \"FRÁGIL\".",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto"
+            },
+            {
+              "texto": "Cristales (parabrisas, lunetas, laterales): cajón de madera o MDF con zunchos horizontales y verticales, film y rótulo \"VIDRIO\".",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/instrucciones-para-embalar-cada-tipo-de-producto"
+            }
           ],
           "error_comun": "Mandar dos piezas juntas en la misma caja sin separador.",
           "en_la_sala": "",
           "confirmar_en_panel": [],
           "preguntas": [
-            { "id": "emb2a", "q": "Una autoparte que no va en caja, ¿con cuántas capas de plástico burbuja como mínimo?", "o": ["1", "3", "No hace falta"], "c": 1, "p": "Cada pieza en cartón o con al menos 3 capas de plástico burbuja." },
-            { "id": "emb2b", "q": "¿Cómo se manda un parabrisas?", "o": ["En caja de cartón común", "En cajón de madera o MDF con zunchos, film y rótulo VIDRIO", "Envuelto en papel"], "c": 1, "p": "Cristales en cajón de madera o MDF con zunchos horizontales y verticales, film y rótulo VIDRIO." }
+            {
+              "id": "emb2a",
+              "q": "Una autoparte que no va en caja, ¿con cuántas capas de plástico burbuja como mínimo?",
+              "o": [
+                "1",
+                "3",
+                "No hace falta"
+              ],
+              "c": 1,
+              "p": "Cada pieza en cartón o con al menos 3 capas de plástico burbuja."
+            },
+            {
+              "id": "emb2b",
+              "q": "¿Cómo se manda un parabrisas?",
+              "o": [
+                "En caja de cartón común",
+                "En cajón de madera o MDF con zunchos, film y rótulo VIDRIO",
+                "Envuelto en papel"
+              ],
+              "c": 1,
+              "p": "Cristales en cajón de madera o MDF con zunchos horizontales y verticales, film y rótulo VIDRIO."
+            }
           ]
         },
         {
@@ -241,18 +725,60 @@
           "minutos": 4,
           "objetivo": "Saber qué paquetes no se aceptan.",
           "puntos": [
-            { "texto": "Colecta: hasta 30 kg físicos, 86 kg volumétricos, 260 cm de suma de lados y 150 cm el lado más largo.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "Puntos de despacho: igual que Colecta, pero el lado más largo hasta 120 cm.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "Se rechaza un paquete que supera medidas o peso, con etiqueta faltante, duplicada o mal colocada, con embalaje inadecuado (producto expuesto, caja rota, mojada o remendada) o que no corresponde al producto.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "Un producto rechazado por embalaje puede ser devuelto o descartado.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas" },
-            { "texto": "En la publicación conviene declarar las medidas del embalaje real.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/trabajar-con-reclamos/items-atributos-de-envio-y-dimensiones" }
+            {
+              "texto": "Colecta: hasta 30 kg físicos, 86 kg volumétricos, 260 cm de suma de lados y 150 cm el lado más largo.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "Puntos de despacho: igual que Colecta, pero el lado más largo hasta 120 cm.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "Se rechaza un paquete que supera medidas o peso, con etiqueta faltante, duplicada o mal colocada, con embalaje inadecuado (producto expuesto, caja rota, mojada o remendada) o que no corresponde al producto.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "Un producto rechazado por embalaje puede ser devuelto o descartado.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-embalar-para-envio-a-empresas-logisticas"
+            },
+            {
+              "texto": "En la publicación conviene declarar las medidas del embalaje real.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/trabajar-con-reclamos/items-atributos-de-envio-y-dimensiones"
+            }
           ],
           "error_comun": "Reusar una caja remendada o mojada: es motivo de rechazo.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Qué se cobra si el paquete real supera lo declarado."],
+          "confirmar_en_panel": [
+            "Qué se cobra si el paquete real supera lo declarado."
+          ],
           "preguntas": [
-            { "id": "emb3a", "q": "¿Cuál es el peso físico máximo para Colecta?", "o": ["30 kg", "50 kg", "80 kg"], "c": 0, "p": "Colecta: 30 kg físicos, 86 kg volumétricos, 260 cm de suma de lados y 150 cm el lado más largo." },
-            { "id": "emb3b", "q": "¿Cuál de estos paquetes se rechaza?", "o": ["Caja nueva con una sola etiqueta", "Caja mojada o remendada", "Caja justa bien cerrada"], "c": 1, "p": "Caja rota, mojada o remendada es embalaje inadecuado y se rechaza." }
+            {
+              "id": "emb3a",
+              "q": "¿Cuál es el peso físico máximo para Colecta?",
+              "o": [
+                "30 kg",
+                "50 kg",
+                "80 kg"
+              ],
+              "c": 0,
+              "p": "Colecta: 30 kg físicos, 86 kg volumétricos, 260 cm de suma de lados y 150 cm el lado más largo."
+            },
+            {
+              "id": "emb3b",
+              "q": "¿Cuál de estos paquetes se rechaza?",
+              "o": [
+                "Caja nueva con una sola etiqueta",
+                "Caja mojada o remendada",
+                "Caja justa bien cerrada"
+              ],
+              "c": 1,
+              "p": "Caja rota, mojada o remendada es embalaje inadecuado y se rechaza."
+            }
           ]
         },
         {
@@ -261,20 +787,76 @@
           "minutos": 4,
           "objetivo": "Imprimir y pegar la etiqueta para que se escanee de una.",
           "puntos": [
-            { "texto": "Se imprime sin cambiar el tamaño original, en térmica de 10×15 o 10×19 troquelada si está configurado.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios" },
-            { "texto": "Va sin cortes, sin pliegues, sin nada escrito a mano y sin cinta sobre el código de barras o el QR.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-etiquetar-paquetes-para-que-no-sean-rechazados" },
-            { "texto": "Cada paquete lleva su propia etiqueta, aunque sea el mismo producto.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-etiquetar-paquetes-para-que-no-sean-rechazados" },
-            { "texto": "El troquel y la hoja de control no se pegan en el paquete.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios" },
-            { "texto": "Venta de carrito: todo en una caja con una sola etiqueta, salvo que no entre.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-funciona-el-carrito-de-compras-de-mercado-libre" },
-            { "texto": "Si el comprador cargó mal el código postal, lo corrige y la etiqueta se regenera desde Ventas.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-generar-etiquetas-de-paquetes-correctamente" }
+            {
+              "texto": "Se imprime sin cambiar el tamaño original, en térmica de 10×15 o 10×19 troquelada si está configurado.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios"
+            },
+            {
+              "texto": "Va sin cortes, sin pliegues, sin nada escrito a mano y sin cinta sobre el código de barras o el QR.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-etiquetar-paquetes-para-que-no-sean-rechazados"
+            },
+            {
+              "texto": "Cada paquete lleva su propia etiqueta, aunque sea el mismo producto.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-etiquetar-paquetes-para-que-no-sean-rechazados"
+            },
+            {
+              "texto": "El troquel y la hoja de control no se pegan en el paquete.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-imprimir-las-etiquetas-de-envios"
+            },
+            {
+              "texto": "Venta de carrito: todo en una caja con una sola etiqueta, salvo que no entre.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-funciona-el-carrito-de-compras-de-mercado-libre"
+            },
+            {
+              "texto": "Si el comprador cargó mal el código postal, lo corrige y la etiqueta se regenera desde Ventas.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-generar-etiquetas-de-paquetes-correctamente"
+            }
           ],
           "error_comun": "Poner cinta transparente encima del código \"para que no se despegue\": no se lee y el paquete se traba.",
           "en_la_sala": "En la mesa de armado se elige cómo pegar la etiqueta.",
-          "confirmar_en_panel": ["Formato de etiqueta configurado (10×15 o 10×19)."],
+          "confirmar_en_panel": [
+            "Formato de etiqueta configurado (10×15 o 10×19)."
+          ],
           "preguntas": [
-            { "id": "emb4a", "q": "¿Se puede poner cinta encima del código de barras de la etiqueta?", "o": ["Sí, la protege", "No", "Solo cinta transparente"], "c": 1, "p": "Sin cinta sobre el código de barras o el QR: si no se lee, el paquete se rechaza." },
-            { "id": "emb4b", "q": "Una venta de carrito con 3 productos que entran en una caja…", "o": ["Tres cajas, tres etiquetas", "Una caja, una sola etiqueta", "Una caja con tres etiquetas"], "c": 1, "p": "En carrito, todo en una caja con una sola etiqueta, salvo que no entre." },
-            { "id": "emb4c", "q": "¿Se puede escribir a mano sobre la etiqueta?", "o": ["Sí, para aclarar", "No", "Solo con marcador negro"], "c": 1, "p": "La etiqueta va sin cortes, sin pliegues y sin nada escrito a mano." }
+            {
+              "id": "emb4a",
+              "q": "¿Se puede poner cinta encima del código de barras de la etiqueta?",
+              "o": [
+                "Sí, la protege",
+                "No",
+                "Solo cinta transparente"
+              ],
+              "c": 1,
+              "p": "Sin cinta sobre el código de barras o el QR: si no se lee, el paquete se rechaza."
+            },
+            {
+              "id": "emb4b",
+              "q": "Una venta de carrito con 3 productos que entran en una caja…",
+              "o": [
+                "Tres cajas, tres etiquetas",
+                "Una caja, una sola etiqueta",
+                "Una caja con tres etiquetas"
+              ],
+              "c": 1,
+              "p": "En carrito, todo en una caja con una sola etiqueta, salvo que no entre."
+            },
+            {
+              "id": "emb4c",
+              "q": "¿Se puede escribir a mano sobre la etiqueta?",
+              "o": [
+                "Sí, para aclarar",
+                "No",
+                "Solo con marcador negro"
+              ],
+              "c": 1,
+              "p": "La etiqueta va sin cortes, sin pliegues y sin nada escrito a mano."
+            }
           ]
         }
       ]
@@ -284,7 +866,10 @@
       "titulo": "Atender al comprador",
       "para": "todos",
       "descripcion": "Preguntas, mensajes, reclamos, cancelaciones y devoluciones sin dañar la cuenta.",
-      "practica": { "modo": "sala_mensajes", "texto": "Mensajes del comprador en las ventas de práctica." },
+      "practica": {
+        "modo": "sala_mensajes",
+        "texto": "Mensajes del comprador en las ventas de práctica."
+      },
       "lecciones": [
         {
           "id": "ate-1",
@@ -292,16 +877,48 @@
           "minutos": 4,
           "objetivo": "Responder rápido y sin datos de contacto.",
           "puntos": [
-            { "texto": "Responder dentro de la primera hora ayuda a aparecer mejor; el tiempo se mide de lunes a viernes de 9 a 18 hs.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/herramientas-para-responder-preguntas-mas-rapido" },
-            { "texto": "Ni en preguntas ni en mensajes se pueden dar datos personales, e-mails, teléfonos, direcciones, links ni redes.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/responde-con-exito-las-preguntas-y-concreta-mas-rapido-la-operacion" },
-            { "texto": "Respuestas rápidas: se configuran en Preguntas > Configuración, hasta 1000 caracteres, y se llaman escribiendo #.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-crear-respuestas-rapidas" }
+            {
+              "texto": "Responder dentro de la primera hora ayuda a aparecer mejor; el tiempo se mide de lunes a viernes de 9 a 18 hs.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/herramientas-para-responder-preguntas-mas-rapido"
+            },
+            {
+              "texto": "Ni en preguntas ni en mensajes se pueden dar datos personales, e-mails, teléfonos, direcciones, links ni redes.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/responde-con-exito-las-preguntas-y-concreta-mas-rapido-la-operacion"
+            },
+            {
+              "texto": "Respuestas rápidas: se configuran en Preguntas > Configuración, hasta 1000 caracteres, y se llaman escribiendo #.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-crear-respuestas-rapidas"
+            }
           ],
           "error_comun": "Pasar el WhatsApp \"para coordinar\": está prohibido.",
           "en_la_sala": "Mensaje del comprador pidiendo WhatsApp en las ventas de práctica.",
           "confirmar_en_panel": [],
           "preguntas": [
-            { "id": "ate1a", "q": "Un comprador pregunta por tu WhatsApp. ¿Qué hacés?", "o": ["Se lo paso", "Todo se habla por Mercado Libre, sin datos de contacto", "Le paso un link"], "c": 1, "p": "No se pueden dar teléfonos, e-mails, links ni redes, ni en preguntas ni en mensajes." },
-            { "id": "ate1b", "q": "¿En qué horario mide ML el tiempo de respuesta a preguntas?", "o": ["Las 24 horas", "Lunes a viernes de 9 a 18 hs", "Solo los fines de semana"], "c": 1, "p": "Se mide en horario hábil: lunes a viernes de 9 a 18 hs. Lo ideal es responder dentro de la primera hora." }
+            {
+              "id": "ate1a",
+              "q": "Un comprador pregunta por tu WhatsApp. ¿Qué hacés?",
+              "o": [
+                "Se lo paso",
+                "Todo se habla por Mercado Libre, sin datos de contacto",
+                "Le paso un link"
+              ],
+              "c": 1,
+              "p": "No se pueden dar teléfonos, e-mails, links ni redes, ni en preguntas ni en mensajes."
+            },
+            {
+              "id": "ate1b",
+              "q": "¿En qué horario mide ML el tiempo de respuesta a preguntas?",
+              "o": [
+                "Las 24 horas",
+                "Lunes a viernes de 9 a 18 hs",
+                "Solo los fines de semana"
+              ],
+              "c": 1,
+              "p": "Se mide en horario hábil: lunes a viernes de 9 a 18 hs. Lo ideal es responder dentro de la primera hora."
+            }
           ]
         },
         {
@@ -310,16 +927,50 @@
           "minutos": 3,
           "objetivo": "Usar la mensajería de la venta como pide ML.",
           "puntos": [
-            { "texto": "El vendedor no inicia una conversación libre: elige un motivo y tiene 1 mensaje hasta que el comprador responda.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/mensajes-de-la-venta-aprende-cuando-utilizarlos-y-ahorra-tiempo-en-tu-gestion" },
-            { "texto": "La factura se adjunta a la venta, no se manda por mensajería.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/cargar-factura" },
-            { "texto": "Si el comprador pide cambiar la venta (otra medida, otra cantidad), no se despacha algo distinto: lo resuelve el encargado. El flujo oficial de Cambios solo existe para ventas Full con variantes en stock.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-gestionar-cambios-de-producto-en-tus-ventas" }
+            {
+              "texto": "El vendedor no inicia una conversación libre: elige un motivo y tiene 1 mensaje hasta que el comprador responda.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/mensajes-de-la-venta-aprende-cuando-utilizarlos-y-ahorra-tiempo-en-tu-gestion"
+            },
+            {
+              "texto": "La factura se adjunta a la venta, no se manda por mensajería.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/cargar-factura"
+            },
+            {
+              "texto": "Si el comprador pide cambiar la venta (otra medida, otra cantidad), no se despacha algo distinto: lo resuelve el encargado. El flujo oficial de Cambios solo existe para ventas Full con variantes en stock.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-gestionar-cambios-de-producto-en-tus-ventas"
+            }
           ],
           "error_comun": "Mandar algo distinto a lo vendido porque el comprador lo pidió por mensaje.",
           "en_la_sala": "Mensajes que hay que frenar y pasar al encargado.",
-          "confirmar_en_panel": ["Plazo de respuesta a mensajes."],
+          "confirmar_en_panel": [
+            "Plazo de respuesta a mensajes."
+          ],
           "preguntas": [
-            { "id": "ate2a", "q": "Después de la venta, ¿cuántos mensajes puede mandar el vendedor antes de que el comprador conteste?", "o": ["Los que quiera", "1, eligiendo un motivo", "Ninguno"], "c": 1, "p": "El vendedor elige un motivo y tiene un mensaje hasta que el comprador responda." },
-            { "id": "ate2b", "q": "El comprador pide otra medida antes del despacho. ¿Qué hacés?", "o": ["Le mando la otra", "No lo despacho y aviso al encargado", "Despacho igual lo vendido sin avisar"], "c": 1, "p": "Nunca se despacha algo distinto a lo vendido; el cambio lo gestiona el encargado." }
+            {
+              "id": "ate2a",
+              "q": "Después de la venta, ¿cuántos mensajes puede mandar el vendedor antes de que el comprador conteste?",
+              "o": [
+                "Los que quiera",
+                "1, eligiendo un motivo",
+                "Ninguno"
+              ],
+              "c": 1,
+              "p": "El vendedor elige un motivo y tiene un mensaje hasta que el comprador responda."
+            },
+            {
+              "id": "ate2b",
+              "q": "El comprador pide otra medida antes del despacho. ¿Qué hacés?",
+              "o": [
+                "Le mando la otra",
+                "No lo despacho y aviso al encargado",
+                "Despacho igual lo vendido sin avisar"
+              ],
+              "c": 1,
+              "p": "Nunca se despacha algo distinto a lo vendido; el cambio lo gestiona el encargado."
+            }
           ]
         },
         {
@@ -328,18 +979,60 @@
           "minutos": 5,
           "objetivo": "Resolver reclamos a tiempo y con pruebas.",
           "puntos": [
-            { "texto": "En un reclamo que pide cancelar, hay 2 días hábiles para reembolsar sin despachar; si no, el reembolso es automático y afecta la reputación.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion" },
-            { "texto": "La API habla de 48 horas: ante la duda, tomar 48 horas corridas, que es lo más estricto.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/sobre-nuestra-api/que-es-un-reclamo" },
-            { "texto": "Con el asistente de posventa no hay impacto si se resuelve hasta las 14 hs del día hábil siguiente.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/herramientas-para-resolver-los-reclamos-y-cuidar-mas-tu-reputacion" },
-            { "texto": "Un reembolso parcial dentro de los primeros 2 días también evita el impacto.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/ahorra-dinero-al-resolver-reclamos-con-reembolsos-parciales" },
-            { "texto": "En mediación decide ML y ya no se pueden cargar pruebas de envío: las fotos del embalaje y el comprobante se suben antes.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/gestionar-evidencia-de-reclamos" }
+            {
+              "texto": "En un reclamo que pide cancelar, hay 2 días hábiles para reembolsar sin despachar; si no, el reembolso es automático y afecta la reputación.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cuida-tu-reputacion-en-los-reclamos-con-cancelacion"
+            },
+            {
+              "texto": "La API habla de 48 horas: ante la duda, tomar 48 horas corridas, que es lo más estricto.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/sobre-nuestra-api/que-es-un-reclamo"
+            },
+            {
+              "texto": "Con el asistente de posventa no hay impacto si se resuelve hasta las 14 hs del día hábil siguiente.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/herramientas-para-resolver-los-reclamos-y-cuidar-mas-tu-reputacion"
+            },
+            {
+              "texto": "Un reembolso parcial dentro de los primeros 2 días también evita el impacto.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/ahorra-dinero-al-resolver-reclamos-con-reembolsos-parciales"
+            },
+            {
+              "texto": "En mediación decide ML y ya no se pueden cargar pruebas de envío: las fotos del embalaje y el comprobante se suben antes.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/gestionar-evidencia-de-reclamos"
+            }
           ],
           "error_comun": "Esperar a que intervenga ML: en mediación ya no se pueden cargar pruebas.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["El plazo sin impacto que muestra cada reclamo (48 horas o 2 días hábiles)."],
+          "confirmar_en_panel": [
+            "El plazo sin impacto que muestra cada reclamo (48 horas o 2 días hábiles)."
+          ],
           "preguntas": [
-            { "id": "ate3a", "q": "¿Cuánto tiempo hay para resolver un reclamo sin que afecte la reputación?", "o": ["2 días hábiles (48 horas, por las dudas)", "Un mes", "No hay plazo"], "c": 0, "p": "2 días hábiles según la ayuda; 48 horas según la API. Tomar lo más estricto." },
-            { "id": "ate3b", "q": "¿Cuándo hay que subir las fotos del embalaje y el comprobante de un reclamo?", "o": ["Antes de la mediación", "Durante la mediación", "Nunca"], "c": 0, "p": "En mediación ya no se pueden cargar pruebas de envío." }
+            {
+              "id": "ate3a",
+              "q": "¿Cuánto tiempo hay para resolver un reclamo sin que afecte la reputación?",
+              "o": [
+                "2 días hábiles (48 horas, por las dudas)",
+                "Un mes",
+                "No hay plazo"
+              ],
+              "c": 0,
+              "p": "2 días hábiles según la ayuda; 48 horas según la API. Tomar lo más estricto."
+            },
+            {
+              "id": "ate3b",
+              "q": "¿Cuándo hay que subir las fotos del embalaje y el comprobante de un reclamo?",
+              "o": [
+                "Antes de la mediación",
+                "Durante la mediación",
+                "Nunca"
+              ],
+              "c": 0,
+              "p": "En mediación ya no se pueden cargar pruebas de envío."
+            }
           ]
         },
         {
@@ -348,15 +1041,37 @@
           "minutos": 3,
           "objetivo": "Evitar cancelaciones con stock real.",
           "puntos": [
-            { "texto": "ML pide nunca cancelar una venta. La causa típica es quedarse sin stock por no sincronizar el local con internet.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cancelaciones-como-evitarlas" },
-            { "texto": "Alternativas: pausar la publicación, cargar el stock real y usar el plazo de disponibilidad. Nunca poner \"consultar stock\".", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/consultar-por-stock-por-que-no-deberias-incluirlo-en-tus-publicaciones" },
-            { "texto": "Si la pieza no está en su lugar, se avisa enseguida (\"No lo encontré\") para el recuento, antes de que la venta se complique.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/cancelaciones-como-evitarlas" }
+            {
+              "texto": "ML pide nunca cancelar una venta. La causa típica es quedarse sin stock por no sincronizar el local con internet.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cancelaciones-como-evitarlas"
+            },
+            {
+              "texto": "Alternativas: pausar la publicación, cargar el stock real y usar el plazo de disponibilidad. Nunca poner \"consultar stock\".",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/consultar-por-stock-por-que-no-deberias-incluirlo-en-tus-publicaciones"
+            },
+            {
+              "texto": "Si la pieza no está en su lugar, se avisa enseguida (\"No lo encontré\") para el recuento, antes de que la venta se complique.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/cancelaciones-como-evitarlas"
+            }
           ],
           "error_comun": "Publicar con stock inflado y cancelar después.",
           "en_la_sala": "Botón \"No estaba\" en las estanterías: pide un recuento.",
           "confirmar_en_panel": [],
           "preguntas": [
-            { "id": "ate4a", "q": "Te quedaste sin stock de una pieza publicada. ¿Qué hacés?", "o": ["Cancelo las ventas que entren", "Pauso la publicación o cargo el stock real", "Pongo \"consultar stock\" en el título"], "c": 1, "p": "Nunca cancelar: pausar o tener el stock real. \"Consultar stock\" no se usa." }
+            {
+              "id": "ate4a",
+              "q": "Te quedaste sin stock de una pieza publicada. ¿Qué hacés?",
+              "o": [
+                "Cancelo las ventas que entren",
+                "Pauso la publicación o cargo el stock real",
+                "Pongo \"consultar stock\" en el título"
+              ],
+              "c": 1,
+              "p": "Nunca cancelar: pausar o tener el stock real. \"Consultar stock\" no se usa."
+            }
           ]
         },
         {
@@ -365,21 +1080,80 @@
           "minutos": 5,
           "objetivo": "Saber los plazos y cuándo ML nos cubre.",
           "puntos": [
-            { "texto": "Con Compra Protegida, el comprador tiene 30 días desde la entrega para devolver un producto nuevo.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-actuar-ante-una-devolucion" },
-            { "texto": "Para usados, las páginas oficiales dicen 10 o 14 días: confirmar en el panel.", "estado": "confirmar", "fuente": "https://www.mercadolibre.com.ar/ayuda/Reembolso-devoluci-n_5266" },
-            { "texto": "Las devoluciones por arrepentimiento no cuentan como reclamo.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-actuar-ante-una-devolucion" },
-            { "texto": "ML cubre al vendedor si el producto llegó defectuoso, distinto o no llegó; no lo cubre si vuelve con las mismas fallas reportadas, si el embalaje original estaba abierto o dañado, o si faltan fotos.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/39332" },
-            { "texto": "Al recibir una devolución en nuestro depósito hay 3 días hábiles para reportar un problema.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/18326" },
-            { "texto": "Ley 24.240, art. 34: 10 días corridos de arrepentimiento en ventas a distancia, irrenunciable, con gastos de devolución a cargo del vendedor.", "estado": "oficial", "fuente": "https://www.argentina.gob.ar/normativa/nacional/norma-638/actualizacion" },
-            { "texto": "La Res. 424/2020 del botón de arrepentimiento fue derogada por la Disposición 954/2025, que lo mantiene y obliga a dar un código de identificación dentro de las 24 horas.", "estado": "oficial", "fuente": "https://www.argentina.gob.ar/normativa/nacional/norma-417152/texto" }
+            {
+              "texto": "Con Compra Protegida, el comprador tiene 30 días desde la entrega para devolver un producto nuevo.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-actuar-ante-una-devolucion"
+            },
+            {
+              "texto": "Para usados, las páginas oficiales dicen 14 días (lo más citado) o 10 días: confirmar en el panel.",
+              "estado": "confirmar",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Reembolso-devoluci-n_5266"
+            },
+            {
+              "texto": "Las devoluciones por arrepentimiento no cuentan como reclamo.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-actuar-ante-una-devolucion"
+            },
+            {
+              "texto": "ML cubre al vendedor si el producto llegó defectuoso, distinto o no llegó; no lo cubre si vuelve con las mismas fallas reportadas, si el embalaje original estaba abierto o dañado, o si faltan fotos.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/39332"
+            },
+            {
+              "texto": "Al recibir una devolución en nuestro depósito hay 3 días hábiles para reportar un problema.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/18326"
+            },
+            {
+              "texto": "Ley 24.240, art. 34: 10 días corridos de arrepentimiento en ventas a distancia, irrenunciable, con gastos de devolución a cargo del vendedor.",
+              "estado": "oficial",
+              "fuente": "https://www.argentina.gob.ar/normativa/nacional/norma-638/actualizacion"
+            },
+            {
+              "texto": "La Res. 424/2020 del botón de arrepentimiento fue derogada por la Disposición 954/2025, que lo mantiene y obliga a dar un código de identificación dentro de las 24 horas.",
+              "estado": "oficial",
+              "fuente": "https://www.argentina.gob.ar/normativa/nacional/norma-417152/texto"
+            }
           ],
           "error_comun": "Dejar pasar los 3 días hábiles sin revisar la devolución que volvió.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Plazo de devolución para usados (10 o 14 días) y quién paga el envío de vuelta por arrepentimiento."],
+          "confirmar_en_panel": [
+            "Plazo de devolución para usados (10 o 14 días) y quién paga el envío de vuelta por arrepentimiento."
+          ],
           "preguntas": [
-            { "id": "ate5a", "q": "¿Cuántos días tiene el comprador para devolver un producto nuevo con Compra Protegida?", "o": ["10 días", "30 días", "90 días"], "c": 1, "p": "30 días desde la entrega para productos nuevos. La ley da 10 días corridos de arrepentimiento." },
-            { "id": "ate5b", "q": "Te vuelve una devolución al depósito. ¿Cuánto tiempo hay para reportar un problema?", "o": ["3 días hábiles", "Un mes", "No se puede reportar"], "c": 0, "p": "3 días hábiles para revisar y reportar un problema." },
-            { "id": "ate5c", "q": "Una devolución por arrepentimiento, ¿cuenta como reclamo?", "o": ["Sí", "No"], "c": 1, "p": "Las devoluciones por arrepentimiento no cuentan como reclamo." }
+            {
+              "id": "ate5a",
+              "q": "¿Cuántos días tiene el comprador para devolver un producto nuevo con Compra Protegida?",
+              "o": [
+                "10 días",
+                "30 días",
+                "90 días"
+              ],
+              "c": 1,
+              "p": "30 días desde la entrega para productos nuevos. La ley da 10 días corridos de arrepentimiento."
+            },
+            {
+              "id": "ate5b",
+              "q": "Te vuelve una devolución al depósito. ¿Cuánto tiempo hay para reportar un problema?",
+              "o": [
+                "3 días hábiles",
+                "Un mes",
+                "No se puede reportar"
+              ],
+              "c": 0,
+              "p": "3 días hábiles para revisar y reportar un problema."
+            },
+            {
+              "id": "ate5c",
+              "q": "Una devolución por arrepentimiento, ¿cuenta como reclamo?",
+              "o": [
+                "Sí",
+                "No"
+              ],
+              "c": 1,
+              "p": "Las devoluciones por arrepentimiento no cuentan como reclamo."
+            }
           ]
         }
       ]
@@ -389,7 +1163,10 @@
       "titulo": "Publicar autopartes que venden",
       "para": "publicadores",
       "descripcion": "Título, fotos, número de pieza, compatibilidades, lo prohibido, costos y catálogo.",
-      "practica": { "modo": "corrector_titulos", "texto": "Corrector de títulos del panel." },
+      "practica": {
+        "modo": "corrector_titulos",
+        "texto": "Corrector de títulos del panel."
+      },
       "lecciones": [
         {
           "id": "pub-1",
@@ -397,18 +1174,60 @@
           "minutos": 5,
           "objetivo": "Armar títulos que cumplen y aparecen en la búsqueda.",
           "puntos": [
-            { "texto": "Fórmula: Producto + Marca + Modelo + especificaciones clave.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Como-hacer-una-buena-publicacion_677" },
-            { "texto": "Sin puntuación ni símbolos; sin \"oferta\", envío gratis, cuotas o devoluciones; sin color (va en variantes) ni condición (va en características); \"genérico\" si no hay marca.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-hacer-un-buen-titulo-para-tu-publicacion" },
-            { "texto": "La marca del vehículo se nombra con \"para\" o \"compatible con\". \"Tipo\", \"símil\", \"igual a\" o \"idéntico a\" son motivo de denuncia por propiedad intelectual.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-publicar-sin-infringir-propiedad-intelectual" },
-            { "texto": "El largo máximo lo fija cada categoría: mirá el contador del formulario.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/en_us/categories-and-attributes" },
-            { "texto": "Ejemplo: \"Amortiguador Delantero Corven 12345 para Volkswagen Gol Trend\", con la lista completa de vehículos en Compatibilidades.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-hacer-un-buen-titulo-para-tu-publicacion" }
+            {
+              "texto": "Fórmula: Producto + Marca + Modelo + especificaciones clave.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Como-hacer-una-buena-publicacion_677"
+            },
+            {
+              "texto": "Sin puntuación ni símbolos; sin \"oferta\", envío gratis, cuotas o devoluciones; sin color (va en variantes) ni condición (va en características); \"genérico\" si no hay marca.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-hacer-un-buen-titulo-para-tu-publicacion"
+            },
+            {
+              "texto": "La marca del vehículo se nombra con \"para\" o \"compatible con\". \"Tipo\", \"símil\", \"igual a\" o \"idéntico a\" son motivo de denuncia por propiedad intelectual.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-publicar-sin-infringir-propiedad-intelectual"
+            },
+            {
+              "texto": "El largo máximo lo fija cada categoría: mirá el contador del formulario.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/en_us/categories-and-attributes"
+            },
+            {
+              "texto": "Ejemplo: \"Amortiguador Delantero Corven 12345 para Volkswagen Gol Trend\", con la lista completa de vehículos en Compatibilidades.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-hacer-un-buen-titulo-para-tu-publicacion"
+            }
           ],
           "error_comun": "Escribir \"tipo original\" o \"símil\": dispara denuncias de marca.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Largo máximo del título en cada categoría de autopartes que usamos."],
+          "confirmar_en_panel": [
+            "Largo máximo del título en cada categoría de autopartes que usamos."
+          ],
           "preguntas": [
-            { "id": "pub1a", "q": "¿Cómo se nombra la marca del vehículo en el título?", "o": ["\"Tipo Volkswagen\"", "\"Para Volkswagen\" o \"compatible con Volkswagen\"", "\"Símil Volkswagen\""], "c": 1, "p": "Se usa \"para\" o \"compatible con\". \"Tipo\" o \"símil\" son motivo de denuncia." },
-            { "id": "pub1b", "q": "¿Cuál de estos títulos cumple las reglas?", "o": ["OFERTA!!! Amortiguador envío gratis", "Amortiguador Delantero Corven para Volkswagen Gol Trend", "Amortiguador símil original Gol"], "c": 1, "p": "Producto + marca + modelo, sin símbolos, sin \"oferta\" ni envío, y con \"para\"." }
+            {
+              "id": "pub1a",
+              "q": "¿Cómo se nombra la marca del vehículo en el título?",
+              "o": [
+                "\"Tipo Volkswagen\"",
+                "\"Para Volkswagen\" o \"compatible con Volkswagen\"",
+                "\"Símil Volkswagen\""
+              ],
+              "c": 1,
+              "p": "Se usa \"para\" o \"compatible con\". \"Tipo\" o \"símil\" son motivo de denuncia."
+            },
+            {
+              "id": "pub1b",
+              "q": "¿Cuál de estos títulos cumple las reglas?",
+              "o": [
+                "OFERTA!!! Amortiguador envío gratis",
+                "Amortiguador Delantero Corven para Volkswagen Gol Trend",
+                "Amortiguador símil original Gol"
+              ],
+              "c": 1,
+              "p": "Producto + marca + modelo, sin símbolos, sin \"oferta\" ni envío, y con \"para\"."
+            }
           ]
         },
         {
@@ -417,15 +1236,39 @@
           "minutos": 4,
           "objetivo": "Fotos que no se moderan.",
           "puntos": [
-            { "texto": "Subir a 1200 × 1200 px (mínimo 500 × 500, máximo 1920 × 1920, hasta 10 MB, JPG o PNG).", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/en_us/working-with-pictures" },
-            { "texto": "La portada lleva un solo artículo con fondo blanco digital, sin logos, marcas de agua, bordes, QR ni textos.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/seguro_publicacion.html" },
-            { "texto": "Una foto que no cumple deja la publicación con menos exposición o pausada; se recupera cambiando fotos o completando la ficha técnica.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/moderaciones-de-imagenes" }
+            {
+              "texto": "Subir a 1200 × 1200 px (mínimo 500 × 500, máximo 1920 × 1920, hasta 10 MB, JPG o PNG).",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/en_us/working-with-pictures"
+            },
+            {
+              "texto": "La portada lleva un solo artículo con fondo blanco digital, sin logos, marcas de agua, bordes, QR ni textos.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/seguro_publicacion.html"
+            },
+            {
+              "texto": "Una foto que no cumple deja la publicación con menos exposición o pausada; se recupera cambiando fotos o completando la ficha técnica.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/moderaciones-de-imagenes"
+            }
           ],
           "error_comun": "Sacar la foto en el taller con un logo o un teléfono a la vista.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Cantidad máxima de fotos en nuestras categorías."],
+          "confirmar_en_panel": [
+            "Cantidad máxima de fotos en nuestras categorías."
+          ],
           "preguntas": [
-            { "id": "pub2a", "q": "¿Cómo tiene que ser la foto de portada?", "o": ["Un solo artículo con fondo blanco, sin logos ni textos", "Varias piezas juntas con el logo de la empresa", "Con el teléfono escrito para consultas"], "c": 0, "p": "Un solo artículo, fondo blanco digital, sin logos, marcas de agua, bordes, QR ni textos." }
+            {
+              "id": "pub2a",
+              "q": "¿Cómo tiene que ser la foto de portada?",
+              "o": [
+                "Un solo artículo con fondo blanco, sin logos ni textos",
+                "Varias piezas juntas con el logo de la empresa",
+                "Con el teléfono escrito para consultas"
+              ],
+              "c": 0,
+              "p": "Un solo artículo, fondo blanco digital, sin logos, marcas de agua, bordes, QR ni textos."
+            }
           ]
         },
         {
@@ -434,19 +1277,70 @@
           "minutos": 6,
           "objetivo": "Cargar lo que más pesa en autopartes.",
           "puntos": [
-            { "texto": "El Número de pieza (MPN) sirve para localizar un repuesto de manera única y definir sus compatibilidades.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/identificadores-de-productos" },
-            { "texto": "Si el producto no tiene código universal de fábrica, no hace falta comprar uno. Un código incorrecto o repetido entre productos distintos ML lo puede borrar, y se pierde visibilidad.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/codigo-universal-de-producto-todo-lo-que-tenes-que-saber" },
-            { "texto": "Las compatibilidades asocian la pieza con Marca, Modelo, Año y Motor del vehículo.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/compatibilidades-entre-items-y-productos" },
-            { "texto": "Publicando en forma masiva hay 7 días para cargar compatibilidades y, en algunas categorías, posiciones (delantera/trasera, izquierda/derecha); si no, la publicación se pausa.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/las-diferentes-formas-de-informar-compatibilidades" },
-            { "texto": "Informar vehículos no compatibles genera reclamos, daña la reputación y suma costos de devolución: revisar siempre las compatibilidades sugeridas.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-evitar-reclamos-por-incompatibilidadd" }
+            {
+              "texto": "El Número de pieza (MPN) sirve para localizar un repuesto de manera única y definir sus compatibilidades.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/identificadores-de-productos"
+            },
+            {
+              "texto": "Si el producto no tiene código universal de fábrica, no hace falta comprar uno. Un código incorrecto o repetido entre productos distintos ML lo puede borrar, y se pierde visibilidad.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/codigo-universal-de-producto-todo-lo-que-tenes-que-saber"
+            },
+            {
+              "texto": "Las compatibilidades asocian la pieza con Marca, Modelo, Año y Motor del vehículo.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/compatibilidades-entre-items-y-productos"
+            },
+            {
+              "texto": "Publicando en forma masiva hay 7 días para cargar compatibilidades y, en algunas categorías, posiciones (delantera/trasera, izquierda/derecha); si no, la publicación se pausa.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/las-diferentes-formas-de-informar-compatibilidades"
+            },
+            {
+              "texto": "Informar vehículos no compatibles genera reclamos, daña la reputación y suma costos de devolución: revisar siempre las compatibilidades sugeridas.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-evitar-reclamos-por-incompatibilidadd"
+            }
           ],
           "error_comun": "Aceptar todas las compatibilidades sugeridas sin revisarlas.",
           "en_la_sala": "En el depósito: elegir delantero/trasero e izquierdo/derecho correcto.",
-          "confirmar_en_panel": ["Si nuestras categorías exigen compatibilidades y posiciones, y si hay un atributo \"Código OEM\" aparte del número de pieza."],
+          "confirmar_en_panel": [
+            "Si nuestras categorías exigen compatibilidades y posiciones, y si hay un atributo \"Código OEM\" aparte del número de pieza."
+          ],
           "preguntas": [
-            { "id": "pub3a", "q": "Publicando en forma masiva, ¿cuánto tiempo hay para cargar compatibilidades antes de que se pause?", "o": ["7 días", "30 días", "No se pausa"], "c": 0, "p": "7 días para compatibilidades y, en algunas categorías, posiciones." },
-            { "id": "pub3b", "q": "Una pieza no tiene código universal de fábrica. ¿Hay que comprar uno?", "o": ["Sí, siempre", "No"], "c": 1, "p": "No hace falta comprar un código universal si el producto no lo tiene." },
-            { "id": "pub3c", "q": "¿Qué pasa si se informan vehículos que no son compatibles?", "o": ["Nada", "Llegan reclamos, se daña la reputación y hay costos de devolución", "Se vende más"], "c": 1, "p": "Las compatibilidades mal cargadas vuelven como reclamo y golpean la misma reputación que cuida el depósito." }
+            {
+              "id": "pub3a",
+              "q": "Publicando en forma masiva, ¿cuánto tiempo hay para cargar compatibilidades antes de que se pause?",
+              "o": [
+                "7 días",
+                "30 días",
+                "No se pausa"
+              ],
+              "c": 0,
+              "p": "7 días para compatibilidades y, en algunas categorías, posiciones."
+            },
+            {
+              "id": "pub3b",
+              "q": "Una pieza no tiene código universal de fábrica. ¿Hay que comprar uno?",
+              "o": [
+                "Sí, siempre",
+                "No"
+              ],
+              "c": 1,
+              "p": "No hace falta comprar un código universal si el producto no lo tiene."
+            },
+            {
+              "id": "pub3c",
+              "q": "¿Qué pasa si se informan vehículos que no son compatibles?",
+              "o": [
+                "Nada",
+                "Llegan reclamos, se daña la reputación y hay costos de devolución",
+                "Se vende más"
+              ],
+              "c": 1,
+              "p": "Las compatibilidades mal cargadas vuelven como reclamo y golpean la misma reputación que cuida el depósito."
+            }
           ]
         },
         {
@@ -455,17 +1349,54 @@
           "minutos": 4,
           "objetivo": "Evitar publicaciones anuladas.",
           "puntos": [
-            { "texto": "No se permite vender autopartes y repuestos usados sin las certificaciones legales correspondientes, ni contrabando, falsificados o adulterados.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/seguro_prohibidos.html" },
-            { "texto": "Ante una denuncia de marca (Brand Protection Program) la publicación se pausa y hay una única oportunidad de responder, en 4 días corridos.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/brand-protection-program-que-es-y-como-usarlo/" },
-            { "texto": "Una publicación pausada se reactiva corrigiéndola; una anulada no.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-gestionar-tus-publicaciones-de-forma-efectiva" },
-            { "texto": "Teléfonos, e-mails y links están prohibidos en título, descripción, fotos y respuestas.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/seguro_publicacion.html" }
+            {
+              "texto": "No se permite vender autopartes y repuestos usados sin las certificaciones legales correspondientes, ni contrabando, falsificados o adulterados.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/seguro_prohibidos.html"
+            },
+            {
+              "texto": "Ante una denuncia de marca (Brand Protection Program) la publicación se pausa y hay una única oportunidad de responder, en 4 días corridos.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/brand-protection-program-que-es-y-como-usarlo/"
+            },
+            {
+              "texto": "Una publicación pausada se reactiva corrigiéndola; una anulada no.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/como-gestionar-tus-publicaciones-de-forma-efectiva"
+            },
+            {
+              "texto": "Teléfonos, e-mails y links están prohibidos en título, descripción, fotos y respuestas.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/seguro_publicacion.html"
+            }
           ],
           "error_comun": "Tardar en responder una denuncia: hay una sola oportunidad, en 4 días corridos.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Qué certificación pide ML para autopartes usadas."],
+          "confirmar_en_panel": [
+            "Qué certificación pide ML para autopartes usadas."
+          ],
           "preguntas": [
-            { "id": "pub4a", "q": "Llega una denuncia de marca. ¿Cuánto tiempo hay para responder?", "o": ["Una sola oportunidad, en 4 días corridos", "Un mes", "Se puede responder varias veces"], "c": 0, "p": "Una única oportunidad de responder en 4 días corridos." },
-            { "id": "pub4b", "q": "Una publicación anulada, ¿se puede reactivar?", "o": ["Sí, corrigiéndola", "No"], "c": 1, "p": "La pausada se reactiva corrigiéndola; la anulada no." }
+            {
+              "id": "pub4a",
+              "q": "Llega una denuncia de marca. ¿Cuánto tiempo hay para responder?",
+              "o": [
+                "Una sola oportunidad, en 4 días corridos",
+                "Un mes",
+                "Se puede responder varias veces"
+              ],
+              "c": 0,
+              "p": "Una única oportunidad de responder en 4 días corridos."
+            },
+            {
+              "id": "pub4b",
+              "q": "Una publicación anulada, ¿se puede reactivar?",
+              "o": [
+                "Sí, corrigiéndola",
+                "No"
+              ],
+              "c": 1,
+              "p": "La pausada se reactiva corrigiéndola; la anulada no."
+            }
           ]
         },
         {
@@ -474,18 +1405,67 @@
           "minutos": 5,
           "objetivo": "Entender qué paga cada venta y dónde hacer la cuenta.",
           "puntos": [
-            { "texto": "ML ya no muestra \"Clásica\" y \"Premium\": las distingue por cuotas. Clásica: cuotas con interés del banco. Premium: cuotas sin interés al mismo precio, con costo adicional.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/es_ar/tipos-de-publicacion-y-actualizaciones-de-articulos" },
-            { "texto": "El costo fijo por unidad se aplica solo debajo de $33.000, escalonado, y un kit paga uno solo.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Costos-para-vender-productos_870" },
-            { "texto": "En productos nuevos desde $33.000 el envío gratis es obligatorio, con descuento de ML.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/16467" },
-            { "texto": "Las comisiones y los montos del cargo fijo cambian seguido: la cuenta real se hace en el simulador de costos.", "estado": "confirmar", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-usar-el-simulador-de-costos-de-mercado-libre" },
-            { "texto": "En piezas de ticket bajo (filtros, lámparas, fichas) el cargo fijo se come el margen: armar kits es la palanca para pagar uno solo.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/Costos-para-vender-productos_870" }
+            {
+              "texto": "ML ya no muestra \"Clásica\" y \"Premium\": las distingue por cuotas. Clásica: cuotas con interés del banco. Premium: cuotas sin interés al mismo precio, con costo adicional.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/es_ar/tipos-de-publicacion-y-actualizaciones-de-articulos"
+            },
+            {
+              "texto": "El costo fijo por unidad se aplica solo debajo de $33.000, escalonado, y un kit paga uno solo.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Costos-para-vender-productos_870"
+            },
+            {
+              "texto": "Desde el 1/9/2026 el cargo fijo depende del tipo de envío. Según terceros, con Flex, acordar o retiro: $1.330 hasta $14.999, $2.740 de $15.000 a $23.999 y $3.320 de $24.000 a $32.999.",
+              "estado": "no_oficial",
+              "fuente": "https://algoritmodigital.com.ar/calculadora-comision-mercado-libre-2026/"
+            },
+            {
+              "texto": "En productos nuevos desde $33.000 el envío gratis es obligatorio, con descuento de ML.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/16467"
+            },
+            {
+              "texto": "Las comisiones y los montos del cargo fijo cambian seguido: la cuenta real se hace en el simulador de costos.",
+              "estado": "confirmar",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/como-usar-el-simulador-de-costos-de-mercado-libre"
+            },
+            {
+              "texto": "En piezas de ticket bajo (filtros, lámparas, fichas) el cargo fijo se come el margen: armar kits es la palanca para pagar uno solo.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/Costos-para-vender-productos_870"
+            }
           ],
           "error_comun": "Calcular el precio con comisiones de memoria: siempre con el simulador del día.",
           "en_la_sala": "",
-          "confirmar_en_panel": ["Comisión vigente de Clásica y Premium para Accesorios para Vehículos.", "Montos del cargo fijo por tramo.", "Umbral de envío gratis ($33.000 según la ayuda oficial)."],
+          "confirmar_en_panel": [
+            "Comisión vigente de Clásica y Premium para Accesorios para Vehículos.",
+            "Montos del cargo fijo por tramo.",
+            "Umbral de envío gratis ($33.000 según la ayuda oficial)."
+          ],
           "preguntas": [
-            { "id": "pub5a", "q": "Según la ayuda oficial, ¿desde qué precio el envío gratis es obligatorio en productos nuevos?", "o": ["$33.000", "$5.000", "$100.000"], "c": 0, "p": "Desde $33.000 (confirmalo en el panel: cambia seguido)." },
-            { "id": "pub5b", "q": "¿Dónde se calcula lo que cobra ML por una venta?", "o": ["De memoria", "En el simulador de costos de ML", "Preguntándole a un comprador"], "c": 1, "p": "Las comisiones y el cargo fijo cambian: la cuenta se hace en el simulador." }
+            {
+              "id": "pub5a",
+              "q": "Según la ayuda oficial, ¿desde qué precio el envío gratis es obligatorio en productos nuevos?",
+              "o": [
+                "$33.000",
+                "$5.000",
+                "$100.000"
+              ],
+              "c": 0,
+              "p": "Desde $33.000 (confirmalo en el panel: cambia seguido)."
+            },
+            {
+              "id": "pub5b",
+              "q": "¿Dónde se calcula lo que cobra ML por una venta?",
+              "o": [
+                "De memoria",
+                "En el simulador de costos de ML",
+                "Preguntándole a un comprador"
+              ],
+              "c": 1,
+              "p": "Las comisiones y el cargo fijo cambian: la cuenta se hace en el simulador."
+            }
           ]
         },
         {
@@ -494,14 +1474,32 @@
           "minutos": 3,
           "objetivo": "Competir en catálogo con autopartes.",
           "puntos": [
-            { "texto": "En catálogo, la autoparte se busca por Número de pieza y la ficha trae fotos, título y descripción.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/nota/publica-rapido-con-el-catalogo-de-mercado-libre" },
-            { "texto": "Gana quien ofrece las mejores condiciones en conjunto (precio, cuotas, envío gratis o en el día), con reputación verde, verde claro o amarilla.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/ayuda/-Qu--tengo-que-hacer-para-gana_4648" }
+            {
+              "texto": "En catálogo, la autoparte se busca por Número de pieza y la ficha trae fotos, título y descripción.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/nota/publica-rapido-con-el-catalogo-de-mercado-libre"
+            },
+            {
+              "texto": "Gana quien ofrece las mejores condiciones en conjunto (precio, cuotas, envío gratis o en el día), con reputación verde, verde claro o amarilla.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/-Qu--tengo-que-hacer-para-gana_4648"
+            }
           ],
           "error_comun": "Pensar que en catálogo gana solo el precio más bajo.",
           "en_la_sala": "",
           "confirmar_en_panel": [],
           "preguntas": [
-            { "id": "pub6a", "q": "En catálogo, ¿qué hace ganar a una publicación?", "o": ["Solo el precio más bajo", "Las mejores condiciones en conjunto, con buena reputación", "La foto más linda"], "c": 1, "p": "Precio, cuotas y envío en conjunto, con reputación verde, verde claro o amarilla." }
+            {
+              "id": "pub6a",
+              "q": "En catálogo, ¿qué hace ganar a una publicación?",
+              "o": [
+                "Solo el precio más bajo",
+                "Las mejores condiciones en conjunto, con buena reputación",
+                "La foto más linda"
+              ],
+              "c": 1,
+              "p": "Precio, cuotas y envío en conjunto, con reputación verde, verde claro o amarilla."
+            }
           ]
         }
       ]
@@ -511,7 +1509,10 @@
       "titulo": "Facturación esencial",
       "para": "administracion",
       "descripcion": "Qué factura corresponde y cómo se le hace llegar al comprador.",
-      "practica": { "modo": "sala_mensajes", "texto": "Mensaje del comprador que pide factura A." },
+      "practica": {
+        "modo": "sala_mensajes",
+        "texto": "Mensaje del comprador que pide factura A."
+      },
       "lecciones": [
         {
           "id": "fac-1",
@@ -519,18 +1520,60 @@
           "minutos": 6,
           "objetivo": "Saber qué comprobante corresponde y dónde se carga.",
           "puntos": [
-            { "texto": "Un Responsable Inscripto emite A a otro Responsable Inscripto o a un monotributista, y B a consumidor final, exento o no categorizado.", "estado": "oficial", "fuente": "https://www.afip.gob.ar/facturacion/regimen-general/comprobantes.asp" },
-            { "texto": "Un monotributista emite C a cualquiera. Si el comprador pide \"factura A\", igual corresponde C.", "estado": "oficial", "fuente": "https://www.afip.gob.ar/monotributo/ayuda/facturacion.asp" },
-            { "texto": "Desde la RG ARCA 5700/2025 hay que identificar al consumidor final solo desde $10.000.000.", "estado": "oficial", "fuente": "https://www.boletinoficial.gob.ar/detalleAviso/primera/326743/1" },
-            { "texto": "El Facturador de Mercado Libre es gratuito, en modo automático o manual, y solo factura ventas posteriores al día en que se configuró.", "estado": "oficial", "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/que-es-el-facturador-de-mercado-libre" },
-            { "texto": "Si se factura por fuera, el PDF o XML se adjunta a la venta, nunca por mensajería.", "estado": "dev", "fuente": "https://developers.mercadolibre.com.ar/cargar-factura" }
+            {
+              "texto": "Un Responsable Inscripto emite A a otro Responsable Inscripto o a un monotributista, y B a consumidor final, exento o no categorizado.",
+              "estado": "oficial",
+              "fuente": "https://www.afip.gob.ar/facturacion/regimen-general/comprobantes.asp"
+            },
+            {
+              "texto": "Un monotributista emite C a cualquiera. Si el comprador pide \"factura A\", igual corresponde C.",
+              "estado": "oficial",
+              "fuente": "https://www.afip.gob.ar/monotributo/ayuda/facturacion.asp"
+            },
+            {
+              "texto": "Desde la RG ARCA 5700/2025 hay que identificar al consumidor final solo desde $10.000.000.",
+              "estado": "oficial",
+              "fuente": "https://www.boletinoficial.gob.ar/detalleAviso/primera/326743/1"
+            },
+            {
+              "texto": "El Facturador de Mercado Libre es gratuito, en modo automático o manual, y solo factura ventas posteriores al día en que se configuró.",
+              "estado": "oficial",
+              "fuente": "https://vendedores.mercadolibre.com.ar/aprender/nota/que-es-el-facturador-de-mercado-libre"
+            },
+            {
+              "texto": "Si se factura por fuera, el PDF o XML se adjunta a la venta, nunca por mensajería.",
+              "estado": "dev",
+              "fuente": "https://developers.mercadolibre.com.ar/cargar-factura"
+            }
           ],
           "error_comun": "Mandar la factura por mensaje: se adjunta a la venta.",
           "en_la_sala": "El pedido de factura A lo resuelve administración y el pedido sigue.",
-          "confirmar_en_panel": ["Configuración del Facturador (automático o manual) y si todas las ventas tienen la factura adjunta."],
+          "confirmar_en_panel": [
+            "Configuración del Facturador (automático o manual) y si todas las ventas tienen la factura adjunta."
+          ],
           "preguntas": [
-            { "id": "fac1a", "q": "Un monotributista vende y el comprador pide factura A. ¿Qué corresponde?", "o": ["Factura A", "Factura C", "Ninguna"], "c": 1, "p": "El monotributista emite C a cualquiera." },
-            { "id": "fac1b", "q": "¿Dónde va la factura de una venta de ML?", "o": ["Adjunta a la venta", "Por mensaje", "Por WhatsApp"], "c": 0, "p": "Se adjunta a la venta (o la emite el Facturador de ML), nunca por mensajería." }
+            {
+              "id": "fac1a",
+              "q": "Un monotributista vende y el comprador pide factura A. ¿Qué corresponde?",
+              "o": [
+                "Factura A",
+                "Factura C",
+                "Ninguna"
+              ],
+              "c": 1,
+              "p": "El monotributista emite C a cualquiera."
+            },
+            {
+              "id": "fac1b",
+              "q": "¿Dónde va la factura de una venta de ML?",
+              "o": [
+                "Adjunta a la venta",
+                "Por mensaje",
+                "Por WhatsApp"
+              ],
+              "c": 0,
+              "p": "Se adjunta a la venta (o la emite el Facturador de ML), nunca por mensajería."
+            }
           ]
         }
       ]
@@ -540,7 +1583,10 @@
       "titulo": "Sexhotic: reglas del rubro",
       "para": "sex",
       "descripcion": "Solo para quien tiene acceso a la sala sexhotic.",
-      "practica": { "modo": "sala_sex", "texto": "Ventas de práctica con embalaje discreto." },
+      "practica": {
+        "modo": "sala_sex",
+        "texto": "Ventas de práctica con embalaje discreto."
+      },
       "lecciones": [
         {
           "id": "adu-1",
@@ -548,21 +1594,84 @@
           "minutos": 5,
           "objetivo": "Publicar y despachar el rubro dentro de las reglas.",
           "puntos": [
-            { "texto": "En la categoría Adultos solo pueden ingresar, publicar y comprar mayores de 18 años.", "estado": "oficial", "fuente": "https://listado.mercadolibre.com.ar/adultstermsandconditions" },
-            { "texto": "Los artículos de Adultos publicados en otra categoría se remueven; el material erótico o con desnudez está prohibido fuera de Adultos.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/seguro_prohibidos.html" },
-            { "texto": "El vendedor que recibe datos del comprador es responsable de su tratamiento y no puede cederlos sin consentimiento.", "estado": "oficial", "fuente": "https://www.mercadolibre.com.ar/privacidad/declaracion-privacidad/31256" },
-            { "texto": "No hay guía oficial de envío discreto: la caja neutra, sin logos ni nombre del producto, es nuestra regla interna.", "estado": "confirmar", "fuente": "" },
-            { "texto": "La ayuda de ML incluiría a Adultos en \"Productos que no tienen devolución\", pero el art. 34 de la Ley 24.240 es irrenunciable: aceptar devoluciones de productos cerrados y de fallas.", "estado": "confirmar", "fuente": "https://www.mercadolibre.com.ar/ayuda/productos-sin-devolucion_4292" }
+            {
+              "texto": "En la categoría Adultos solo pueden ingresar, publicar y comprar mayores de 18 años.",
+              "estado": "oficial",
+              "fuente": "https://listado.mercadolibre.com.ar/adultstermsandconditions"
+            },
+            {
+              "texto": "Los artículos de Adultos publicados en otra categoría se remueven; el material erótico o con desnudez está prohibido fuera de Adultos.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/seguro_prohibidos.html"
+            },
+            {
+              "texto": "El vendedor que recibe datos del comprador es responsable de su tratamiento y no puede cederlos sin consentimiento.",
+              "estado": "oficial",
+              "fuente": "https://www.mercadolibre.com.ar/privacidad/declaracion-privacidad/31256"
+            },
+            {
+              "texto": "No hay guía oficial de envío discreto: la caja neutra, sin logos ni nombre del producto, es nuestra regla interna.",
+              "estado": "confirmar",
+              "fuente": ""
+            },
+            {
+              "texto": "La ayuda de ML incluiría a Adultos en \"Productos que no tienen devolución\", pero el art. 34 de la Ley 24.240 es irrenunciable: aceptar devoluciones de productos cerrados y de fallas.",
+              "estado": "confirmar",
+              "fuente": "https://www.mercadolibre.com.ar/ayuda/productos-sin-devolucion_4292"
+            }
           ],
           "error_comun": "Comentar con alguien qué compró un comprador: es un dato privado.",
           "en_la_sala": "Paso extra de discreción en la mesa sexhotic.",
-          "confirmar_en_panel": ["Si Adultos sigue en \"Productos que no tienen devolución\" y qué datos del producto aparecen en la etiqueta."],
+          "confirmar_en_panel": [
+            "Si Adultos sigue en \"Productos que no tienen devolución\" y qué datos del producto aparecen en la etiqueta."
+          ],
           "preguntas": [
-            { "id": "adu1a", "q": "¿Quién puede comprar en la categoría Adultos?", "o": ["Cualquiera", "Solo mayores de 18 años", "Solo empresas"], "c": 1, "p": "Solo mayores de 18 años con capacidad legal." },
-            { "id": "adu1b", "q": "Un compañero pregunta quién compró un producto del rubro. ¿Qué hacés?", "o": ["Le cuento", "No se comenta: el vendedor es responsable de esos datos", "Le muestro la etiqueta"], "c": 1, "p": "El vendedor es responsable de los datos del comprador y no puede cederlos sin consentimiento." }
+            {
+              "id": "adu1a",
+              "q": "¿Quién puede comprar en la categoría Adultos?",
+              "o": [
+                "Cualquiera",
+                "Solo mayores de 18 años",
+                "Solo empresas"
+              ],
+              "c": 1,
+              "p": "Solo mayores de 18 años con capacidad legal."
+            },
+            {
+              "id": "adu1b",
+              "q": "Un compañero pregunta quién compró un producto del rubro. ¿Qué hacés?",
+              "o": [
+                "Le cuento",
+                "No se comenta: el vendedor es responsable de esos datos",
+                "Le muestro la etiqueta"
+              ],
+              "c": 1,
+              "p": "El vendedor es responsable de los datos del comprador y no puede cederlos sin consentimiento."
+            }
           ]
         }
       ]
     }
-  ]
+  ],
+  "verificacion": {
+    "fecha": "2026-10-21",
+    "metodo": "Dos pasadas: extractos de buscador sobre páginas oficiales de ML Argentina, ARCA y el Estado, y una segunda búsqueda a fondo para contrastar las cifras. Las páginas de mercadolibre.com.ar no se pudieron abrir completas desde el entorno de trabajo.",
+    "confirmado": [
+      "Cambio de reputación del 16/09/2026: 101 ventas, medición a 60 o 365 días",
+      "Límites del verde: reclamos 1,5%, cancelaciones 1%, demoras 10% (60 días)",
+      "Devolución de productos nuevos: 30 días",
+      "Flex: 97% de envíos correctos y entrega antes de las 21 hs",
+      "Revisión de devoluciones: 3 días hábiles",
+      "Ley 24.240: 10 días corridos de arrepentimiento"
+    ],
+    "pendiente_de_fuente_oficial": [
+      "Montos de facturación de MercadoLíder desde el 16/09/2026",
+      "Cargo fijo por tipo de envío desde el 1/9/2026",
+      "Comisiones de Clásica y Premium para Accesorios para Vehículos",
+      "Descuento de envío gratis según color de reputación",
+      "Plazo de devolución de usados (10 o 14 días)",
+      "Largo máximo de título en autopartes"
+    ],
+    "revisar_cada": "Antes de cada clase y, como mínimo, una vez por mes: los montos cambian seguido."
+  }
 }

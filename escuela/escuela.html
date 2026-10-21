@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Escuela hotic.</title>
+<!-- Escuela de Mercado Libre Argentina: página de referencia sin dependencias.
+     Lee programa.json (mismo directorio) y guarda el progreso en el navegador.
+     Para integrarla a tu panel: copiala tal cual, o usá sus funciones como guía para tus componentes. -->
+<style>
+  :root {
+    --bg: #0e0e10; --panel: #151517; --panel2: #1b1b1f; --linea: #2a2a2e; --texto: #f4f4f5; --suave: #a1a1aa;
+    --azul: #3b6bff; --azul-claro: #8fa2ff; --turquesa: #22c7c9; --verde: #2fbf71; --amarillo: #f2c230; --rojo: #e5484d;
+    --fuente: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--texto); font: 15px/1.5 var(--fuente); }
+  a { color: var(--azul-claro); } a:hover { color: #c3cdff; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .contenedor { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; display: flex; flex-direction: column; gap: 22px; }
+  header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.03em; }
+  header p { margin: 4px 0 0; color: var(--suave); }
+  .aviso { background: #2a2410; border: 1px solid #5a4b1d; border-radius: 12px; padding: 12px 16px; font-size: 13px; color: #f1e6c4; }
+  .pestanas { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pestanas button { padding: 10px 18px; border-radius: 99px; border: 1px solid var(--linea); background: var(--panel); color: var(--texto); font-weight: 700; min-height: 44px; }
+  .pestanas button[aria-pressed="true"] { background: var(--texto); color: #0b0b0c; border-color: var(--texto); }
+  .tarjeta { background: var(--panel); border: 1px solid var(--linea); border-radius: 16px; padding: 18px 22px; }
+  .curso { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .curso .num { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #3f3f46; display: grid; place-items: center; font-weight: 800; flex-shrink: 0; }
+  .curso .num.hecho { background: var(--verde); border-color: var(--verde); color: #0b0b0c; }
+  .curso .info { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .curso h2 { margin: 0; font-size: 18px; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 99px; padding: 2px 9px; border: 1px solid #3f3f46; color: var(--suave); }
+  .barra { height: 6px; border-radius: 99px; background: #26262b; overflow: hidden; width: 180px; max-width: 100%; }
+  .barra i { display: block; height: 100%; background: var(--azul); }
+  .boton { padding: 10px 18px; border-radius: 10px; border: 0; background: var(--texto); color: #0b0b0c; font-weight: 700; min-height: 44px; }
+  .boton.sec { background: transparent; color: var(--texto); border: 1px solid var(--linea); }
+  .suave { color: var(--suave); }
+  .leccion-item { width: 100%; text-align: left; display: flex; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 18px; color: var(--texto); }
+  .punto { padding: 10px 0; border-bottom: 1px solid #1f1f23; display: flex; flex-direction: column; gap: 6px; }
+  .etq { font-size: 11px; font-weight: 700; color: #0b0b0c; border-radius: 99px; padding: 2px 8px; }
+  .etq.oficial { background: var(--verde); } .etq.dev { background: var(--azul-claro); } .etq.confirmar { background: var(--amarillo); } .etq.no_oficial { background: var(--suave); }
+  .error { background: #2a1414; border-color: #5a2626; color: #f4d4d4; }
+  .confirmar { background: #2a2410; border-color: #5a4b1d; color: #f1e6c4; }
+  .rotulo { font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+  .opcion { width: 100%; text-align: left; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--linea); background: var(--panel2); color: var(--texto); min-height: 44px; margin-top: 6px; }
+  .opcion.bien { background: #12301f; border-color: var(--verde); } .opcion.mal { background: #3a1616; border-color: var(--rojo); }
+  .grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="contenedor">
+  <header>
+    <h1>Escuela</h1>
+    <p>Del pedido de Mercado Libre al despacho, sin errores.</p>
+  </header>
+  <div class="aviso" id="aviso"></div>
+  <nav class="pestanas" aria-label="Secciones de la escuela">
+    <button type="button" data-vista="cursos" aria-pressed="true">Aprender</button>
+    <button type="button" data-vista="repaso" aria-pressed="false">Repaso rápido <span id="pendientes"></span></button>
+  </nav>
+  <main id="vista" aria-live="polite"></main>
+</div>
+
+<script type="module">
+import { bancoDePreguntas, crearRepaso } from './repaso.js';
+
+// Configuración: quién usa la página y si ve el curso de Sexhotic (en tu panel, sacalo del usuario logueado).
+const USUARIO = new URLSearchParams(location.search).get('usuario') || 'equipo';
+const INCLUIR_SEX = new URLSearchParams(location.search).get('sex') === '1';
+const ETIQUETA = { oficial: 'Oficial', dev: 'Técnico', confirmar: 'Confirmar en el panel', no_oficial: 'No oficial' };
+const PARA = { todos: 'todos', deposito: 'depósito', publicadores: 'publicadores', administracion: 'administración', sex: 'con clave' };
+
+const $ = (s) => document.querySelector(s);
+// Orden de las opciones mezclado pero estable por pregunta (que la correcta no esté siempre en el mismo lugar).
+const hash = (t) => {
+  let x = [...t].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
+  x ^= x >>> 16; x = Math.imul(x, 0x45d9f3b) >>> 0; x ^= x >>> 16;
+  return x >>> 0;
+};
+const orden = (q) => q.o.map((_, i) => i).sort((a, b) => hash(q.id + ':' + a) - hash(q.id + ':' + b));
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const guardado = (clave, valor) => {
+  const k = 'escuela-' + clave + '-' + USUARIO;
+  try { if (valor === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(valor)); } catch (e) { return null; }
+};
+
+let programa, banco, repaso;
+const estado = { vista: 'cursos', curso: null, leccion: null, respuestas: {} };
+const completas = () => guardado('completas') || {};
+
+function cursosVisibles() { return programa.cursos.filter((c) => c.para !== 'sex' || INCLUIR_SEX); }
+
+function pintar() {
+  document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vista === estado.vista)));
+  const n = repaso.pendientes(banco);
+  $('#pendientes').textContent = n ? '· ' + n : '';
+  if (estado.vista === 'repaso') return pintarRepaso();
+  if (estado.leccion) return pintarLeccion();
+  if (estado.curso) return pintarCurso();
+  pintarCursos();
+}
+
+function pintarCursos() {
+  const hechas = completas();
+  $('#vista').innerHTML = cursosVisibles().map((c, i) => {
+    const total = c.lecciones.length, listas = c.lecciones.filter((l) => hechas[l.id]).length;
+    const minutos = c.lecciones.reduce((s, l) => s + l.minutos, 0);
+    return `<article class="tarjeta curso">
+      <div class="num ${listas === total ? 'hecho' : ''}">${listas === total ? '✓' : i + 1}</div>
+      <div class="info">
+        <h2>${esc(c.titulo)} <span class="chip">${esc(PARA[c.para] || c.para)}</span></h2>
+        <div class="suave">${esc(c.descripcion)}</div>
+        <div style="display:flex;align-items:center;gap:10px"><div class="barra"><i style="width:${Math.round(100 * listas / total)}%"></i></div>
+        <span class="suave" style="font-size:13px">${listas} de ${total} lecciones · ${minutos} min</span></div>
+      </div>
+      <button type="button" class="boton" data-curso="${esc(c.id)}">${listas ? 'Seguir' : 'Ver curso'}</button>
+    </article>`;
+  }).join('<div style="height:12px"></div>');
+  document.querySelectorAll('[data-curso]').forEach((b) => b.onclick = () => { estado.curso = programa.cursos.find((c) => c.id === b.dataset.curso); pintar(); });
+}
+
+function pintarCurso() {
+  const c = estado.curso, hechas = completas();
+  $('#vista').innerHTML = `<button type="button" class="boton sec" id="volver">← Todos los cursos</button>
+    <div style="margin:16px 0"><div class="rotulo" style="color:var(--azul-claro)">${c.lecciones.length} LECCIONES</div>
+    <h2 style="margin:4px 0;font-size:28px;letter-spacing:-.02em">${esc(c.titulo)}</h2><div class="suave">${esc(c.descripcion)}</div></div>
+    <div style="display:flex;flex-direction:column;gap:10px">${c.lecciones.map((l, j) => `
+      <button type="button" class="leccion-item" data-leccion="${j}">
+        <span class="chip" style="${hechas[l.id] ? 'background:var(--verde);color:#0b0b0c;border-color:var(--verde)' : ''}">${hechas[l.id] ? '✓' : j + 1}</span>
+        <span style="flex:1"><b>${esc(l.titulo)}</b><br><span class="suave">${esc(l.objetivo)}</span></span>
+        <span class="suave">${l.minutos} min →</span>
+      </button>`).join('')}</div>
+    <p class="tarjeta" style="margin-top:14px">Práctica del curso: ${esc(c.practica.texto)}</p>`;
+  $('#volver').onclick = () => { estado.curso = null; pintar(); };
+  document.querySelectorAll('[data-leccion]').forEach((b) => b.onclick = () => { estado.leccion = c.lecciones[+b.dataset.leccion]; estado.respuestas = {}; pintar(); });
+}
+
+function pintarLeccion() {
+  const c = estado.curso, l = estado.leccion, j = c.lecciones.indexOf(l);
+  const r = estado.respuestas;
+  const bien = l.preguntas.filter((q, k) => r[k] === q.c).length, hechas = Object.keys(r).length;
+  $('#vista').innerHTML = `<button type="button" class="boton sec" id="volver">← ${esc(c.titulo)}</button>
+    <div style="margin:16px 0"><div class="rotulo" style="color:var(--azul-claro)">LECCIÓN ${j + 1} · ${l.minutos} MINUTOS</div>
+    <h2 style="margin:4px 0;font-size:28px;letter-spacing:-.02em">${esc(l.titulo)}</h2><div class="suave">${esc(l.objetivo)}</div></div>
+    <section class="tarjeta"><h3 style="margin:0 0 6px">Lo que tenés que saber</h3>${l.puntos.map((p) => `
+      <div class="punto"><div>${esc(p.texto)}</div><div style="display:flex;gap:10px;align-items:center">
+        <span class="etq ${esc(p.estado)}">${ETIQUETA[p.estado] || p.estado}</span>
+        ${p.fuente ? `<a href="${esc(p.fuente)}" target="_blank" rel="noopener" style="font-size:13px">Ver fuente</a>` : ''}</div></div>`).join('')}</section>
+    <div class="grilla" style="margin:14px 0">
+      <div class="tarjeta error"><div class="rotulo" style="color:#ff9b9b">ERROR COMÚN</div>${esc(l.error_comun)}</div>
+      ${l.confirmar_en_panel.length ? `<div class="tarjeta confirmar"><div class="rotulo" style="color:var(--amarillo)">CONFIRMAR EN EL PANEL</div>${l.confirmar_en_panel.map((t) => `<div>${esc(t)}</div>`).join('')}</div>` : ''}
+    </div>
+    <section class="tarjeta"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Preguntas sin mirar</h3>
+      <span class="suave" style="font-size:13px">${hechas} de ${l.preguntas.length} · ${bien} bien</span></div>
+      ${l.preguntas.map((q, k) => `<div style="margin-top:14px"><b>${esc(q.q)}</b>
+        ${orden(q).map((m) => {
+          const o = q.o[m], resp = r[k] !== undefined, clase = resp && m === q.c ? 'bien' : resp && m === r[k] ? 'mal' : '';
+          return `<button type="button" class="opcion ${clase}" data-q="${k}" data-o="${m}" ${resp ? 'disabled' : ''}>${resp && m === q.c ? '✓ ' : resp && m === r[k] ? '✗ ' : ''}${esc(o)}</button>`;
+        }).join('')}
+        ${r[k] !== undefined ? `<p class="suave" style="margin:8px 0 0">${r[k] === q.c ? 'Bien. ' : 'Era otra. '}${esc(q.p)}</p>` : ''}</div>`).join('')}
+    </section>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+      ${j < c.lecciones.length - 1 ? '<button type="button" class="boton" id="siguiente">Siguiente lección →</button>' : ''}
+      <button type="button" class="boton sec" id="alCurso">Volver al curso</button></div>`;
+  $('#volver').onclick = $('#alCurso').onclick = () => { estado.leccion = null; pintar(); };
+  if ($('#siguiente')) $('#siguiente').onclick = () => { estado.leccion = c.lecciones[j + 1]; estado.respuestas = {}; pintar(); window.scrollTo(0, 0); };
+  document.querySelectorAll('[data-q]').forEach((b) => b.onclick = () => {
+    const k = +b.dataset.q, m = +b.dataset.o, q = l.preguntas[k];
+    estado.respuestas[k] = m;
+    repaso.responder(q.id, m === q.c); // cada respuesta alimenta el repaso espaciado
+    if (Object.keys(estado.respuestas).length === l.preguntas.length) guardado('completas', { ...completas(), [l.id]: true });
+    pintar();
+  });
+}
+
+function pintarRepaso(feedback) {
+  const q = repaso.proxima(banco);
+  if (!q) { $('#vista').innerHTML = '<div class="tarjeta">Ya repasaste todo lo que tocaba hoy. Mañana hay más.</div>'; return; }
+  $('#vista').innerHTML = `${feedback || ''}<section class="tarjeta"><div class="rotulo suave">REPASO RÁPIDO</div>
+    <h2 style="margin:6px 0 4px;font-size:20px">${esc(q.q)}</h2>
+    ${orden(q).map((m) => `<button type="button" class="opcion" data-r="${m}">${esc(q.o[m])}</button>`).join('')}</section>`;
+  document.querySelectorAll('[data-r]').forEach((b) => b.onclick = () => {
+    const ok = +b.dataset.r === q.c, res = repaso.responder(q.id, ok);
+    pintarRepaso(`<div class="tarjeta ${ok ? '' : 'error'}" style="margin-bottom:14px">${ok ? '✅ Bien. ' : '❌ Era: "' + esc(q.o[q.c]) + '". '}${esc(q.p)}
+      <div class="suave" style="font-size:13px;margin-top:6px">Dominás ${res.dominadas} de ${banco.length}.</div></div>`);
+    $('#pendientes').textContent = repaso.pendientes(banco) ? '· ' + repaso.pendientes(banco) : '';
+  });
+}
+
+document.querySelectorAll('[data-vista]').forEach((b) => b.onclick = () => { estado.vista = b.dataset.vista; estado.curso = estado.leccion = null; pintar(); });
+
+fetch('./programa.json').then((r) => r.json()).then((p) => {
+  programa = p;
+  banco = bancoDePreguntas(programa, { incluirSex: INCLUIR_SEX });
+  repaso = crearRepaso(USUARIO);
+  $('#aviso').textContent = `Contenido verificado al ${p.verificacion ? p.verificacion.fecha.split('-').reverse().join('/') : p.version}. Los datos marcados "Confirmar en el panel" o "No oficial" se revisan en tu panel de vendedor antes de cada clase.`;
+  pintar();
+}).catch(() => { $('#vista').innerHTML = '<div class="tarjeta error">No se pudo cargar programa.json.</div>'; });
+</script>
+</body>
+</html>
