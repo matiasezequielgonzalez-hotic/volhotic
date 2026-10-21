@@ -914,7 +914,7 @@ const BOT_MENSAJES_COMPRADOR = [
     leccion: 'La charla con el comprador queda dentro de Mercado Libre: protege la venta y la reputación. Vos seguís armando.' },
   { texto: '¿Me pueden hacer factura A?', correcta: 0, frena: false,
     opciones: ['Aviso al encargado y sigo armando', 'Freno el pedido hasta que esté la factura', 'Le escribo los datos en la caja'],
-    leccion: 'La factura la gestiona administración. El pedido sigue su curso para no llegar tarde al corte.' },
+    leccion: 'La factura la gestiona administración y se adjunta a la venta (nunca por mensaje). Ojo: si la empresa es monotributista corresponde factura C. El pedido sigue su curso para no llegar tarde al corte.' },
   { texto: 'Lo necesito urgente, ¿sale hoy?', correcta: 1, frena: false,
     opciones: ['Le prometo que llega hoy', 'Lo armo ya para que salga antes del corte', 'Lo dejo para después de los otros'],
     leccion: 'No prometas fechas: la promesa la da Mercado Libre. Lo que sí depende de vos es despacharlo antes del horario de corte.' },

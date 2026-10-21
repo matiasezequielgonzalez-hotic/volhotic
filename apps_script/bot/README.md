@@ -14,6 +14,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 | `BotSala.html` | Modo Sala en 3D | Archivo HTML `BotSala` |
 | `BotSprites.html` | Figuras de cuerpo entero para la sala | Archivo HTML `BotSprites` |
 | `BotEscenas.html` | Escenas de hottie para la interfaz de la sala (venta, entrega, escaneo) | Archivo HTML `BotEscenas` |
+| `BotEscuela.html` | Preguntas verificadas de la Escuela de ML Argentina (se genera desde `escuela/programa.json`) | Archivo HTML `BotEscuela` |
 | `BotVideos.html` | Videos de las pantallas de la sala (mp4 + webm, en base64) | Archivo HTML `BotVideos` |
 | `BotCharla.html` | Personalidad de hottie: charla y frases | Archivo HTML `BotCharla` |
 | `Sinonimos.csv` | Sinónimos y errores de tipeo iniciales | Hoja nueva `Sinonimos` |
@@ -23,7 +24,7 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
 
 1. En tu proyecto de Apps Script, creá un archivo por cada uno de la tabla de arriba, con el mismo
    nombre (sin la extensión): `Bot` (script) y los HTML `BotUI`, `BotAvatar`, `BotWidget`, `BotSala`,
-   `BotSprites`, `BotEscenas`, `BotVideos` y `BotCharla`. Pegá el contenido de cada uno.
+   `BotSprites`, `BotEscenas`, `BotEscuela`, `BotVideos` y `BotCharla`. Pegá el contenido de cada uno.
    Todo empieza con `bot`/`BOT` para no chocar con tu código.
 2. **Quién está logueado:** cambiá `botEmailActual_()` en `Bot.gs` para que devuelva el Gmail del
    usuario como lo hace tu app. Por defecto usa `Session.getActiveUser().getEmail()`, que solo
@@ -146,7 +147,11 @@ para sumar a la app del equipo, en tres formas: página de chat, **ventana emerg
   comprador", con lo aprendido. La dificultad sube con el nivel: Aprendiz, Pro (hay que recordar la
   etiqueta y la cantidad) y Experto (también el envío; menos tiempo; packs de hasta 3).
 - **Termómetro del equipo:** perfectas, con errores, demoradas y frenadas del día (hoja `BotXP`).
-- **Preguntas rápidas:** hottie repasa las reglas con repetición espaciada (lo que se erra vuelve a los
+- **Escuela de Mercado Libre Argentina:** `escuela/programa.json` tiene 7 cursos, 25 lecciones y 53
+  preguntas armadas con fuentes oficiales (informe completo en `reports/Escuela Mercado Libre Argentina.md`).
+  Cada dato dice si es oficial, técnico o a confirmar en el panel. Si cambiás el programa, corré
+  `python3 escuela/generar_bot_escuela.py` para regenerar `BotEscuela.html`.
+- **Preguntas rápidas:** hottie repasa las reglas de la Escuela con repetición espaciada (lo que se erra vuelve a los
   10 minutos; lo que se sabe, a los 1, 3, 7 y 16 días). Se guarda en el navegador de cada uno.
 - **Autopartes por piso:** al fondo hay una estantería por piso (Subsuelo, PB, Piso 1, 2, 3) con una
   bahía por zona; "general" es el piso sin zona cargada. El lado del portón queda libre. Acepta pisos

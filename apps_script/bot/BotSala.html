@@ -212,6 +212,7 @@
 <?!= botInclude('BotSprites') ?>
 <?!= botInclude('BotCharla') ?>
 <?!= botInclude('BotEscenas') ?>
+<?!= botInclude('BotEscuela') ?>
 <?!= botInclude('BotVideos') ?>
 <?!= '<script>const BOT_AVATAR = "' + botInclude('BotAvatar') + '";</script>' ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2030,11 +2031,12 @@ function revisarDiscrecion() {
 }
 
 // Dónde va la etiqueta: si no se lee el código, el paquete no viaja.
+// Reglas oficiales de ML Argentina: sin cortes, sin pliegues, sin nada escrito a mano y sin cinta sobre el código.
 const LUGARES_ETIQUETA = [
-  { texto: 'Arriba, en la cara más grande, lisa y sin cinta sobre el código', bien: true },
-  { texto: 'Doblada sobre una esquina para que se vea de los dos lados', leccion: 'Doblada no se escanea: el código tiene que quedar plano, en una sola cara.' },
-  { texto: 'Con cinta transparente encima del código para que no se despegue', leccion: 'Nunca cinta sobre el código de barras: refleja y no se lee. La cinta va alrededor, no encima.' },
-  { texto: 'Al lado de una etiqueta vieja que tenía la caja', leccion: 'Si reusás una caja, sacá o tapá la etiqueta vieja: dos etiquetas confunden al que la escanea.' },
+  { texto: 'Lisa, sin cortes ni pliegues, sin nada escrito y sin cinta sobre el código', bien: true },
+  { texto: 'Doblada sobre una esquina para que se vea de los dos lados', leccion: 'Doblada no se escanea: la etiqueta va sin pliegues, en una cara plana. Si no se lee, el paquete se rechaza.' },
+  { texto: 'Con cinta transparente encima del código para que no se despegue', leccion: 'Nunca cinta sobre el código de barras o el QR: no se lee y el paquete se rechaza.' },
+  { texto: 'Con el nombre del comprador escrito a mano al lado, por las dudas', leccion: 'Nada escrito a mano en la etiqueta: va tal cual sale de la impresora, en su tamaño original.' },
 ];
 function ubicarEtiqueta() {
   const opciones = LUGARES_ETIQUETA.slice().sort(() => Math.random() - 0.5).slice(0, 3);

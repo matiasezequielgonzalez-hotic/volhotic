@@ -467,7 +467,7 @@ var Hottie = (function () {
   // Recordar sin mirar (práctica de recuperación) fija mucho más que releer.
   var PREGUNTAS = [
     { id: 'lista', q: '¿Cuándo está lista una venta para despachar?', o: ['Cuando imprimí la etiqueta', 'Cuando verifiqué producto, variante y cantidad contra la venta', 'Cuando la puse en la caja'], c: 1, p: 'Imprimir la etiqueta no es preparar: hay que comprobar que producto, variante y cantidad coincidan con la venta.' },
-    { id: 'etiq_lugar', q: '¿Dónde va la etiqueta de envío?', o: ['Doblada sobre una esquina', 'Arriba, en la cara más grande, lisa', 'Adentro de la caja'], c: 1, p: 'Plana, sin arrugas y en la cara más grande, para que el código se escanee de una.' },
+    { id: 'etiq_lugar', q: '¿Cómo va la etiqueta de envío?', o: ['Doblada sobre una esquina', 'Sin cortes ni pliegues, sin nada escrito y sin cinta sobre el código', 'Adentro de la caja'], c: 1, p: 'Sin cortes, pliegues ni nada escrito a mano, y sin cinta sobre el código de barras o el QR.' },
     { id: 'etiq_cinta', q: '¿Se puede poner cinta encima del código de barras?', o: ['Sí, la protege', 'No, puede no leerse', 'Solo cinta transparente'], c: 1, p: 'La cinta refleja la luz del lector: el código puede no leerse y el paquete se traba.' },
     { id: 'corte', q: 'Si despachás después del horario de corte…', o: ['No pasa nada si llega igual', 'La venta queda demorada y afecta la reputación', 'Se cancela sola'], c: 1, p: 'Las demoras cuentan en la reputación de la cuenta. Leer la venta y arrancar ya es la mejor defensa.' },
     { id: 'reputacion', q: '¿Qué mide la reputación de Mercado Libre?', o: ['Reclamos, cancelaciones y demoras', 'Cantidad de publicaciones', 'Fotos y precios'], c: 0, p: 'Reclamos, ventas canceladas por el vendedor y despachos demorados. Cada pedido bien armado la cuida.' },
@@ -486,6 +486,20 @@ var Hottie = (function () {
     { id: 'sx_privacidad', sex: true, q: 'Un compañero te pregunta quién compró tal cosa:', o: ['Le cuento, es de confianza', 'Eso no se comenta: privacidad del comprador', 'Le muestro la etiqueta'], c: 1, p: 'Lo que compra cada persona es privado. En esta sala, secreto profesional.' },
     { id: 'papel', q: 'Sobró papel de embalar. ¿Qué hacés?', o: ['Lo tiro al piso', 'Lo junto y lo reciclo', 'Lo dejo en la mesa'], c: 1, p: 'Orden y limpieza: un depósito limpio es más rápido y más seguro.' },
   ];
+  // Si la página trae la Escuela (BotEscuela, generada desde escuela/programa.json), se usan sus
+  // preguntas verificadas con fuente oficial; si no, las de acá.
+  var banco = null;
+  function bancoPreguntas() {
+    if (banco) return banco;
+    if (typeof ESCUELA === 'undefined') return (banco = PREGUNTAS);
+    banco = [];
+    ESCUELA.cursos.forEach(function (c) {
+      c.lecciones.forEach(function (l) {
+        l.preguntas.forEach(function (q) { banco.push({ id: 'e_' + q.id, q: q.q, o: q.o, c: q.c, p: q.p, sex: c.para === 'sex', curso: c.titulo }); });
+      });
+    });
+    return banco;
+  }
   var DIAS_CAJA = [0, 1, 3, 7, 16];
   function claveRepaso(nombre) { return 'hottie-repaso-' + normal(nombre).replace(/\s+/g, '_'); }
   function leerRepaso(nombre) { try { return JSON.parse(localStorage.getItem(claveRepaso(nombre)) || '{}'); } catch (e) { return {}; } }
@@ -493,7 +507,7 @@ var Hottie = (function () {
   // La próxima pregunta que toca: primero las que vencieron (de la caja más baja), después las nuevas.
   function proximaPregunta(nombre, opciones) {
     var datos = leerRepaso(nombre), ahora = Date.now(), sex = !!(opciones && opciones.sex);
-    var pool = PREGUNTAS.filter(function (q) { return !q.sex || sex; });
+    var pool = bancoPreguntas().filter(function (q) { return !q.sex || sex; });
     var vencidas = pool.filter(function (q) { return datos[q.id] && datos[q.id].proxima <= ahora; })
       .sort(function (a, b) { return datos[a.id].caja - datos[b.id].caja; });
     if (vencidas.length) return vencidas[0];
@@ -507,9 +521,9 @@ var Hottie = (function () {
     d.proxima = Date.now() + (acierto ? DIAS_CAJA[d.caja] * 86400000 : 600000);
     datos[id] = d; guardarRepaso(nombre, datos);
     var dominadas = Object.keys(datos).filter(function (k) { return datos[k].caja >= 3; }).length;
-    return { caja: d.caja, dominadas: dominadas, total: PREGUNTAS.length };
+    return { caja: d.caja, dominadas: dominadas, total: bancoPreguntas().length };
   }
-  var repaso = { proxima: proximaPregunta, responder: responderPregunta, total: PREGUNTAS.length };
+  var repaso = { proxima: proximaPregunta, responder: responderPregunta, get total() { return bancoPreguntas().length; } };
 
   return { linea: linea, repaso: repaso, charla: charla, encontrado: encontrado, varios: varios, nada: nada, buscando: buscando, saludo: function (nombre, sala) { return sala === 'sex' ? saludoSex(apodo(nombre)) : saludo(apodo(nombre)); }, chipsInicio: CHIPS_INICIO, chipsSex: CHIPS_SEX, apodo: apodo };
 })();
