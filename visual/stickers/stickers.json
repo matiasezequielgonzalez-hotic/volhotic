@@ -1,0 +1,126 @@
+{
+  "hottie": {
+    "hola": {
+      "archivo": "hottie_hola.svg",
+      "texto": "¡Hola!",
+      "uso": "Saludo al entrar"
+    },
+    "guino": {
+      "archivo": "hottie_guino.svg",
+      "texto": "¡Bien ahí!",
+      "uso": "Respuesta correcta"
+    },
+    "festejo": {
+      "archivo": "hottie_festejo.svg",
+      "texto": "¡Pedido perfecto!",
+      "uso": "Pedido sin errores"
+    },
+    "ups": {
+      "archivo": "hottie_ups.svg",
+      "texto": "Ups… revisalo",
+      "uso": "Error en un paso"
+    },
+    "pensando": {
+      "archivo": "hottie_pensando.svg",
+      "texto": "Mmm…",
+      "uso": "Pregunta de repaso"
+    },
+    "escaneando": {
+      "archivo": "hottie_escaneando.svg",
+      "texto": "Escaneá antes",
+      "uso": "Verificar el producto"
+    },
+    "paquete": {
+      "archivo": "hottie_paquete.svg",
+      "texto": "¡Listo para despachar!",
+      "uso": "Pedido armado"
+    },
+    "apurada": {
+      "archivo": "hottie_apurada.svg",
+      "texto": "¡Se viene el corte!",
+      "uso": "Aviso de horario de corte"
+    },
+    "xp": {
+      "archivo": "hottie_xp.svg",
+      "texto": "+XP",
+      "uso": "Suma de experiencia"
+    },
+    "ok": {
+      "archivo": "hottie_ok.svg",
+      "texto": "OK",
+      "uso": "Confirmación"
+    },
+    "sorpresa": {
+      "archivo": "hottie_sorpresa.svg",
+      "texto": "¿¡Qué!?",
+      "uso": "Algo inesperado"
+    },
+    "descanso": {
+      "archivo": "hottie_descanso.svg",
+      "texto": "Pausa de mate",
+      "uso": "Pausa"
+    },
+    "agente": {
+      "archivo": "hottie_agente.svg",
+      "texto": "Soy un bot",
+      "uso": "hottie se presenta: hotic._agent"
+    }
+  },
+  "matias": {
+    "hola": {
+      "archivo": "matias_hola.svg",
+      "texto": "¡Buenas, equipo!",
+      "uso": "Saludo del día"
+    },
+    "facha": {
+      "archivo": "matias_facha.svg",
+      "texto": "Así se despacha",
+      "uso": "Pedido impecable"
+    },
+    "aprobado": {
+      "archivo": "matias_aprobado.svg",
+      "texto": "Aprobado",
+      "uso": "Confirmación"
+    },
+    "bien": {
+      "archivo": "matias_bien.svg",
+      "texto": "¡Bien ahí!",
+      "uso": "Felicitación"
+    },
+    "festejo": {
+      "archivo": "matias_festejo.svg",
+      "texto": "¡Récord de ventas!",
+      "uso": "Meta cumplida"
+    },
+    "pensando": {
+      "archivo": "matias_pensando.svg",
+      "texto": "Mmm…",
+      "uso": "Pregunta"
+    },
+    "corte": {
+      "archivo": "matias_corte.svg",
+      "texto": "¡Al corte, equipo!",
+      "uso": "Aviso de horario de corte"
+    },
+    "paquete": {
+      "archivo": "matias_paquete.svg",
+      "texto": "¡A despachar!",
+      "uso": "Pedido armado"
+    },
+    "xp": {
+      "archivo": "matias_xp.svg",
+      "texto": "+XP",
+      "uso": "Suma de experiencia"
+    },
+    "revisemos": {
+      "archivo": "matias_revisemos.svg",
+      "texto": "Revisemos eso",
+      "uso": "Algo para corregir"
+    },
+    "mate": {
+      "archivo": "matias_mate.svg",
+      "texto": "Mate y a laburar",
+      "uso": "Arranque del día"
+    }
+  }
+}

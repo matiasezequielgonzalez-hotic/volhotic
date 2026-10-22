@@ -1104,7 +1104,7 @@ function botSalaAvisar(texto) {
 // ---------------------------------------------------------------------------
 
 // Paleta del equipo: un color por persona, los mismos que usan la sala y los retratos.
-const BOT_COLOR_PERSONA = { hottie: '#22c7c9', facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a' };
+const BOT_COLOR_PERSONA = { hottie: '#22c7c9', facundo: '#4d8dff', gabriel: '#f2b84b', sebastian: '#a98bff', agustin: '#ff7a7a', matias: '#ff9f43' };
 // Para quien no esté en la paleta (gente nueva), uno fijo según el nombre.
 const BOT_COLORES_AVATAR = ['#4d8dff', '#f2b84b', '#a98bff', '#ff7a7a', '#7fe08a', '#8fa2ff'];
 const BOT_MAX_FOTO_BYTES = 300 * 1024;
